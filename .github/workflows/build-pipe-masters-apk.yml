@@ -45,4 +45,9 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -f pipe-masters/downloads/PipeMasters.apk
-          git diff --cached --quiet || (git commit -m 'Publish Pipe Masters classroom APK [skip ci]' && git push)
+          if ! git diff --cached --quiet; then
+            git commit -m 'Publish Pipe Masters classroom APK [skip ci]'
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi
