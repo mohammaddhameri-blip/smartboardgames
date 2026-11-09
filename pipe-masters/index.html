@@ -331,12 +331,25 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
     $('stopBtn').hidden=next==='idle';$('cameraBtn').textContent=next==='camera'?'↻ Restart camera':'📷 Start camera';resetRound();
   }
   function stopCamera(keepMode=true){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}if(video.srcObject)video.srcObject=null;if(!keepMode)clearInterval(frameTimer);frameTimer=0;}
+  function requestAndroidCameraPermission(){
+    if(typeof window.PipeMastersAndroid?.requestCameraPermission!=='function')return Promise.resolve(true);
+    return new Promise(resolve=>{
+      window.pipeMastersNativeCameraPermission=allowed=>{delete window.pipeMastersNativeCameraPermission;resolve(allowed===true)};
+      try{window.PipeMastersAndroid.requestCameraPermission()}
+      catch{delete window.pipeMastersNativeCameraPermission;resolve(true)}
+    });
+  }
   async function openCamera(){if(!navigator.mediaDevices?.getUserMedia){switchMode('idle');updateStatus('Camera unavailable','Use an HTTPS page and allow the webcam in browser permissions.',false);return;}
     stopCamera(false);try{updateStatus('Starting webcam…','Please allow camera access in your browser.',false);
+      if(!await requestAndroidCameraPermission()){
+        switchMode('idle');
+        updateStatus('Android camera permission denied','Open Android Settings → Apps → Pipe Masters → Permissions → Camera, then select Allow while using. Check the Android Camera access switch too.',false);
+        return;
+      }
       stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{width:{ideal:1280},height:{ideal:720},frameRate:{ideal:15,max:20},...(chosenDevice?{deviceId:{exact:chosenDevice}}:{facingMode:'user'})}});
       video.srcObject=stream;await video.play();mode='camera';$('stage').className='stage';$('cameraState').textContent='● CAMERA LIVE';$('cameraState').classList.add('online');$('modeLabel').textContent='Live tracking';$('cameraTag').textContent='LIVE CAMERA';$('stopBtn').hidden=false;$('cameraBtn').textContent='↻ Restart camera';
       video.style.transform=mirrored?'scaleX(-1)':'none';resetRound();await refreshCameras();frameTimer=setInterval(processCamera,170);
-    }catch(err){stopCamera();mode='idle';$('stage').className='stage idle';$('cameraState').textContent='● CAMERA OFF';$('cameraState').classList.remove('online');$('modeLabel').textContent='Choose a mode';$('stopBtn').hidden=true;$('cameraBtn').textContent='📷 Start camera';$('cameraTag').textContent='';updateStatus('Could not start camera',`${err.name||'Error'}: ${err.message||'Check the camera permission.'} Try demo mode instead.`,false);}
+    }catch(err){stopCamera();mode='idle';$('stage').className='stage idle';$('cameraState').textContent='● CAMERA OFF';$('cameraState').classList.remove('online');$('modeLabel').textContent='Choose a mode';$('stopBtn').hidden=true;$('cameraBtn').textContent='📷 Start camera';$('cameraTag').textContent='';updateStatus('Could not start camera',err.name==='NotAllowedError'?'Camera access blocked. Check Android Settings → Apps → Pipe Masters → Permissions → Camera and the system Camera access switch.':`${err.name||'Error'}: ${err.message||'Check the camera permission.'} Try demo mode instead.`,false);}
   }
   async function refreshCameras(){if(!navigator.mediaDevices?.enumerateDevices)return;try{const cameras=(await navigator.mediaDevices.enumerateDevices()).filter(x=>x.kind==='videoinput');$('cameraSelect').innerHTML='<option value="">Default camera</option>'+cameras.map((c,i)=>`<option value="${c.deviceId.replaceAll('&','&amp;').replaceAll('"','&quot;')}">${(c.label||'Camera '+(i+1)).replaceAll('&','&amp;').replaceAll('<','&lt;')}</option>`).join('');$('cameraSelect').value=chosenDevice;}catch{}}
   function detectPapers(){const W=off.width,H=off.height,N=W*H;try{octx.drawImage(video,0,0,W,H)}catch{return []}let pix;try{pix=octx.getImageData(0,0,W,H).data}catch{return []}
