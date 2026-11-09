@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#101d2b">
-  <title>Pipe Masters — Team Challenge v0.3</title>
+  <title>Pipe Masters — Team Challenge v0.4</title>
   <style>
     :root{color-scheme:dark;--bg:#0b1622;--panel:#152434;--line:#2d4153;--muted:#9eafbd;--ink:#eef6fc;--accent:#4cc6f2;--green:#64dfad;--yellow:#f8bd58}
     *{box-sizing:border-box}body{margin:0;font:500 16px/1.45 system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at 80% 0,#1c3042,#0b1622 55%);color:var(--ink);min-height:100dvh}
@@ -109,7 +109,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   <div class="shell">
     <main class="layout" aria-label="Pipe Masters team challenge">
       <section class="panel puzzle-panel" aria-label="Pipeline puzzle">
-        <div class="playfield-title"><div class="arcade-title">PIPE MASTERS <span>v0.3</span></div>
+        <div class="playfield-title"><div class="arcade-title">PIPE MASTERS <span>v0.4</span></div>
           <div class="playfield-level"><span id="levelTag">LEVEL 1 / 5</span><strong id="levelTitle">First Flow</strong></div></div>
         <div class="boardwrap">
           <svg class="board" id="puzzle" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" aria-label="Pipeline with coloured missing sections" role="img"></svg>
@@ -120,13 +120,13 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
         <div class="boardfooter"><div class="colourkey" id="colourKey"></div><div class="progress" id="progress"></div></div>
       </section>
       <aside class="sidebar" aria-label="Camera and game control panels">
-        <section class="panel camera-panel" aria-label="Live team webcam">
+        <section class="panel camera-panel" aria-label="Live front-facing camera">
           <div class="panelhead camera-heading"><div class="camera-heading-text"><strong>LIVE CAMERA</strong>
             <span class="muted" id="modeLabel">Choose a mode</span></div><span class="pill" id="cameraState">● OFF</span></div>
           <div class="stagebox"><div class="stage idle" id="stage">
             <video id="video" autoplay muted playsinline></video>
             <canvas id="overlay" width="640" height="360" aria-label="Detected paper positions"></canvas>
-            <div class="placeholder"><span class="camera-icon">📷</span><b>Camera preview</b><span>Connect a webcam or try Demo.</span></div>
+            <div class="placeholder"><span class="camera-icon">📷</span><b>Camera preview</b><span>Use the device selfie camera or try Demo.</span></div>
             <span class="cameraTag" id="cameraTag"></span>
           </div></div>
         </section>
@@ -139,10 +139,10 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
             <div class="hud-stat"><span>BEST</span><strong id="bestTimeLabel">—</strong></div>
           </div>
           <div class="status" aria-live="polite"><div class="bigstatus" id="bigStatus">Ready for your team</div>
-            <div class="hint" id="hint">Start the camera or try demo mode.</div>
+            <div class="hint" id="hint">Start the selfie camera or try demo mode.</div>
             <div class="meter" aria-label="Formation hold progress"><span id="holdBar"></span></div></div>
           <div class="controls camera-controls">
-            <button class="btn primary" id="cameraBtn" type="button">📷 Camera</button>
+            <button class="btn primary" id="cameraBtn" type="button">📷 Selfie camera</button>
             <button class="btn" id="demoBtn" type="button">✋ Demo</button>
             <button class="btn ghost" id="stopBtn" type="button" hidden>Stop</button>
           </div>
@@ -165,7 +165,8 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   </div>
   <dialog id="settingsDialog" class="dialog" aria-label="Game settings">
     <h2>Game settings</h2><p>Adjust the timer and camera detection for your classroom.</p>
-    <label class="field">Camera source<select id="cameraSelect"><option value="">Default camera</option></select></label>
+    <div class="field"><strong>Camera source: front-facing (selfie)</strong><span class="muted">On Android, Pipe Masters prioritises the built-in selfie camera. No USB webcam is required.</span></div>
+    <button class="btn small" type="button" id="cameraPermissionsBtn" hidden>⚙ Android camera permission settings</button>
     <label class="field">Time per level<select id="timeLimitSelect"><option value="60">1 minute</option><option value="90">90 seconds</option><option value="120" selected>2 minutes</option><option value="180">3 minutes</option><option value="0">No time limit</option></select></label>
     <label class="field">Formation accuracy<select id="toleranceSelect"><option value="0.20">Precise</option><option value="0.30" selected>Standard</option><option value="0.39">Relaxed</option></select></label>
     <label class="switch"><input id="mirrorSelect" type="checkbox" checked> Mirror camera preview</label>
@@ -193,7 +194,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   const $=id=>document.getElementById(id), video=$('video'), canvas=$('overlay'), ctx=canvas.getContext('2d');
   const off=document.createElement('canvas');off.width=240;off.height=135;const octx=off.getContext('2d',{willReadFrequently:true});
   let levelIndex=0, mode='idle',stream=null, started=0,holdStart=0,win=false, frameTimer=0, lastTime=0;
-  let guides=true,mirrored=true,tolerance=.30, chosenDevice='';
+  let guides=true,mirrored=true,tolerance=.30;
   let detected=[], demo=[], dragging=null, best={};
   let timeLimit=120, paused=false, pauseStarted=0, pausedElapsed=0, expired=false, score=0;
   const scoredLevels=new Set();
@@ -328,30 +329,80 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   }
   function switchMode(next){stopCamera(false);mode=next;$('stage').classList.toggle('idle',next==='idle');$('stage').classList.toggle('demo',next==='demo');$('cameraState').classList.toggle('online',next==='camera');
     $('cameraState').textContent=next==='camera'?'● CAMERA LIVE':next==='demo'?'● DEMO MODE':'● CAMERA OFF';$('modeLabel').textContent=next==='camera'?'Live tracking':next==='demo'?'Interactive demo':'Choose a mode';$('cameraTag').textContent=next==='camera'?'LIVE CAMERA':next==='demo'?'DRAG + TAP TO ROTATE':'';
-    $('stopBtn').hidden=next==='idle';$('cameraBtn').textContent=next==='camera'?'↻ Restart camera':'📷 Start camera';resetRound();
+    $('stopBtn').hidden=next==='idle';$('cameraBtn').textContent=next==='camera'?'↻ Restart selfie':'📷 Selfie camera';resetRound();
   }
   function stopCamera(keepMode=true){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}if(video.srcObject)video.srcObject=null;if(!keepMode)clearInterval(frameTimer);frameTimer=0;}
+  function applyPreviewMirror(){
+    const transform=mirrored?'scaleX(-1)':'none';
+    video.style.transform=transform;
+    canvas.style.transform=transform;
+  }
   function requestAndroidCameraPermission(){
     if(typeof window.PipeMastersAndroid?.requestCameraPermission!=='function')return Promise.resolve(true);
     return new Promise(resolve=>{
       window.pipeMastersNativeCameraPermission=allowed=>{delete window.pipeMastersNativeCameraPermission;resolve(allowed===true)};
       try{window.PipeMastersAndroid.requestCameraPermission()}
-      catch{delete window.pipeMastersNativeCameraPermission;resolve(true)}
+      catch{delete window.pipeMastersNativeCameraPermission;resolve(false)}
     });
   }
-  async function openCamera(){if(!navigator.mediaDevices?.getUserMedia){switchMode('idle');updateStatus('Camera unavailable','Use an HTTPS page and allow the webcam in browser permissions.',false);return;}
-    stopCamera(false);try{updateStatus('Starting webcam…','Please allow camera access in your browser.',false);
+  async function acquireSelfieCamera(){
+    const media=navigator.mediaDevices;
+    const quality={width:{ideal:1280},height:{ideal:720},frameRate:{ideal:15,max:20}};
+    // Prefer Android's selfie camera rather than the default rear camera.
+    try{
+      return await media.getUserMedia({audio:false,video:{...quality,facingMode:{exact:'user'}}});
+    }catch(error){
+      if(!['OverconstrainedError','NotFoundError','TypeError'].includes(error?.name))throw error;
+    }
+    // Some Android WebViews do not implement exact facingMode.
+    const devices=await media.enumerateDevices?.().catch(()=>[])||[];
+    const selfie=devices.find(device=>device.kind==='videoinput'&&/front|selfie|user-facing|user facing/i.test(device.label));
+    if(selfie){
+      return media.getUserMedia({audio:false,video:{...quality,deviceId:{exact:selfie.deviceId}}});
+    }
+    const fallback=await media.getUserMedia({audio:false,video:{...quality,facingMode:{ideal:'user'}}});
+    const track=fallback.getVideoTracks()[0];
+    if(track&&(track.getSettings?.().facingMode==='environment'||/rear|back camera|environment/i.test(track.label||''))){
+      fallback.getTracks().forEach(t=>t.stop());
+      const error=new Error('No front-facing camera was found. Pipe Masters does not use the rear camera.');
+      error.name='NotFoundError';
+      throw error;
+    }
+    return fallback;
+  }
+  async function openCamera(){
+    stopCamera(false);
+    try{
+      updateStatus('Starting selfie camera…','Android will ask for camera permission if needed.',false);
       if(!await requestAndroidCameraPermission()){
         switchMode('idle');
-        updateStatus('Android camera permission denied','Open Android Settings → Apps → Pipe Masters → Permissions → Camera, then select Allow while using. Check the Android Camera access switch too.',false);
+        updateStatus('Camera permission denied','Enable Camera in Android Settings → Apps → Pipe Masters → Permissions. Also enable the system Camera access switch.',false);
         return;
       }
-      stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{width:{ideal:1280},height:{ideal:720},frameRate:{ideal:15,max:20},...(chosenDevice?{deviceId:{exact:chosenDevice}}:{facingMode:'user'})}});
-      video.srcObject=stream;await video.play();mode='camera';$('stage').className='stage';$('cameraState').textContent='● CAMERA LIVE';$('cameraState').classList.add('online');$('modeLabel').textContent='Live tracking';$('cameraTag').textContent='LIVE CAMERA';$('stopBtn').hidden=false;$('cameraBtn').textContent='↻ Restart camera';
-      video.style.transform=mirrored?'scaleX(-1)':'none';resetRound();await refreshCameras();frameTimer=setInterval(processCamera,170);
-    }catch(err){stopCamera();mode='idle';$('stage').className='stage idle';$('cameraState').textContent='● CAMERA OFF';$('cameraState').classList.remove('online');$('modeLabel').textContent='Choose a mode';$('stopBtn').hidden=true;$('cameraBtn').textContent='📷 Start camera';$('cameraTag').textContent='';updateStatus('Could not start camera',err.name==='NotAllowedError'?'Camera access blocked. Check Android Settings → Apps → Pipe Masters → Permissions → Camera and the system Camera access switch.':`${err.name||'Error'}: ${err.message||'Check the camera permission.'} Try demo mode instead.`,false);}
+      if(!navigator.mediaDevices?.getUserMedia){
+        switchMode('idle');
+        updateStatus('Camera unavailable','On Android, update Android System WebView and allow camera access. In browsers, open the secure HTTPS game link.',false);
+        return;
+      }
+      stream=await acquireSelfieCamera();
+      video.srcObject=stream;
+      await video.play();
+      mode='camera';$('stage').className='stage';
+      $('cameraState').textContent='● SELFIE LIVE';$('cameraState').classList.add('online');
+      $('modeLabel').textContent='Front camera tracking';$('cameraTag').textContent='FRONT CAMERA';
+      $('stopBtn').hidden=false;$('cameraBtn').textContent='↻ Restart selfie';
+      applyPreviewMirror();resetRound();frameTimer=setInterval(processCamera,170);
+    }catch(err){
+      stopCamera();mode='idle';$('stage').className='stage idle';
+      $('cameraState').textContent='● CAMERA OFF';$('cameraState').classList.remove('online');
+      $('modeLabel').textContent='Selfie camera';$('stopBtn').hidden=true;
+      $('cameraBtn').textContent='📷 Selfie camera';$('cameraTag').textContent='';
+      const blocked=err?.name==='NotAllowedError'||err?.name==='SecurityError';
+      updateStatus(blocked?'Camera permission blocked':'Could not start selfie camera',
+        blocked?'Allow Camera for Pipe Masters in Android Settings and check the system-wide Camera access switch. Restart the app after changing permission.':
+        `${err?.name||'Error'}: ${err?.message||'The selfie camera could not be opened.'}`,false);
+    }
   }
-  async function refreshCameras(){if(!navigator.mediaDevices?.enumerateDevices)return;try{const cameras=(await navigator.mediaDevices.enumerateDevices()).filter(x=>x.kind==='videoinput');$('cameraSelect').innerHTML='<option value="">Default camera</option>'+cameras.map((c,i)=>`<option value="${c.deviceId.replaceAll('&','&amp;').replaceAll('"','&quot;')}">${(c.label||'Camera '+(i+1)).replaceAll('&','&amp;').replaceAll('<','&lt;')}</option>`).join('');$('cameraSelect').value=chosenDevice;}catch{}}
   function detectPapers(){const W=off.width,H=off.height,N=W*H;try{octx.drawImage(video,0,0,W,H)}catch{return []}let pix;try{pix=octx.getImageData(0,0,W,H).data}catch{return []}
     const label=new Uint8Array(N),names=['','red','yellow','green','cyan','purple','grey','blue','orange'];const accepted=new Set(level().colors);
     for(let p=0,i=0;p<N;p++,i+=4){const R=pix[i]/255,G=pix[i+1]/255,B=pix[i+2]/255,max=Math.max(R,G,B),min=Math.min(R,G,B),d=max-min,v=max,s=max?d/max:0;
@@ -388,10 +439,10 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   $('pauseBtn').onclick=togglePause;
   $('timeLimitSelect').onchange=e=>{timeLimit=Number(e.target.value);resetRound()};
   $('cameraBtn').onclick=openCamera;$('demoBtn').onclick=()=>switchMode('demo');$('stopBtn').onclick=()=>switchMode('idle');$('prevBtn').onclick=()=>changeLevel(levelIndex-1);$('nextBtn').onclick=()=>changeLevel(levelIndex+1);$('restartBtn').onclick=resetRound;$('successNext').onclick=()=>changeLevel(levelIndex===LEVELS.length-1?0:levelIndex+1);
-  if(window.PipeMastersAndroid){$('apkDownloadLink').hidden=true;}
+  if(window.PipeMastersAndroid){$('apkDownloadLink').hidden=true;$('cameraPermissionsBtn').hidden=false;}
   $('checkUpdatesBtn').onclick=()=>{if(window.PipeMastersAndroid?.checkForUpdates){$('updateNote').textContent='Checking GitHub for the latest game…';window.PipeMastersAndroid.checkForUpdates();}else{location.reload();}};
-  $('settingsBtn').onclick=()=>{if(mode!=='idle'&&!paused&&!win&&!expired)togglePause();$('settingsDialog').showModal();refreshCameras()};$('settingsClose').onclick=()=>$('settingsDialog').close();$('cameraSelect').onchange=e=>{chosenDevice=e.target.value;if(mode==='camera')openCamera()};
-  $('toleranceSelect').onchange=e=>{tolerance=Number(e.target.value);holdStart=0};$('mirrorSelect').onchange=e=>{mirrored=e.target.checked;video.style.transform=mirrored?'scaleX(-1)':'none';holdStart=0};
+  $('settingsBtn').onclick=()=>{if(mode!=='idle'&&!paused&&!win&&!expired)togglePause();$('settingsDialog').showModal()};$('settingsClose').onclick=()=>$('settingsDialog').close();$('cameraPermissionsBtn').onclick=()=>window.PipeMastersAndroid?.openCameraSettings?.();
+  $('toleranceSelect').onchange=e=>{tolerance=Number(e.target.value);holdStart=0};$('mirrorSelect').onchange=e=>{mirrored=e.target.checked;applyPreviewMirror();holdStart=0};
   const setGuides=val=>{guides=val;$('guidesSelect').checked=val;$('guideBtn').textContent=`◎ Guides: ${val?'On':'Off'}`;drawStage()};$('guidesSelect').onchange=e=>setGuides(e.target.checked);$('guideBtn').onclick=()=>setGuides(!guides);
   $('fullscreenBtn').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen?.();else document.documentElement.requestFullscreen?.()};
   window.addEventListener('pagehide',()=>stopCamera());
