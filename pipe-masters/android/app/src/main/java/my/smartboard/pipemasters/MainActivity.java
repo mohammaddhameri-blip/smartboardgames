@@ -43,6 +43,7 @@ public final class MainActivity extends Activity {
     private static final String GAME_URL = "https://appassets.androidplatform.net/game/index.html";
     private static final String UPDATE_URL = "https://raw.githubusercontent.com/mohammaddhameri-blip/smartboardgames/main/pipe-masters/index.html";
     private static final int CAMERA_REQUEST = 1104;
+    private static final int CAMERA_PREFLIGHT_REQUEST = 1105;
     private static final int MAX_GAME_BYTES = 900_000;
 
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -50,6 +51,7 @@ public final class MainActivity extends Activity {
     private WebView view;
     private TextView splash;
     private PermissionRequest pending;
+    private boolean nativeCameraPreflightPending = false;
     private volatile boolean updating = false;
 
     @Override public void onCreate(Bundle savedInstanceState) {
@@ -124,10 +126,16 @@ public final class MainActivity extends Activity {
     }
 
     private void handleCameraPermission(PermissionRequest req) {
-        // Restrict permission to our secure game origin and camera capture only.
-        if (!"https://appassets.androidplatform.net".equals(req.getOrigin().toString()) ||
-            !Arrays.asList(req.getResources()).contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE) ||
-            req.getResources().length != 1) {
+        // WebView may stringify the origin with a trailing slash or a default port.
+        // Validate the URI components rather than comparing its entire string.
+        android.net.Uri origin = req.getOrigin();
+        boolean trustedOrigin = origin != null
+            && "https".equalsIgnoreCase(origin.getScheme())
+            && "appassets.androidplatform.net".equalsIgnoreCase(origin.getHost())
+            && (origin.getPort() == -1 || origin.getPort() == 443);
+        boolean videoOnly = req.getResources().length == 1
+            && Arrays.asList(req.getResources()).contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE);
+        if (!trustedOrigin || !videoOnly) {
             req.deny();
             return;
         }
@@ -140,13 +148,35 @@ public final class MainActivity extends Activity {
         }
     }
 
+    private void preflightCameraPermission() {
+        if (Build.VERSION.SDK_INT < 23 ||
+            checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            sendPreflightResult(true);
+            return;
+        }
+        if (nativeCameraPreflightPending) return;
+        nativeCameraPreflightPending = true;
+        requestPermissions(new String[] {Manifest.permission.CAMERA}, CAMERA_PREFLIGHT_REQUEST);
+    }
+
+    private void sendPreflightResult(boolean granted) {
+        if (view != null) {
+            view.evaluateJavascript(
+                "window.pipeMastersNativeCameraPermission && window.pipeMastersNativeCameraPermission(" +
+                    (granted ? "true" : "false") + ");", null);
+        }
+    }
+
     @Override public void onRequestPermissionsResult(int requestCode, String[] perms, int[] results) {
         super.onRequestPermissionsResult(requestCode, perms, results);
-        if (requestCode == CAMERA_REQUEST && pending != null) {
+        boolean granted = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
+        if (requestCode == CAMERA_PREFLIGHT_REQUEST) {
+            nativeCameraPreflightPending = false;
+            sendPreflightResult(granted);
+        } else if (requestCode == CAMERA_REQUEST && pending != null) {
             PermissionRequest request = pending;
             pending = null;
-            if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED)
-                request.grant(new String[] {PermissionRequest.RESOURCE_VIDEO_CAPTURE});
+            if (granted) request.grant(new String[] {PermissionRequest.RESOURCE_VIDEO_CAPTURE});
             else request.deny();
         }
     }
@@ -222,10 +252,13 @@ public final class MainActivity extends Activity {
     }
 
     public final class GameBridge {
+        @JavascriptInterface public void requestCameraPermission() {
+            main.post(() -> preflightCameraPermission());
+        }
         @JavascriptInterface public void checkForUpdates() {
             main.post(() -> checkUpdates(false, true));
         }
-        @JavascriptInterface public String getAppVersion() { return "Android shell 0.2.0"; }
+        @JavascriptInterface public String getAppVersion() { return "Android shell 0.2.1"; }
     }
 
     @Override public void onBackPressed() {
