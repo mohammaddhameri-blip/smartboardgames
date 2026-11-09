@@ -1,38 +1,50 @@
 # Smartboard Games 🎮
 
-A central classroom game library and home for independently playable smartboard games.
+A central game-selection website **and** a collection of individually playable smartboard games.
 
-## Repository layout
+## Play and browse
 
-- \`index.html\`: main game library website.
-- \`games.json\`: catalogue of game titles, descriptions, and publishing status.
-- \`game-name/index.html\`: each game's own playable webpage, with any required assets in its folder.
+The GitHub Pages site (once publishing is enabled):
 
-Initially, game entries are marked **Coming soon** because their playable files have **not** yet been copied to this repository. Existing game repositories are unchanged.
+**https://mohammaddhameri-blip.github.io/smartboardgames/**
 
-## Publishing on GitHub Pages
+Games imported from the user's original repositories:
 
-Open **Settings → Pages** in this repository. Under **Build and deployment**, choose **Deploy from a branch**, select **main**, select **/(root)**, then click **Save**.
+| Game | Individual library link | Original repository |
+|---|---|---|
+| BoatBeats | [Play](https://mohammaddhameri-blip.github.io/smartboardgames/boatbeats/) | [Source](https://github.com/mohammaddhameri-blip/boatbeats) |
+| Sketch Rally | [Play](https://mohammaddhameri-blip.github.io/smartboardgames/sketch-rally/) | [Source](https://github.com/mohammaddhameri-blip/sketch-rally) |
+| Melody Trail | [Play](https://mohammaddhameri-blip.github.io/smartboardgames/melody-trail/) | [Source](https://github.com/mohammaddhameri-blip/melody-trail) |
+| STEM Battleship | [Play](https://mohammaddhameri-blip.github.io/smartboardgames/stem-battleship/) | [Source](https://github.com/mohammaddhameri-blip/stem-battleship) |
 
-Once Pages is enabled and deployed, the main library will be:
+**Coming soon:** Motion Quest and Boxing Game. These catalogue entries are placeholders only; their playable game files have not yet been published here.
 
-https://mohammaddhameri-blip.github.io/smartboardgames/
+## File structure
 
-For example, after you publish BoatBeats at \`boatbeats/index.html\`, its independent URL will be:
+- `index.html` — the library website.
+- `games.json` — game metadata and visibility.
+- `boatbeats/` — playable BoatBeats.
+- `sketch-rally/` — Sketch Rally smartboard game and `phone.html` controller page.
+- `melody-trail/` — playable Melody Trail browser game.
+- `stem-battleship/` — playable STEM Battleship browser files.
+- Each game folder contains its own `index.html` and any supporting static files.
 
-https://mohammaddhameri-blip.github.io/smartboardgames/boatbeats/
+## Enable GitHub Pages
 
-## Adding or updating a game
+In **Settings → Pages**, set **Build and deployment → Source: Deploy from a branch**, **Branch: main**, **Folder: /(root)**, and click **Save**. The site then builds at the URL above.
 
-1. Create or update the game's own folder, such as \`boatbeats/\`. Include its \`index.html\` and any required assets.
-2. Add or edit the corresponding entry in \`games.json\`.
-3. Set \`published\` to \`true\` **only after** the game files are present and functional.
-4. Commit. The main library will now show a Play button that opens the individual game URL.
+## Add a game
 
-Games can be updated independently. A game using a database, multiplayer, or a secure server may also need an external backend.
+1. Create a folder such as `new-game/`.
+2. Upload its playable HTML, JavaScript, CSS and assets, including a `new-game/index.html` entry point.
+3. Add an entry to `games.json` with a relative path of `new-game/` and `published: true` only after the game is ready.
+4. Commit the changes; the homepage will then show a Play link.
+5. Update only the relevant game's folder when releasing a new version.
 
-## Notes
+## Important maintenance notes
 
-- Each game is a separate folder within the **same** repository.
-- The homepage and individual game URLs are both supported.
-- Changes to existing, separate repositories are not required.
+- The original repositories remain unchanged. The versions here are **copies**, not automatically synchronized with their originals. When updating one copy, update the other separately if you want them both current.
+- Android APKs and build workflows remain managed in the games' **original** repositories, not this browser library.
+- STEM Battleship's page uses its original repository's public `ocean-loop.gif` and PNG icon files through raw GitHub URLs. Those images require network access; the rest of the imported browser game files are hosted in this library.
+- Sketch Rally's phone-pairing function uses its existing Supabase service, which may need its own configuration.
+- This repository provides a static site. Database, cloud synchronization, and multiplayer features depend on their respective backends.
