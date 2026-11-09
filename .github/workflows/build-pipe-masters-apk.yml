@@ -47,6 +47,7 @@ jobs:
           git add -f pipe-masters/downloads/PipeMasters.apk
           if ! git diff --cached --quiet; then
             git commit -m 'Publish Pipe Masters classroom APK [skip ci]'
+            git restore pipe-masters/android/app/src/main/assets/index.html
             git fetch origin main
             git rebase origin/main
             git push origin HEAD:main
