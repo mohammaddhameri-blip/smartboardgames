@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101d2b">
+  <title>Pipe Masters — Team Challenge</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1622;--panel:#152434;--line:#2d4153;--muted:#9eafbd;--ink:#eef6fc;--accent:#4cc6f2;--green:#64dfad;--yellow:#f8bd58}
+    *{box-sizing:border-box}body{margin:0;font:500 16px/1.45 system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at 80% 0,#1c3042,#0b1622 55%);color:var(--ink);min-height:100dvh}
+    button,select,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+    .shell{max-width:1540px;margin:0 auto;padding:16px clamp(12px,2.4vw,34px) 24px}
+    header{display:flex;align-items:center;gap:13px;margin-bottom:19px;flex-wrap:wrap}.brandmark{width:49px;height:49px;display:grid;place-items:center;background:#0d3846;border:1px solid #276276;border-radius:15px;font-size:27px}.brand{flex:1;min-width:175px}.brand strong{font-size:clamp(21px,2.3vw,31px);letter-spacing:.025em;line-height:1.1;display:block}.brand small{color:#a1b5c5;letter-spacing:.1em;font-size:11px;font-weight:800}.header-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .pill{border:1px solid #3a5567;border-radius:999px;font-size:12px;font-weight:800;padding:7px 12px;color:#b7cad8;background:#182a39}.pill.online{color:#82e9bf;border-color:#2d7a65}.btn{display:inline-flex;justify-content:center;align-items:center;gap:7px;border:1px solid #456173;background:#24394a;border-radius:12px;color:#f4fbff;padding:10px 15px;min-height:43px;font-weight:750;white-space:nowrap;transition:transform .13s,background .13s}.btn:hover{background:#2d475d}.btn:active{transform:scale(.98)}.btn.primary{background:#2eb7dd;color:#051d2c;border-color:#2eb7dd}.btn.primary:hover{background:#69ddfb}.btn.good{background:#1e765b;border-color:#38ab86}.btn.small{padding:8px 12px;min-height:37px;font-size:14px}.btn.ghost{background:transparent}.btn[hidden]{display:none}
+    .layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(350px,.88fr);gap:18px}.panel{min-width:0;background:linear-gradient(180deg,#152535,#122130);border:1px solid #294152;border-radius:20px;box-shadow:0 13px 30px #030b1130;overflow:hidden}.panelhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 19px;border-bottom:1px solid #2a4050}.panelhead h2{margin:0;font-size:18px;font-weight:850}.subhead{font-size:12px;letter-spacing:.09em;font-weight:900;color:var(--accent);text-transform:uppercase}.muted{color:var(--muted);font-size:13px}.scoreline{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.timer{font-size:26px;font-weight:850;font-variant-numeric:tabular-nums}.lvl{border-radius:8px;padding:5px 9px;background:#224351;color:#94e1f5;font-size:12px;font-weight:850}
+    .boardwrap{padding:12px;position:relative}.board{display:block;width:100%;aspect-ratio:10/6;background:#eaf4f5;border-radius:12px;overflow:hidden;border:1px solid #6a8e99}.board text{font-family:system-ui,Arial,sans-serif}.board .pipeOutline{stroke:#344e58;stroke-width:32;fill:none;stroke-linecap:butt;stroke-linejoin:round}.board .pipeInside{stroke:#b9cbd2;stroke-width:22;fill:none;stroke-linecap:butt;stroke-linejoin:round}.board .waterline{stroke:#28b8ee;stroke-width:15;fill:none;stroke-linejoin:round;stroke-dasharray:32 14;animation:flow .5s linear infinite}.board .guide{stroke-width:17;stroke-linecap:butt;stroke-dasharray:29 12;fill:none;opacity:.86}.board .guide.completed{stroke-dasharray:none;opacity:1}.board .guideback{stroke:#b6cbd0;stroke-width:26;fill:none;stroke-dasharray:29 12;opacity:.5}.board .endpoint{fill:#19516d;stroke:#fff;stroke-width:4}.board .endpoint.exit{fill:#d75259}.board .pointlabel{font-size:19px;fill:#1d5367;font-weight:900}.board .pointlabel.exit{fill:#ac3c41}.board .gridline{stroke:#d6e6e9;stroke-width:1}.board .waterline{display:none}.board.complete .waterline{display:block}@keyframes flow{to{stroke-dashoffset:-46}}
+    .boardfooter{display:flex;gap:14px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:0 17px 17px}.colourkey{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.swatch{width:24px;height:14px;display:inline-block;border-radius:5px;border:1px solid #ffffff30;box-shadow:inset 0 0 0 1px #0002}.pieces{font-size:12px;color:#b8cad3;font-weight:800;margin-left:5px}
+    .stagebox{padding:12px}.stage{position:relative;aspect-ratio:16/9;background:#081018;border-radius:12px;overflow:hidden;touch-action:none;border:1px solid #3d586b}.stage video{width:100%;height:100%;display:block;object-fit:fill}.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}.stage.demo{background:linear-gradient(145deg,#dde9e9,#c6d9da)}.stage.demo video{display:none}.placeholder{position:absolute;inset:0;display:grid;place-content:center;text-align:center;gap:10px;padding:20px;color:#a8bfcc}.placeholder b{font-size:19px;color:#e8f6fa}.placeholder .camera-icon{font-size:42px}.stage:not(.idle) .placeholder{display:none}.cameraTag{position:absolute;left:10px;top:10px;border-radius:7px;padding:5px 9px;background:#07131bd6;color:#effaff;font-size:12px;font-weight:900;pointer-events:none}.cameraTag:empty{display:none}
+    .status{padding:10px 15px 13px}.bigstatus{font-size:19px;font-weight:850;min-height:29px}.bigstatus.ok{color:#7ce5bd}.bigstatus.warn{color:#f5c26b}.hint{font-size:13px;color:#adbfcc;min-height:40px}.meter{margin-top:10px;height:9px;border-radius:999px;background:#2a4354;overflow:hidden}.meter>span{width:0;height:100%;display:block;background:linear-gradient(90deg,#2ab1d8,#61dfab);border-radius:999px;transition:width .18s}.controls{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 14px}.controls .btn{flex:1}.controlrow{display:flex;flex-wrap:wrap;gap:8px;padding:13px 16px;border-top:1px solid #293f50}.controlrow .btn{flex:1}.progress{display:flex;gap:5px;align-items:center}.progress i{width:20px;height:6px;border-radius:99px;background:#456274}.progress i.passed{background:#59d8aa}.progress i.active{background:#4cc6f2}
+    .footnote{padding:15px 5px;color:#91a9ba;font-size:12px;text-align:center}.dialog{border:1px solid #3a5d72;border-radius:20px;background:#142435;color:#f0f9fe;padding:24px;width:min(470px,calc(100vw - 30px));box-shadow:0 30px 90px #0009}.dialog::backdrop{background:#030b12bd}.dialog h2{margin:0 0 7px}.dialog p{color:#a9c0d0;margin:0 0 16px}.field{display:flex;flex-direction:column;gap:6px;margin:14px 0;color:#ccdde7;font-weight:750}.field select{padding:10px;border-radius:9px;border:1px solid #527082;background:#263b4a;color:white}.switch{display:flex;gap:9px;align-items:center;margin:12px 0}.switch input{width:18px;height:18px;accent-color:#38c5e8}.dialogmenu{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}.successbanner{position:absolute;inset:0;background:#062437db;color:white;display:none;place-content:center;text-align:center;gap:8px;backdrop-filter:blur(4px)}.successbanner.show{display:grid}.successbanner .star{font-size:55px}.successbanner b{font-size:36px}.successbanner p{margin:0;color:#bce6f4}.successbanner button{margin:auto;margin-top:12px;min-width:180px}
+    @media(max-width:1050px){.layout{grid-template-columns:1fr}.stagebox{max-width:770px;margin:0 auto}.panelhead{padding:12px 15px}.boardwrap{padding:9px}}@media(max-width:550px){header{margin-bottom:12px}.brandmark{width:43px;height:43px}.header-right{width:100%;justify-content:space-between}.panel{border-radius:13px}.layout{gap:11px}.timer{font-size:22px}.panelhead h2{font-size:16px}.boardfooter{padding:0 10px 10px}.subhead{font-size:10px}.controls .btn,.controlrow .btn{font-size:13px;padding:8px 9px}.scoreline{gap:6px}.pill{font-size:11px}}
+    @media(prefers-reduced-motion:reduce){.board .waterline{animation:none}.btn{transition:none}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brandmark" aria-hidden="true">🧩</div>
+      <div class="brand"><strong>PIPE MASTERS</strong><small>TEAMWORK CHALLENGE · PROTOTYPE v0.2</small></div>
+      <div class="header-right">
+        <span class="pill" id="cameraState">● CAMERA OFF</span>
+        <button class="btn small ghost" id="fullscreenBtn" type="button">⛶ Fullscreen</button>
+        <button class="btn small ghost" id="settingsBtn" type="button">⚙ Settings</button>
+      </div>
+    </header>
+    <main class="layout">
+      <section class="panel" aria-label="Pipeline puzzle">
+        <div class="panelhead">
+          <div><div class="subhead" id="levelTag">LEVEL 1 / 5</div><h2 id="levelTitle">First Flow</h2></div>
+          <div class="scoreline"><span class="lvl" id="playerCount">3 PLAYERS</span><span class="timer" id="timer">00:00</span></div>
+        </div>
+        <div class="boardwrap">
+          <svg class="board" id="puzzle" viewBox="0 0 1000 600" aria-label="Pipeline with coloured missing segments" role="img"></svg>
+          <div class="successbanner" id="successBanner"><div class="star">💧</div><b>PIPE COMPLETE!</b><p id="resultTime">Great teamwork!</p><button class="btn primary" id="successNext" type="button">Next challenge →</button></div>
+        </div>
+        <div class="boardfooter">
+          <div class="colourkey" id="colourKey"></div>
+          <div class="progress" id="progress"></div>
+        </div>
+        <div class="controlrow">
+          <button class="btn ghost" id="prevBtn" type="button">← Previous</button>
+          <button class="btn ghost" id="restartBtn" type="button">↻ Retry</button>
+          <button class="btn primary" id="nextBtn" type="button">Next level →</button>
+        </div>
+      </section>
+      <section class="panel" aria-label="Team webcam">
+        <div class="panelhead">
+          <div><div class="subhead">LIVE FORMATION</div><h2>Team Camera</h2></div>
+          <span class="muted" id="modeLabel">Choose a mode</span>
+        </div>
+        <div class="stagebox">
+          <div class="stage idle" id="stage">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="overlay" width="640" height="360" aria-label="Detected paper positions"></canvas>
+            <div class="placeholder"><span class="camera-icon">📷</span><b>Ready for your team?</b><span>Start a camera or try the interactive demo.</span></div>
+            <span class="cameraTag" id="cameraTag"></span>
+          </div>
+        </div>
+        <div class="status" aria-live="polite">
+          <div class="bigstatus" id="bigStatus">Waiting for a camera</div>
+          <div class="hint" id="hint">Hold a coloured paper for each missing pipe section.</div>
+          <div class="meter" aria-label="Formation hold progress"><span id="holdBar"></span></div>
+        </div>
+        <div class="controls">
+          <button class="btn primary" id="cameraBtn" type="button">📷 Start camera</button>
+          <button class="btn" id="demoBtn" type="button">✋ Try demo</button>
+          <button class="btn ghost" id="stopBtn" type="button" hidden>Stop</button>
+        </div>
+        <div class="controlrow"><button class="btn ghost" id="guideBtn" type="button">◎ Guides: On</button><span class="muted" style="align-self:center;flex:2">Demo: drag to move, tap to rotate.</span></div>
+      </section>
+    </main>
+    <div class="footnote">Local camera processing only · No video is recorded or uploaded · Camera access requires HTTPS on the web · Android uses a secure local origin</div>
+  </div>
+  <dialog id="settingsDialog" class="dialog" aria-label="Game settings">
+    <h2>Camera settings</h2><p>Adjust detection for your classroom.</p>
+    <label class="field">Camera source<select id="cameraSelect"><option value="">Default camera</option></select></label>
+    <label class="field">Formation accuracy<select id="toleranceSelect"><option value="0.20">Precise</option><option value="0.30" selected>Standard</option><option value="0.39">Relaxed</option></select></label>
+    <label class="switch"><input id="mirrorSelect" type="checkbox" checked> Mirror camera preview</label>
+    <label class="switch"><input id="guidesSelect" type="checkbox" checked> Show target guides in camera view</label>
+    <p class="muted">Use evenly lit A4 coloured paper. Grey can be difficult to distinguish from clothing; use an uncluttered background.</p>
+    <div style="border-top:1px solid #334f61;padding-top:12px;margin-top:12px">
+      <b>Game updates</b>
+      <p class="muted" style="margin:5px 0 11px">The browser and Android game use the same updates. Android checks automatically when opened and keeps a saved version for offline play.</p>
+      <button class="btn small" type="button" id="checkUpdatesBtn">↻ Check for latest version</button>
+      <p class="muted" id="updateNote" style="margin-top:8px">On the web, this reloads the game. In the Android app, it checks GitHub for new gameplay code.</p>
+    </div>
+    <div class="dialogmenu"><button class="btn primary" id="settingsClose" type="button">Done</button></div>
+  </dialog>
+  <script>
+  'use strict';
+  const COLORS={red:'#e24e52',cyan:'#16b7dc',green:'#42b66d',yellow:'#f0b829',purple:'#a877cd',grey:'#858d99',blue:'#3278e6',orange:'#e78c37'};
+  const LEVELS=[
+    {name:'First Flow',colors:['red','cyan','green'],nodes:[[20,30],[45,30],[45,63],[82,63]]},
+    {name:'The First Bend',colors:['cyan','green','yellow','purple'],nodes:[[20,24],[20,54],[46,54],[46,76],[83,76]]},
+    {name:'Waterfall',colors:['yellow','red','cyan','purple','green'],nodes:[[20,67],[38,67],[38,25],[60,25],[60,57],[83,57]]},
+    {name:'Team Circuit',colors:['cyan','green','yellow','grey','red','purple'],nodes:[[20,32],[37,32],[37,56],[57,56],[57,27],[78,27],[78,72]]},
+    {name:'Pipe Masters',colors:['purple','red','green','cyan','yellow','grey'],nodes:[[20,70],[20,29],[38,29],[38,52],[59,52],[59,26],[83,26]]}
+  ];
+  const $=id=>document.getElementById(id), video=$('video'), canvas=$('overlay'), ctx=canvas.getContext('2d');
+  const off=document.createElement('canvas');off.width=240;off.height=135;const octx=off.getContext('2d',{willReadFrequently:true});
+  let levelIndex=0, mode='idle',stream=null, started=0,holdStart=0,win=false, frameTimer=0, lastTime=0;
+  let guides=true,mirrored=true,tolerance=.30, chosenDevice='';
+  let detected=[], demo=[], dragging=null, best={};
+  try{best=JSON.parse(localStorage.getItem('pipemasters-best')||'{}')}catch{best={}}
+  const level=()=>LEVELS[levelIndex];
+  const segmentData=()=>level().colors.map((colour,i)=>{
+    const a=level().nodes[i],b=level().nodes[i+1];
+    return {colour,a,b,cx:(a[0]+b[0])/2,cy:(a[1]+b[1])/2,vertical:a[0]===b[0]};
+  });
+  const xy=([x,y])=>[x*10,y*6];
+  const path=(pts)=>pts.map((p,i)=>(i?'L':'M')+xy(p).join(' ')).join(' ');
+  function drawPuzzle(){
+    const l=level(),seg=segmentData(),nodes=l.nodes,first=nodes[0],last=nodes.at(-1);
+    const entry=first[0]===20?[[5,first[1]],first]:[[first[0],first[1]>50?88:8],first];
+    const exit=(last[1]>60?[[last[0],last[1]],[last[0],91]]:[[last[0],last[1]],[96,last[1]]]);
+    const paths=[path(entry),path(exit)];
+    const pipe=paths.map(d=>`<path class="pipeOutline" d="${d}"/><path class="pipeInside" d="${d}"/>`).join('');
+    const guidesSvg=seg.map(s=>`<path class="guideback" d="${path([s.a,s.b])}"/><path class="guide${win?' completed':''}" stroke="${COLORS[s.colour]}" d="${path([s.a,s.b])}"/>`).join('');
+    const full=path([entry[0],...nodes,exit.at(-1)]);
+    const grid=Array.from({length:9},(_,i)=>`<path class="gridline" d="M0 ${i*75} H1000"/>`).join('');
+    $('puzzle').innerHTML=`<rect width="1000" height="600" fill="#eaf4f5"/>${grid}<g>${pipe}</g>${guidesSvg}<path class="waterline" d="${full}"/><circle class="endpoint" cx="${xy(entry[0])[0]}" cy="${xy(entry[0])[1]}" r="18"/><circle class="endpoint exit" cx="${xy(exit.at(-1))[0]}" cy="${xy(exit.at(-1))[1]}" r="18"/><text class="pointlabel" x="${Math.max(17,xy(entry[0])[0]-35)}" y="${Math.max(20,xy(entry[0])[1]-30)}">IN</text><text class="pointlabel exit" x="${Math.min(930,xy(exit.at(-1))[0]-30)}" y="${Math.min(580,xy(exit.at(-1))[1]+49)}">OUT</text>`;
+    $('puzzle').classList.toggle('complete',win);
+    $('levelTag').textContent=`LEVEL ${levelIndex+1} / ${LEVELS.length}`;
+    $('levelTitle').textContent=l.name;
+    $('playerCount').textContent=`${l.colors.length} PLAYERS`;
+    $('colourKey').innerHTML=l.colors.map(c=>`<span title="${c}" class="swatch" style="background:${COLORS[c]}"></span>`).join('')+`<span class="pieces">${l.colors.length} coloured papers</span>`;
+    $('progress').innerHTML=LEVELS.map((_,i)=>`<i class="${i<levelIndex?'passed':i===levelIndex?'active':''}"></i>`).join('');
+    $('prevBtn').disabled=levelIndex===0;$('nextBtn').disabled=levelIndex===LEVELS.length-1;
+    $('successBanner').classList.toggle('show',win);
+    $('successNext').textContent=levelIndex===LEVELS.length-1?'Play again ↻':'Next challenge →';
+  }
+  function newDemo(){const seg=segmentData();
+    demo=seg.map((s,i)=>({colour:s.colour,x:.18+.60*(i%3)/2,y:.22+.57*Math.floor(i/3)/Math.max(1,Math.ceil(seg.length/3)-1),vertical:!s.vertical}));
+    // Offset pieces from the answer so the puzzle requires genuine rearrangement.
+    if(demo.length===3){demo[0].x=.25;demo[0].y=.7;demo[1].x=.68;demo[1].y=.23;demo[2].x=.55;demo[2].y=.72}
+  }
+  function resetRound(){win=false;holdStart=0;started=mode==='idle'?0:performance.now();lastTime=0;$('holdBar').style.width='0%';if(mode==='demo')newDemo();drawPuzzle();updateStatus('Form the missing route','Match every colour and direction.',false);drawStage();}
+  function changeLevel(next){levelIndex=(next+LEVELS.length)%LEVELS.length;resetRound()}
+  const format=t=>{const s=Math.floor(t/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+  const name=c=>c[0].toUpperCase()+c.slice(1);
+  function targetPositions(){const seg=segmentData(),xx=seg.map(s=>s.cx),yy=seg.map(s=>s.cy),minX=Math.min(...xx),maxX=Math.max(...xx),minY=Math.min(...yy),maxY=Math.max(...yy);
+    return seg.map(s=>({...s,nx:(s.cx-minX)/Math.max(1,maxX-minX),ny:(s.cy-minY)/Math.max(1,maxY-minY),tx:.17+.66*(s.cx-minX)/Math.max(1,maxX-minX),ty:.18+.64*(s.cy-minY)/Math.max(1,maxY-minY)}));
+  }
+  function evaluate(items){const expected=targetPositions(),lookup=new Map(items.map(d=>[d.colour,d])),missing=expected.filter(e=>!lookup.has(e.colour));
+    if(missing.length)return {ready:false,good:[],progress:0,message:'Show the '+name(missing[0].colour)+' paper',hint:`${missing.length} of ${expected.length} coloured papers still missing.`,detail:new Map()};
+    const x=expected.map(e=>lookup.get(e.colour).x),y=expected.map(e=>lookup.get(e.colour).y);const minX=Math.min(...x),maxX=Math.max(...x),minY=Math.min(...y),maxY=Math.max(...y);
+    const detail=new Map(),wrongAngles=[],wrongPos=[];let good=0;
+    expected.forEach(e=>{const obs=lookup.get(e.colour),xx=(obs.x-minX)/Math.max(.075,maxX-minX),yy=(obs.y-minY)/Math.max(.075,maxY-minY);
+      const position=Math.hypot(xx-e.nx,yy-e.ny)<=tolerance,angle=obs.vertical===e.vertical;
+      detail.set(e.colour,{position,angle,valid:position&&angle});if(position&&angle)good++;else if(!angle)wrongAngles.push(e);else wrongPos.push(e);
+    });
+    const all=good===expected.length;
+    let message='Connecting the pipeline',hint=`${good} of ${expected.length} sections aligned.`;
+    if(wrongAngles.length){message='Rotate the '+name(wrongAngles[0].colour)+' paper';hint=`Hold it ${wrongAngles[0].vertical?'vertically':'horizontally'}. ${good}/${expected.length} correct.`;}
+    else if(wrongPos.length){message='Reposition the '+name(wrongPos[0].colour)+' paper';hint=`Match the coloured route. ${good}/${expected.length} correct.`;}
+    if(all){message='Hold that formation!';hint='Keep every coloured strip steady for 3 seconds.';}
+    return {ready:all,progress:good/expected.length,good,detail,message,hint};
+  }
+  function updateStatus(message,hint,ok){$('bigStatus').textContent=message;$('bigStatus').className='bigstatus '+(ok?'ok':'warn');$('hint').textContent=hint}
+  function statusFrom(items){if(win)return;const r=evaluate(items);let p=0;
+    if(r.ready){if(!holdStart)holdStart=performance.now();p=Math.min(1,(performance.now()-holdStart)/3000);if(p>=1){finish();return;}}
+    else holdStart=0;
+    $('holdBar').style.width=`${Math.round(100*p)}%`;updateStatus(r.message,r.hint,r.ready);return r;
+  }
+  function finish(){if(win)return;win=true;const elapsed=started?performance.now()-started:0;const seconds=Math.max(1,Math.round(elapsed/1000));const old=best[levelIndex];if(!old||seconds<old){best[levelIndex]=seconds;try{localStorage.setItem('pipemasters-best',JSON.stringify(best))}catch{}}
+    $('resultTime').textContent=`Completed in ${seconds}s · ${level().colors.length} teammates`;drawPuzzle();updateStatus('Pipeline complete!','Excellent teamwork — the water is flowing.',true);$('holdBar').style.width='100%';
+  }
+  function drawStage(){const w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);if(mode==='idle')return;
+    const expect=targetPositions();
+    if(mode==='demo'){
+      ctx.fillStyle='#d8e7e7';ctx.fillRect(0,0,w,h);
+      ctx.lineWidth=1;ctx.strokeStyle='#b8d0d0';for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
+    }
+    if(guides){expect.forEach(e=>{const x=e.tx*w,y=e.ty*h;ctx.save();ctx.translate(x,y);if(e.vertical)ctx.rotate(Math.PI/2);ctx.strokeStyle=COLORS[e.colour];ctx.globalAlpha=mode==='camera'?.62:.50;ctx.lineWidth=3;ctx.setLineDash([8,6]);ctx.strokeRect(-44,-17,88,34);ctx.restore()});}
+    if(mode==='demo'){
+      const r=evaluate(demo);demo.forEach(d=>{const x=d.x*w,y=d.y*h,correct=r.detail.get(d.colour)?.valid;ctx.save();ctx.translate(x,y);if(d.vertical)ctx.rotate(Math.PI/2);
+        ctx.shadowColor='#102d3f50';ctx.shadowBlur=12;ctx.shadowOffsetY=5;ctx.fillStyle=COLORS[d.colour];ctx.fillRect(-43,-17,86,34);ctx.shadowColor='transparent';ctx.lineWidth=correct?4:2;ctx.strokeStyle=correct?'#166545':'#ffffff';ctx.strokeRect(-43,-17,86,34);
+        ctx.fillStyle=['yellow','cyan','grey'].includes(d.colour)?'#172835':'white';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 12px system-ui';ctx.fillText(name(d.colour),0,1);ctx.restore();
+      });
+    }else if(mode==='camera'){
+      const r=evaluate(detected);detected.forEach(d=>{const x=d.x*w,y=d.y*h;ctx.strokeStyle=r.detail.get(d.colour)?.valid?'#59ffb4':COLORS[d.colour];ctx.lineWidth=4;
+        ctx.strokeRect(d.box.x*w,d.box.y*h,d.box.w*w,d.box.h*h);
+        ctx.fillStyle='#0b1723dd';ctx.fillRect(x-37,Math.max(0,y-33),74,24);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='bold 13px system-ui';ctx.fillText(name(d.colour),x,Math.max(18,y-16));
+      });
+    }
+  }
+  function switchMode(next){stopCamera(false);mode=next;$('stage').classList.toggle('idle',next==='idle');$('stage').classList.toggle('demo',next==='demo');$('cameraState').classList.toggle('online',next==='camera');
+    $('cameraState').textContent=next==='camera'?'● CAMERA LIVE':next==='demo'?'● DEMO MODE':'● CAMERA OFF';$('modeLabel').textContent=next==='camera'?'Live tracking':next==='demo'?'Interactive demo':'Choose a mode';$('cameraTag').textContent=next==='camera'?'LIVE CAMERA':next==='demo'?'DRAG + TAP TO ROTATE':'';
+    $('stopBtn').hidden=next==='idle';$('cameraBtn').textContent=next==='camera'?'↻ Restart camera':'📷 Start camera';resetRound();
+  }
+  function stopCamera(keepMode=true){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}if(video.srcObject)video.srcObject=null;if(!keepMode)clearInterval(frameTimer);frameTimer=0;}
+  async function openCamera(){if(!navigator.mediaDevices?.getUserMedia){switchMode('idle');updateStatus('Camera unavailable','Use an HTTPS page and allow the webcam in browser permissions.',false);return;}
+    stopCamera(false);try{updateStatus('Starting webcam…','Please allow camera access in your browser.',false);
+      stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{width:{ideal:1280},height:{ideal:720},frameRate:{ideal:15,max:20},...(chosenDevice?{deviceId:{exact:chosenDevice}}:{facingMode:'user'})}});
+      video.srcObject=stream;await video.play();mode='camera';$('stage').className='stage';$('cameraState').textContent='● CAMERA LIVE';$('cameraState').classList.add('online');$('modeLabel').textContent='Live tracking';$('cameraTag').textContent='LIVE CAMERA';$('stopBtn').hidden=false;$('cameraBtn').textContent='↻ Restart camera';
+      video.style.transform=mirrored?'scaleX(-1)':'none';resetRound();await refreshCameras();frameTimer=setInterval(processCamera,170);
+    }catch(err){stopCamera();mode='idle';$('stage').className='stage idle';$('cameraState').textContent='● CAMERA OFF';$('cameraState').classList.remove('online');$('modeLabel').textContent='Choose a mode';$('stopBtn').hidden=true;$('cameraBtn').textContent='📷 Start camera';$('cameraTag').textContent='';updateStatus('Could not start camera',`${err.name||'Error'}: ${err.message||'Check the camera permission.'} Try demo mode instead.`,false);}
+  }
+  async function refreshCameras(){if(!navigator.mediaDevices?.enumerateDevices)return;try{const cameras=(await navigator.mediaDevices.enumerateDevices()).filter(x=>x.kind==='videoinput');$('cameraSelect').innerHTML='<option value="">Default camera</option>'+cameras.map((c,i)=>`<option value="${c.deviceId.replaceAll('&','&amp;').replaceAll('"','&quot;')}">${(c.label||'Camera '+(i+1)).replaceAll('&','&amp;').replaceAll('<','&lt;')}</option>`).join('');$('cameraSelect').value=chosenDevice;}catch{}}
+  function detectPapers(){const W=off.width,H=off.height,N=W*H;try{octx.drawImage(video,0,0,W,H)}catch{return []}let pix;try{pix=octx.getImageData(0,0,W,H).data}catch{return []}
+    const label=new Uint8Array(N),names=['','red','yellow','green','cyan','purple','grey','blue','orange'];const accepted=new Set(level().colors);
+    for(let p=0,i=0;p<N;p++,i+=4){const R=pix[i]/255,G=pix[i+1]/255,B=pix[i+2]/255,max=Math.max(R,G,B),min=Math.min(R,G,B),d=max-min,v=max,s=max?d/max:0;
+      if(v<.17)continue;let h=0;if(d){if(max===R)h=((G-B)/d+6)%6;else if(max===G)h=(B-R)/d+2;else h=(R-G)/d+4;h*=60}
+      let c='';if(s<.18&&v>.24&&v<.69)c='grey';else if(s>.30){if(h<16||h>345)c='red';else if(h>=24&&h<42)c='orange';else if(h>=42&&h<73)c='yellow';else if(h>=73&&h<164)c='green';else if(h>=164&&h<209)c='cyan';else if(h>=209&&h<258)c='blue';else if(h>=258&&h<338)c='purple'}
+      if(c&&accepted.has(c))label[p]=names.indexOf(c);
+    }
+    const queue=new Int32Array(N),components={};for(let p=0;p<N;p++){const id=label[p];if(!id)continue;let head=0,tail=0;queue[tail++]=p;label[p]=0;let n=0,sx=0,sy=0,sxx=0,syy=0,sxy=0,minX=W,minY=H,maxX=0,maxY=0;
+      while(head<tail){const a=queue[head++],x=a%W,y=(a/W)|0;n++;sx+=x;sy+=y;sxx+=x*x;syy+=y*y;sxy+=x*y;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;
+        if(x>0&&label[a-1]===id){label[a-1]=0;queue[tail++]=a-1}if(x<W-1&&label[a+1]===id){label[a+1]=0;queue[tail++]=a+1}if(y>0&&label[a-W]===id){label[a-W]=0;queue[tail++]=a-W}if(y<H-1&&label[a+W]===id){label[a+W]=0;queue[tail++]=a+W}
+      }
+      if(n<90||n>N*.28)continue;const width=maxX-minX+1,height=maxY-minY+1;if(width<8||height<8)continue;const c=names[id],cx=sx/n,cy=sy/n,covX=sxx/n-cx*cx,covY=syy/n-cy*cy,covXY=sxy/n-cx*cy;
+      const angle=.5*Math.atan2(2*covXY,covX-covY),major=(covX+covY+Math.sqrt((covX-covY)**2+4*covXY**2))/2,minor=(covX+covY-Math.sqrt((covX-covY)**2+4*covXY**2))/2;
+      if(major/Math.max(1,minor)<1.16)continue;
+      const item={colour:c,x:mirrored?1-cx/W:cx/W,y:cy/H,vertical:Math.abs(angle)>Math.PI/4,box:{x:mirrored?1-(maxX+1)/W:minX/W,y:minY/H,w:width/W,h:height/H},count:n};
+      if(!components[c]||components[c].count<n)components[c]=item;
+    }
+    return Object.values(components);
+  }
+  function processCamera(){if(mode!=='camera'||!stream||video.readyState<2||win)return;detected=detectPapers();statusFrom(detected);drawStage()}
+  function tick(){if(started&&!win){$('timer').textContent=format(performance.now()-started)}if(mode==='demo'&&!win){statusFrom(demo);drawStage()}requestAnimationFrame(tick)}
+  function point(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height}}
+  canvas.addEventListener('pointerdown',e=>{if(mode!=='demo'||win)return;const p=point(e);let hit=-1,distance=Infinity;demo.forEach((d,i)=>{const dist=Math.hypot((p.x-d.x)*640,(p.y-d.y)*360);if(dist<65&&dist<distance){hit=i;distance=dist}});if(hit<0)return;dragging={index:hit,start:p,orig:{x:demo[hit].x,y:demo[hit].y},moved:false};canvas.setPointerCapture(e.pointerId)});
+  canvas.addEventListener('pointermove',e=>{if(!dragging||mode!=='demo')return;const p=point(e),dx=p.x-dragging.start.x,dy=p.y-dragging.start.y;const d=demo[dragging.index];if(Math.hypot(dx*640,dy*360)>7)dragging.moved=true;d.x=Math.max(.05,Math.min(.95,dragging.orig.x+dx));d.y=Math.max(.08,Math.min(.92,dragging.orig.y+dy));holdStart=0;drawStage()});
+  function endDrag(){if(!dragging)return;if(!dragging.moved)demo[dragging.index].vertical=!demo[dragging.index].vertical;dragging=null;holdStart=0;drawStage()}
+  canvas.addEventListener('pointerup',endDrag);canvas.addEventListener('pointercancel',()=>{dragging=null});
+  $('cameraBtn').onclick=openCamera;$('demoBtn').onclick=()=>switchMode('demo');$('stopBtn').onclick=()=>switchMode('idle');$('prevBtn').onclick=()=>changeLevel(levelIndex-1);$('nextBtn').onclick=()=>changeLevel(levelIndex+1);$('restartBtn').onclick=resetRound;$('successNext').onclick=()=>changeLevel(levelIndex===LEVELS.length-1?0:levelIndex+1);
+  $('checkUpdatesBtn').onclick=()=>{if(window.PipeMastersAndroid?.checkForUpdates){$('updateNote').textContent='Checking GitHub for the latest game…';window.PipeMastersAndroid.checkForUpdates();}else{location.reload();}};
+  $('settingsBtn').onclick=()=>{$('settingsDialog').showModal();refreshCameras()};$('settingsClose').onclick=()=>$('settingsDialog').close();$('cameraSelect').onchange=e=>{chosenDevice=e.target.value;if(mode==='camera')openCamera()};
+  $('toleranceSelect').onchange=e=>{tolerance=Number(e.target.value);holdStart=0};$('mirrorSelect').onchange=e=>{mirrored=e.target.checked;video.style.transform=mirrored?'scaleX(-1)':'none';holdStart=0};
+  const setGuides=val=>{guides=val;$('guidesSelect').checked=val;$('guideBtn').textContent=`◎ Guides: ${val?'On':'Off'}`;drawStage()};$('guidesSelect').onchange=e=>setGuides(e.target.checked);$('guideBtn').onclick=()=>setGuides(!guides);
+  $('fullscreenBtn').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen?.();else document.documentElement.requestFullscreen?.()};
+  window.addEventListener('pagehide',()=>stopCamera());
+  drawPuzzle();updateStatus('Waiting for your team','Start the camera or try the interactive demo.',false);requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
