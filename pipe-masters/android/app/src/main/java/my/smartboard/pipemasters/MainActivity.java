@@ -4,6 +4,8 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.content.Intent;
+import android.provider.Settings;
 import android.os.Bundle;
 import android.os.Build;
 import android.os.Handler;
@@ -133,9 +135,11 @@ public final class MainActivity extends Activity {
             && "https".equalsIgnoreCase(origin.getScheme())
             && "appassets.androidplatform.net".equalsIgnoreCase(origin.getHost())
             && (origin.getPort() == -1 || origin.getPort() == 443);
-        boolean videoOnly = req.getResources().length == 1
-            && Arrays.asList(req.getResources()).contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE);
-        if (!trustedOrigin || !videoOnly) {
+        // Grant only camera video access, never microphone or other WebView permissions.
+        // Some WebView versions include additional resources in a video permission request.
+        boolean videoRequested = Arrays.asList(req.getResources())
+            .contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE);
+        if (!trustedOrigin || !videoRequested) {
             req.deny();
             return;
         }
@@ -258,7 +262,20 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public void checkForUpdates() {
             main.post(() -> checkUpdates(false, true));
         }
-        @JavascriptInterface public String getAppVersion() { return "Android shell 0.2.1"; }
+        @JavascriptInterface public void openCameraSettings() {
+            main.post(() -> {
+                try {
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    intent.setData(android.net.Uri.fromParts("package", getPackageName(), null));
+                    startActivity(intent);
+                } catch (Exception ignored) {
+                    Toast.makeText(MainActivity.this,
+                        "Open Android Settings → Apps → Pipe Masters → Permissions → Camera",
+                        Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+        @JavascriptInterface public String getAppVersion() { return "Android shell 0.4.0"; }
     }
 
     @Override public void onBackPressed() {
