@@ -92,6 +92,7 @@
       <b>Game updates</b>
       <p class="muted" style="margin:5px 0 11px">The browser and Android game use the same updates. Android checks automatically when opened and keeps a saved version for offline play.</p>
       <button class="btn small" type="button" id="checkUpdatesBtn">↻ Check for latest version</button>
+      <a class="btn small" id="apkDownloadLink" href="https://github.com/mohammaddhameri-blip/smartboardgames/raw/refs/heads/main/pipe-masters/downloads/PipeMasters.apk" style="text-decoration:none;margin-left:7px" download>⬇ Download Android APK</a>
       <p class="muted" id="updateNote" style="margin-top:8px">On the web, this reloads the game. In the Android app, it checks GitHub for new gameplay code.</p>
     </div>
     <div class="dialogmenu"><button class="btn primary" id="settingsClose" type="button">Done</button></div>
@@ -234,6 +235,7 @@
   function endDrag(){if(!dragging)return;if(!dragging.moved)demo[dragging.index].vertical=!demo[dragging.index].vertical;dragging=null;holdStart=0;drawStage()}
   canvas.addEventListener('pointerup',endDrag);canvas.addEventListener('pointercancel',()=>{dragging=null});
   $('cameraBtn').onclick=openCamera;$('demoBtn').onclick=()=>switchMode('demo');$('stopBtn').onclick=()=>switchMode('idle');$('prevBtn').onclick=()=>changeLevel(levelIndex-1);$('nextBtn').onclick=()=>changeLevel(levelIndex+1);$('restartBtn').onclick=resetRound;$('successNext').onclick=()=>changeLevel(levelIndex===LEVELS.length-1?0:levelIndex+1);
+  if(window.PipeMastersAndroid){$('apkDownloadLink').hidden=true;}
   $('checkUpdatesBtn').onclick=()=>{if(window.PipeMastersAndroid?.checkForUpdates){$('updateNote').textContent='Checking GitHub for the latest game…';window.PipeMastersAndroid.checkForUpdates();}else{location.reload();}};
   $('settingsBtn').onclick=()=>{$('settingsDialog').showModal();refreshCameras()};$('settingsClose').onclick=()=>$('settingsDialog').close();$('cameraSelect').onchange=e=>{chosenDevice=e.target.value;if(mode==='camera')openCamera()};
   $('toleranceSelect').onchange=e=>{tolerance=Number(e.target.value);holdStart=0};$('mirrorSelect').onchange=e=>{mirrored=e.target.checked;video.style.transform=mirrored?'scaleX(-1)':'none';holdStart=0};
