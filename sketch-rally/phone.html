@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#0c1422" />
+<title>Sketch Rally v1.4 · Host Phone</title>
+<style>
+:root{--bg:#0c1422;--panel:#17283e;--text:#f2f8ff;--muted:#a9bed3;--line:#415c75;--green:#c4f26b;--blue:#80d7ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif}main{max-width:520px;padding:14px 14px 50px;margin:auto}header{display:flex;align-items:center;gap:12px;margin:8px 0 19px}.mark{height:49px;width:49px;border-radius:14px;background:var(--green);display:grid;place-items:center;color:#0b1424;font-size:25px}h1{font-size:21px;letter-spacing:-.6px;margin:0}header p{color:var(--muted);margin:1px 0 0;font-size:12px}.panel{border:1px solid #354c63;border-radius:17px;background:var(--panel);padding:17px;margin:12px 0;box-shadow:0 8px 35px #040a1424}.panel h2{margin:0 0 13px;font-size:15px;letter-spacing:-.2px}.row{display:flex;gap:9px;align-items:center}.row>*{min-width:0;flex:1}button,.file-button{min-height:43px;border:1px solid #536e88;border-radius:10px;background:#273e55;color:#f4f8ff;font-weight:800;padding:10px 11px;cursor:pointer;font-size:13px}button:disabled{opacity:.4;cursor:not-allowed}.primary{background:var(--green);color:#10222b;border-color:var(--green)}.blue{background:#235470;border-color:#3a7898}.full{display:block;width:100%;margin-top:10px;min-height:49px}.field{min-height:44px;border-radius:10px;border:1px solid #5f7a90;color:#f3faff;padding:10px;background:#0d1b2d;font-size:15px;width:100%}.room{letter-spacing:.16em;text-transform:uppercase;font-weight:850;text-align:center}.status{font-size:12px;color:#b8cde1;padding-top:10px;min-height:26px}.good{color:var(--green)}.bad{color:#ff9ba7}label{font-size:11px;color:#b6cade;font-weight:750;display:block;margin:12px 0 5px}.badge{border-radius:99px;color:#c4f26b;background:#294535;font-size:11px;padding:6px 9px;font-weight:850}.hidden{display:none!important}.video-frame{border-radius:13px;overflow:hidden;position:relative;background:#091727;margin-top:12px;min-height:170px;aspect-ratio:4/3;display:grid;place-items:center;border:1px solid #3e5e76}.video-frame video{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}.video-frame.off video{display:none}.video-frame .hint{color:#93acc6;text-align:center;font-size:13px;max-width:200px;padding:20px}.video-frame:not(.off) .hint{display:none}.file-button{display:flex;justify-content:center;align-items:center;text-align:center;border-style:dashed;margin-top:10px}.file-button input{display:none}.register-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.tagline{color:#93acc6;font-size:11px;margin-top:8px}.racer-list{display:grid;gap:7px;max-height:350px;overflow-y:auto;scrollbar-width:thin;overscroll-behavior:contain}.racer{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 11px;background:#213750;border:1px solid #365673;border-radius:10px}.racer strong{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.racer small{font-size:11px;color:var(--green);white-space:nowrap}.racer-placeholder{color:#8da6bd;font-size:12px;padding:8px 2px}.start-button{font-size:17px;min-height:62px;letter-spacing:.02em}.race-phase{color:var(--muted);font-size:12px;margin-bottom:8px}.sent-image{display:block;width:100%;max-height:170px;object-fit:contain;border-radius:9px;background:#0c1e31;margin-top:10px}.privacy{font-size:10px;color:#819db4;line-height:1.5;padding:0 5px}
+
+.danger{color:#ffb1b6;border-color:#96596a;background:#522e3b}
+.editor-backdrop{position:fixed;inset:0;z-index:100;background:#06101be8;display:grid;place-items:center;padding:12px;overflow-y:auto}
+.editor-panel{width:min(540px,100%);background:#16283e;border:1px solid #56748c;border-radius:18px;padding:13px 14px 18px;max-height:95dvh;overflow-y:auto}
+.editor-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.editor-top strong{font-size:17px}
+.editor-help{color:#b1c8dc;font-size:12px;margin:8px 0}
+#editCanvas{width:100%;height:auto;object-fit:contain;display:block;border-radius:10px;touch-action:none;background:#f1f4f7;cursor:crosshair}
+.editor-row,.filter-row{display:flex;gap:6px;margin-top:9px}.editor-row>*{flex:1;min-width:0}.filter-row>*{flex:1;min-width:0;padding:8px 3px;font-size:11px}
+.filter-selected{background:#375b3d!important;border-color:var(--green)!important;color:var(--green)}
+/* Rotation and crop live in the same edit step. */
+.phone-version{font-size:14px;font-weight:800;color:var(--green);vertical-align:baseline;white-space:nowrap}
+.rotate-label{display:flex;justify-content:space-between;align-items:center;margin:9px 0 0;font-size:12px;color:#cce0f0}
+.rotate-label output{color:var(--green);font-weight:850}
+#photoRotation{width:100%;accent-color:var(--green);margin:7px 0 2px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+</head>
+<body>
+<main>
+<header><div class="mark">📱</div><div><h1>Sketch Rally <span class="phone-version">v1.4</span></h1><p>Host phone</p></div></header>
+<section class="panel" id="pairPanel"><h2>Connect to smartboard</h2><div class="row"><input id="room" class="field room" maxlength="8" autocapitalize="characters" placeholder="ROOM CODE" aria-label="8-character pairing code"/><button id="connect" class="primary" type="button">Connect</button></div><div class="status" role="status" id="connectionStatus">Enter the smartboard's pairing code</div></section>
+<section class="panel" id="photoPanel">
+ <div class="row" style="justify-content:space-between"><h2 style="margin:0">1 · Take a picture</h2><span class="badge" id="rosterBadge">0 / 30</span></div>
+ <div id="cameraFrame" class="video-frame off"><video id="video" autoplay playsinline muted aria-label="Car drawing camera"></video><div class="hint" id="cameraHint">Point your camera at a car drawing</div></div>
+ <div class="register-row" style="margin-top:9px"><button type="button" id="startCamera" class="blue" disabled>📷 Open camera</button><button type="button" id="switchCamera" disabled>↻ Flip camera</button></div>
+ <button type="button" id="capture" class="primary full" disabled>📸 Take picture</button>
+ <label class="file-button full">↑ Upload a photo instead<input type="file" id="filePhoto" accept="image/*" disabled/></label>
+ <div id="photoStatus" class="status" role="status">Connect to the smartboard first</div>
+ <img id="sentImage" class="sent-image hidden" alt="Last registered car drawing"/>
+</section>
+<section class="panel" id="rosterPanel"><h2>Registered racers</h2><div id="rosterList" class="racer-list" aria-live="polite"><div class="racer-placeholder">No cars yet</div></div></section>
+<details class="panel" id="managePanel"><summary style="cursor:pointer;font-weight:800">Manage existing racers</summary>
+ <label for="manageTargetRacer">Select racer</label><select id="manageTargetRacer" class="field"><option value="">Choose racer…</option></select>
+ <div class="register-row" style="margin-top:10px"><button type="button" id="retakePhoto" disabled>↻ Retake photo</button><button type="button" id="removeRacer" class="danger" disabled>✕ Remove racer</button></div>
+</details>
+<section class="panel"><h2>Race control</h2><div class="race-phase" id="raceMode">Select race mode on smartboard</div><button id="remoteStart" class="primary full start-button" disabled>▶ START RACE</button><div id="raceStatus" class="status" role="status">Register at least one racer</div></section>
+<p class="privacy">Both devices must be online. Photos are sent through a temporary pairing room, not saved in an online photo gallery. Keep the room code private. Manual drawing on the smartboard still uses the 3-minute timer.</p>
+</main>
+<div id="photoEditor" class="editor-backdrop hidden" role="dialog" aria-modal="true" aria-label="Edit captured sketch">
+ <div class="editor-panel">
+  <div class="editor-top"><strong>Edit sketch</strong><button type="button" id="closeEditor">✕</button></div>
+  <p class="editor-help">Drag across the photo to crop.</p>
+  <canvas id="editCanvas" width="420" height="320" aria-label="Drag to select photo crop area"></canvas>
+  <div class="editor-row"><button type="button" id="rotatePhotoLeft">↶ Rotate 90°</button><button type="button" id="rotatePhotoRight">↷ Rotate 90°</button></div>
+  <label class="rotate-label" for="photoRotation">Fine rotation <output id="photoRotationValue">0°</output></label>
+  <input id="photoRotation" type="range" min="-180" max="180" step="1" value="0" aria-label="Rotate photo by degrees" />
+  <div class="editor-row"><button type="button" id="resetCrop">Reset crop</button><button type="button" id="editRetake">↻ Retake</button></div>
+  <div class="filter-row" id="filterButtons" role="group" aria-label="Photo filters">
+   <button type="button" data-filter="none" class="filter-selected">Original</button>
+   <button type="button" data-filter="contrast">Contrast</button>
+   <button type="button" data-filter="bw">B&W</button>
+   <button type="button" data-filter="vivid">Vivid</button>
+  </div>
+  <button type="button" id="useEditedPhoto" class="primary full">Continue → Assign racer</button>
+ </div>
+</div>
+<div id="assignDialog" class="editor-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
+ <div class="editor-panel">
+  <div class="editor-top"><strong id="assignTitle">2 · Register drawing</strong><button type="button" id="closeAssign" aria-label="Close registration">✕</button></div>
+  <img id="assignPreview" class="sent-image" alt="Photo to register"/>
+  <label for="targetRacer">Assign to</label><select id="targetRacer" class="field"><option value="">+ New racer</option></select>
+  <div id="newNameSection"><label for="racerName">Racer's name</label><input id="racerName" class="field" type="text" maxlength="24" placeholder="Enter player's name" autocomplete="off"/></div>
+  <label for="viewType">Drawing view</label><select id="viewType" class="field"><option value="side">Side view</option><option value="top">Top view</option><option value="sheet">Both views · one sheet</option></select>
+  <button type="button" id="confirmAssign" class="primary full">✓ Register car</button>
+  <div id="assignStatus" class="status" role="status">Choose a racer to register this drawing.</div>
+ </div>
+</div>
+<script>
+'use strict';
+(()=>{
+const $=id=>document.getElementById(id);
+const SB_URL='https://qekcgsfeomjckctiubgm.supabase.co';
+const SB_KEY='sb_publishable_yJbCYOLDeMreuqM01g_oqA_eF5YEWwq';
+const MAX_RACERS=30;
+let client=null,channel=null,connected=false,paired=false,stream=null,previewTimer=null,cameraFace='environment',sendingRequest=null,startRequest=null,removeRequest=null,roster=[],raceRunning=false,gameMode='hills';
+let editBase=null,editSource=null,editAngle=0,editFilter='none',editCrop={x:0,y:0,w:1,h:1},editDown=null,pendingEditedPhoto=null,requestedExistingId='';
+const params=new URLSearchParams(location.search);$('room').value=(params.get('room')||'').replace(/[^A-Z0-9]/gi,'').toUpperCase().slice(0,8);
+function newId(){if(crypto.randomUUID)return crypto.randomUUID();const a=new Uint32Array(4);crypto.getRandomValues(a);return [...a].map(x=>x.toString(16)).join('')}
+function status(msg){$('connectionStatus').textContent=msg;$('connectionStatus').classList.toggle('good',paired)}
+function photoStatus(msg,ok=false){$('photoStatus').textContent=msg;$('photoStatus').classList.toggle('good',ok)}
+function enable(){
+ const ready=paired&&connected,blocked=!!sendingRequest||raceRunning;
+ $('startCamera').disabled=!ready||blocked;
+ $('filePhoto').disabled=!ready||blocked;
+ $('capture').disabled=!ready||!stream||blocked;
+ $('switchCamera').disabled=!ready||!stream;
+ $('retakePhoto').disabled=!ready||blocked||!$('manageTargetRacer').value;
+ $('removeRacer').disabled=!ready||blocked||!!removeRequest||!$('manageTargetRacer').value;
+ $('confirmAssign').disabled=!ready||blocked;
+ $('remoteStart').disabled=!ready||!roster.some(x=>x.registered)||!!startRequest||raceRunning;
+}
+function updateRacerList(){
+ const box=$('rosterList'),target=$('targetRacer'),value=target.value,manage=$('manageTargetRacer'),managedValue=manage.value;
+ box.replaceChildren();target.replaceChildren();manage.replaceChildren();const opt=document.createElement('option');opt.value='';opt.textContent='+ New racer';target.append(opt);const managePlaceholder=document.createElement('option');managePlaceholder.value='';managePlaceholder.textContent='Choose racer…';manage.append(managePlaceholder);
+ for(const p of roster){
+  const row=document.createElement('div');row.className='racer';const left=document.createElement('strong');left.textContent=p.name;const detail=document.createElement('small');detail.textContent=(p.side?'SIDE ✓':'SIDE —')+'  '+(p.top?'TOP ✓':'TOP —');row.append(left,detail);box.append(row);
+  if(p.registered){const option=document.createElement('option');option.value=p.id;option.textContent=p.name;target.append(option);manage.append(option.cloneNode(true))}
+ }
+ if(!roster.length){const empty=document.createElement('div');empty.className='racer-placeholder';empty.textContent='No cars yet · Scan the first sketch';box.append(empty)}
+ target.value=roster.some(p=>p.id===value&&p.registered)?value:'';manage.value=roster.some(p=>p.id===managedValue&&p.registered)?managedValue:'';
+ $('rosterBadge').textContent=roster.length+' / '+MAX_RACERS;$('newNameSection').classList.toggle('hidden',!!target.value);
+ $('raceMode').textContent='Race: '+(gameMode==='downhill'?'Downhill · Auto':'Hill Climb · Auto');
+ enable();
+}
+function setRoster(payload){if(!Array.isArray(payload?.racers))return;roster=payload.racers.filter(p=>typeof p.name==='string'&&typeof p.id==='string').slice(0,MAX_RACERS);if(typeof payload.mode==='string')gameMode=payload.mode;if(typeof payload.racing==='boolean')raceRunning=payload.racing;updateRacerList()}
+async function join(){const code=$('room').value.replace(/[^A-Z0-9]/gi,'').toUpperCase().slice(0,8);$('room').value=code;if(code.length!==8){status('Enter the 8-character code shown on smartboard.');return}
+ if(!window.supabase?.createClient){status('Connection library unavailable. Check internet.');return}
+ await stop();if(channel&&client){await client.removeChannel(channel);channel=null}connected=false;paired=false;status('Connecting…');enable();
+ try{
+  client=client||window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  const ch=client.channel('sketch-rally:camera:'+code,{config:{private:false,broadcast:{ack:true}}});channel=ch;
+  ch.on('broadcast',{event:'host-ready'},async()=>{if(ch!==channel)return;paired=true;status('Connected to smartboard ✓');photoStatus('Ready · Take a photo, then enter the racer’s name.');enable();await ch.send({type:'broadcast',event:'roster-request',payload:{}})})
+   .on('broadcast',{event:'roster-state'},({payload})=>{if(ch===channel)setRoster(payload)})
+   .on('broadcast',{event:'registration-result'},({payload})=>{
+     if(ch!==channel||!sendingRequest||payload?.requestId!==sendingRequest.id)return;
+     clearTimeout(sendingRequest.timer);const wasUpdate=sendingRequest.isUpdate;const ok=payload.ok===true;sendingRequest=null;
+     if(Array.isArray(payload.racers))setRoster({racers:payload.racers});
+     if(ok){photoStatus('✓ '+String(payload.name||'Car')+' saved',true);pendingEditedPhoto=null;requestedExistingId='';$('assignDialog').classList.add('hidden');document.body.style.overflow='';$('targetRacer').value='';$('newNameSection').classList.remove('hidden');$('racerName').value='';$('filePhoto').value='';$('manageTargetRacer').value='';}else{$('assignStatus').textContent=String(payload.message||'Registration failed');}
+     if(!ok)photoStatus(String(payload.message||'Registration failed'));
+     enable();
+   })
+   .on('broadcast',{event:'remove-result'},({payload})=>{
+     if(ch!==channel||!removeRequest||payload?.requestId!==removeRequest.id)return;
+     clearTimeout(removeRequest.timer);removeRequest=null;
+     if(Array.isArray(payload.racers))setRoster({racers:payload.racers});
+     if(payload.ok){$('targetRacer').value='';$('manageTargetRacer').value='';$('newNameSection').classList.remove('hidden');photoStatus('✓ Racer removed',true)}
+     else photoStatus(String(payload.message||'Could not remove racer'));
+     enable();
+   })
+   .on('broadcast',{event:'race-result'},({payload})=>{
+     if(ch!==channel||!startRequest||payload?.requestId!==startRequest.id)return;
+     clearTimeout(startRequest.timer);startRequest=null;
+     raceRunning=payload.ok===true;
+     $('raceStatus').textContent=payload.ok?'▶ Race running on smartboard':String(payload.message||'Race did not start');enable();
+   });
+  ch.subscribe(async state=>{if(ch!==channel)return;if(state==='SUBSCRIBED'){connected=true;status('Looking for smartboard…');enable();await ch.send({type:'broadcast',event:'phone-hello',payload:{connected:true,controller:'host-v1.2'}})}
+   else if(state==='CHANNEL_ERROR'||state==='CLOSED'||state==='TIMED_OUT'){connected=false;paired=false;raceRunning=false;status('Disconnected · Tap Connect');enable()}});
+ }catch(err){console.error(err);status('Could not connect. Check internet.');}
+}
+async function stop(){if(previewTimer){clearInterval(previewTimer);previewTimer=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('video').srcObject=null;$('cameraFrame').classList.add('off');enable()}
+async function startCamera(){if(!paired){photoStatus('Connect to smartboard first');return}await stop();try{stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:cameraFace},width:{ideal:1280},height:{ideal:960}}});$('video').srcObject=stream;await $('video').play();$('cameraFrame').classList.remove('off');photoStatus('Camera ready · Point at car sketch');enable();
+ previewTimer=setInterval(()=>{if(!paired||!connected||!stream||document.hidden||!channel||$('video').readyState<2)return;const v=$('video'),c=document.createElement('canvas'),w=280;c.width=w;c.height=Math.max(100,Math.round(w*v.videoHeight/v.videoWidth));c.getContext('2d').drawImage(v,0,0,c.width,c.height);const image=c.toDataURL('image/jpeg',.4);if(image.length<58000)channel.send({type:'broadcast',event:'preview',payload:{image}}).catch(()=>{})},1300);
+ }catch(err){console.warn(err);photoStatus('Camera unavailable · Choose a photo instead');await stop()}}
+function compressImage(source){const w=source.videoWidth||source.naturalWidth||source.width,h=source.videoHeight||source.naturalHeight||source.height;if(!w||!h)throw Error('No image');let data='';for(const [max,q] of [[1000,.7],[850,.62],[720,.54],[640,.5],[520,.45]]){const scale=Math.min(1,max/Math.max(w,h)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(source,0,0,canvas.width,canvas.height);data=canvas.toDataURL('image/jpeg',q);if(data.length<210000)return data}if(data.length>234000)throw Error('Image too large');return data}
+// Photo editor: reusable live-camera and gallery capture with crop + contrast filters.
+const editCanvas=$('editCanvas'),editCtx=editCanvas.getContext('2d');
+const filters={none:'none',contrast:'contrast(1.7) brightness(1.06)',bw:'grayscale(1) contrast(1.65)',vivid:'saturate(1.8) contrast(1.2)'};
+function openEditor(source){
+ const w=source.videoWidth||source.naturalWidth||source.width,h=source.videoHeight||source.naturalHeight||source.height;
+ if(!w||!h){photoStatus('No image to edit');return}
+ const scale=Math.min(1,1400/Math.max(w,h));editBase=document.createElement('canvas');editBase.width=Math.round(w*scale);editBase.height=Math.round(h*scale);
+ const c=editBase.getContext('2d');c.fillStyle='white';c.fillRect(0,0,editBase.width,editBase.height);c.drawImage(source,0,0,editBase.width,editBase.height);
+ editSource=editBase;editAngle=0;editFilter='none';editCrop={x:0,y:0,w:1,h:1};editDown=null;
+ $('photoRotation').value=0;$('photoRotationValue').textContent='0°';
+ $('photoEditor').classList.remove('hidden');document.body.style.overflow='hidden';
+ document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('filter-selected',b.dataset.filter==='none'));
+ drawEditorPhoto();
+}
+function closeEditor(){editBase=null;editSource=null;$('photoEditor').classList.add('hidden');document.body.style.overflow='';}
+function setEditorRotation(degrees){
+ if(!editBase)return;
+ editAngle=((Math.round(degrees)+180)%360+360)%360-180;
+ $('photoRotation').value=editAngle;$('photoRotationValue').textContent=editAngle+'°';
+ const sw=editBase.width,sh=editBase.height,rad=editAngle*Math.PI/180,cos=Math.cos(rad),sin=Math.sin(rad);
+ const width=Math.max(1,Math.ceil(Math.abs(sw*cos)+Math.abs(sh*sin))),height=Math.max(1,Math.ceil(Math.abs(sw*sin)+Math.abs(sh*cos)));
+ const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+ const c=canvas.getContext('2d');c.fillStyle='white';c.fillRect(0,0,width,height);c.translate(width/2,height/2);c.rotate(rad);c.drawImage(editBase,-sw/2,-sh/2);
+ editSource=canvas;
+ // Rotating changes the image coordinate system; reset crop rather than losing a corner.
+ editCrop={x:0,y:0,w:1,h:1};editDown=null;drawEditorPhoto();
+}
+$('rotatePhotoLeft').addEventListener('click',()=>setEditorRotation(editAngle-90));
+$('rotatePhotoRight').addEventListener('click',()=>setEditorRotation(editAngle+90));
+$('photoRotation').addEventListener('input',e=>setEditorRotation(Number(e.target.value)));
+function drawEditorPhoto(){
+ if(!editSource)return;const aspect=editSource.width/editSource.height;
+ editCanvas.width=420;editCanvas.height=Math.max(170,Math.round(420/aspect));
+ const c=editCtx,w=editCanvas.width,h=editCanvas.height;c.clearRect(0,0,w,h);c.filter=filters[editFilter];c.drawImage(editSource,0,0,w,h);c.filter='none';
+ const r=editCrop;c.fillStyle='rgba(8,19,28,.47)';c.fillRect(0,0,w,r.y*h);c.fillRect(0,(r.y+r.h)*h,w,h-(r.y+r.h)*h);c.fillRect(0,r.y*h,r.x*w,r.h*h);c.fillRect((r.x+r.w)*w,r.y*h,w-(r.x+r.w)*w,r.h*h);
+ c.strokeStyle='#c4f26b';c.lineWidth=3;c.strokeRect(r.x*w+1,r.y*h+1,r.w*w-2,r.h*h-2);
+}
+function editorPoint(e){const bounds=editCanvas.getBoundingClientRect();return{x:Math.max(0,Math.min(1,(e.clientX-bounds.left)/bounds.width)),y:Math.max(0,Math.min(1,(e.clientY-bounds.top)/bounds.height))}}
+editCanvas.addEventListener('pointerdown',e=>{e.preventDefault();const p=editorPoint(e);editDown=p;editCanvas.setPointerCapture(e.pointerId);editCrop={x:p.x,y:p.y,w:.001,h:.001};drawEditorPhoto()});
+editCanvas.addEventListener('pointermove',e=>{if(!editDown)return;e.preventDefault();const p=editorPoint(e);editCrop={x:Math.min(p.x,editDown.x),y:Math.min(p.y,editDown.y),w:Math.abs(p.x-editDown.x),h:Math.abs(p.y-editDown.y)};drawEditorPhoto()});
+function editorUp(){if(!editDown)return;editDown=null;if(editCrop.w<.055||editCrop.h<.055)editCrop={x:0,y:0,w:1,h:1};drawEditorPhoto()}
+editCanvas.addEventListener('pointerup',editorUp);editCanvas.addEventListener('pointercancel',editorUp);
+$('resetCrop').addEventListener('click',()=>{editCrop={x:0,y:0,w:1,h:1};drawEditorPhoto()});
+document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{editFilter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('filter-selected',x===b));drawEditorPhoto()}));
+$('closeEditor').addEventListener('click',closeEditor);
+$('editRetake').addEventListener('click',()=>{closeEditor();photoStatus('Take another picture or choose from gallery');if(!stream)startCamera()});
+$('retakePhoto').addEventListener('click',()=>{requestedExistingId=$('manageTargetRacer').value;if(!requestedExistingId)return;document.getElementById('photoPanel').scrollIntoView({behavior:'smooth',block:'start'});if(!stream)startCamera();else photoStatus('Ready to retake · Press Take picture')});
+$('useEditedPhoto').addEventListener('click',()=>{
+ if(!editSource)return;
+ const r=editCrop,x=Math.floor(r.x*editSource.width),y=Math.floor(r.y*editSource.height),w=Math.max(1,Math.floor(r.w*editSource.width)),h=Math.max(1,Math.floor(r.h*editSource.height));
+ const out=document.createElement('canvas');out.width=w;out.height=h;const c=out.getContext('2d');c.filter=filters[editFilter];c.drawImage(editSource,x,y,w,h,0,0,w,h);c.filter='none';
+ closeEditor();openAssignment(out);
+});
+async function removeSelectedRacer(){
+ const existing=roster.find(p=>p.id===$('manageTargetRacer').value);if(!paired||!connected||!existing||raceRunning||removeRequest)return;
+ if(!window.confirm('Remove '+existing.name+' from the race?'))return;
+ const requestId=newId();removeRequest={id:requestId,timer:setTimeout(()=>{removeRequest=null;photoStatus('No reply from smartboard. Reconnect and check roster.');enable()},12000)};
+ enable();photoStatus('Removing '+existing.name+'…');
+ try{const reply=await channel.send({type:'broadcast',event:'remove-racer',payload:{requestId,racerId:existing.id}});if(reply!=='ok')throw Error(String(reply))}
+ catch(err){if(removeRequest?.id===requestId){clearTimeout(removeRequest.timer);removeRequest=null}photoStatus('Remove failed · Check connection');enable()}
+}
+$('removeRacer').addEventListener('click',removeSelectedRacer);
+function openAssignment(source){
+ if(!paired||!connected){photoStatus('Connect to smartboard first');return;}
+ pendingEditedPhoto=source;
+ $('assignPreview').src=source.toDataURL('image/jpeg',.78);
+ $('targetRacer').value=roster.some(r=>r.id===requestedExistingId)?requestedExistingId:'';
+ $('newNameSection').classList.toggle('hidden',!!$('targetRacer').value);
+ $('racerName').value='';$('viewType').value='side';
+ $('assignStatus').textContent='Register a new racer or choose an existing racer.';
+ $('assignDialog').classList.remove('hidden');document.body.style.overflow='hidden';
+ if(!$('targetRacer').value)setTimeout(()=>$('racerName').focus(),60);
+ enable();
+}
+function closeAssignment(){if(sendingRequest)return;pendingEditedPhoto=null;requestedExistingId='';$('assignPreview').removeAttribute('src');$('assignDialog').classList.add('hidden');document.body.style.overflow='';photoStatus('Photo not registered · Take another picture');}
+$('closeAssign').addEventListener('click',closeAssignment);
+$('confirmAssign').addEventListener('click',async()=>{
+ if(!pendingEditedPhoto||sendingRequest)return;
+ const name=($('targetRacer').value?roster.find(r=>r.id===$('targetRacer').value)?.name:$('racerName').value.trim())||'';
+ if(!name.trim()){$('assignStatus').textContent='Enter the racer’s name to register this photo.';$('racerName').focus();return;}
+ if(!$('targetRacer').value&&roster.length>=MAX_RACERS){$('assignStatus').textContent='30 racers maximum · Choose an existing racer.';return;}
+ $('assignStatus').textContent='Sending '+name+' to smartboard…';
+ await transmit(pendingEditedPhoto);
+});
+async function transmit(source){if(!paired||!channel){photoStatus('Connect first');return}if(sendingRequest||raceRunning)return;
+ const existing=roster.find(p=>p.id===$('targetRacer').value);const name=(existing?.name||$('racerName').value).trim().slice(0,24);
+ if(!name){$('assignStatus').textContent='Enter racer name first';$('racerName').focus();return}
+ if(!existing&&roster.length>=MAX_RACERS){photoStatus('Garage full ('+MAX_RACERS+' racers)');return}
+ try{
+  const image=compressImage(source),requestId=newId(),racerId=existing?.id||newId(),view=$('viewType').value;
+  $('sentImage').src=image;$('sentImage').classList.remove('hidden');
+  sendingRequest={id:requestId,isUpdate:!!existing,timer:setTimeout(()=>{sendingRequest=null;photoStatus('No confirmation · Retry or reconnect');enable()},15000)};enable();photoStatus('Registering '+name+'…');
+  const response=await channel.send({type:'broadcast',event:'register-car',payload:{requestId,racerId,name,view,image}});
+  if(response!=='ok'){if(sendingRequest?.id===requestId){clearTimeout(sendingRequest.timer);sendingRequest=null;enable()}throw Error('Photo not delivered: '+response)}
+ }catch(err){console.error(err);photoStatus('Could not register. Check connection and try again.');$('assignStatus').textContent='Could not send. Check connection and retry.'}
+}
+async function startRace(){if(!paired||!channel||startRequest||raceRunning||!roster.some(p=>p.registered))return;const id=newId();startRequest={id,timer:setTimeout(()=>{startRequest=null;$('raceStatus').textContent='No confirmation from smartboard · Try again';enable()},12000)};enable();$('raceStatus').textContent='Starting race on smartboard…';try{const response=await channel.send({type:'broadcast',event:'remote-start',payload:{requestId:id}});if(response!=='ok')throw Error(response)}catch(error){console.warn(error);if(startRequest?.id===id){clearTimeout(startRequest.timer);startRequest=null}$('raceStatus').textContent='Could not start · Check smartboard connection';enable()}}
+$('connect').addEventListener('click',join);$('room').addEventListener('keydown',e=>{if(e.key==='Enter')join()});$('racerName').addEventListener('input',enable);$('manageTargetRacer').addEventListener('change',()=>{requestedExistingId='';enable()});$('targetRacer').addEventListener('change',()=>{$('newNameSection').classList.toggle('hidden',!!$('targetRacer').value);enable()});
+$('startCamera').addEventListener('click',()=>{if(stream)stop();else startCamera()});$('switchCamera').addEventListener('click',async()=>{cameraFace=cameraFace==='environment'?'user':'environment';await startCamera()});
+$('capture').addEventListener('click',()=>{if(stream&&$('video').readyState>=2)openEditor($('video'));else photoStatus('Start camera first')});
+$('filePhoto').addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith('image/')){photoStatus('Choose a photo');return}const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>openEditor(img);img.onerror=()=>photoStatus('Unable to read image');img.src=r.result};r.readAsDataURL(f);e.target.value=''});
+$('remoteStart').addEventListener('click',startRace);
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&stream)stop()});window.addEventListener('pagehide',()=>{stop();if(channel&&client)client.removeChannel(channel)});
+updateRacerList();if($('room').value.length===8)join();
+})();
+</script>
+</body>
+</html>
