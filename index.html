@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#10182a">
+  <meta name="description" content="A collection of interactive smartboard games for classroom learning.">
+  <title>Smartboard Games</title>
+  <style>
+    :root{color-scheme:dark;--bg:#10182a;--surface:#1a2740;--line:#35435d;--text:#f5f8ff;--muted:#b7c2d5;--accent:#77e6c4}
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(circle at 80% 0%,#254867 0%,transparent 40%),var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+    a{color:inherit}
+    .container{width:min(1120px,calc(100% - 36px));margin-inline:auto}
+    header{border-bottom:1px solid var(--line)}
+    .navbar{display:flex;justify-content:space-between;align-items:center;gap:20px;padding-block:18px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;text-decoration:none}
+    .brand-icon{display:grid;place-items:center;background:var(--accent);color:#09251e;width:42px;height:42px;border-radius:13px;font-size:23px}
+    .github{color:var(--muted);font-size:14px;text-decoration:none}
+    .github:hover,.github:focus-visible{text-decoration:underline;color:var(--text)}
+    main{padding-block:65px 86px}
+    .eyebrow{text-transform:uppercase;color:var(--accent);letter-spacing:.16em;font-weight:800;font-size:12px}
+    h1{max-width:800px;font-size:clamp(38px,7vw,72px);letter-spacing:-.05em;line-height:1.06;margin:18px 0}
+    .intro{max-width:640px;color:var(--muted);font-size:clamp(16px,2vw,20px);margin:0}
+    .stats{display:flex;flex-wrap:wrap;gap:12px;margin:30px 0 56px}
+    .stat{background:#202f49;border:1px solid var(--line);border-radius:999px;padding:9px 15px;font-size:14px}
+    .stat b{color:var(--accent);margin-right:5px}
+    .heading{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+    h2{font-size:26px;letter-spacing:-.025em;margin:0}
+    .hint{color:var(--muted);font-size:14px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+    .game{background:linear-gradient(150deg,#223451,#172236);border:1px solid var(--line);border-radius:22px;padding:24px;min-height:245px;display:flex;flex-direction:column}
+    .game:has(.play:hover),.game:has(.play:focus-visible){border-color:var(--accent)}
+    .game-icon{display:grid;place-items:center;background:#304665;border-radius:17px;width:65px;height:65px;font-size:34px;margin-bottom:19px}
+    h3{font-size:21px;margin:0 0 8px;letter-spacing:-.02em}
+    .game p{font-size:14px;color:var(--muted);margin:0 0 24px}
+    .game-footer{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:auto}
+    .category{border:1px solid var(--line);border-radius:999px;padding:5px 10px;color:#dce7f8;font-size:12px}
+    .play{background:var(--accent);color:#0d2824;text-decoration:none;font-weight:800;padding:9px 14px;border-radius:10px;white-space:nowrap;font-size:14px}
+    .coming{color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap}
+    .notice{color:var(--muted);margin-top:26px}
+    footer{border-top:1px solid var(--line);color:var(--muted);font-size:13px;padding:21px 0 30px}
+    @media(max-width:550px){main{padding-top:45px}.stats{margin-bottom:42px}.github{font-size:12px}.game{min-height:225px}}
+  </style>
+</head>
+<body>
+  <header><nav class="container navbar" aria-label="Main navigation">
+    <a href="./" class="brand"><span class="brand-icon" aria-hidden="true">🎮</span>Smartboard Games</a>
+    <a class="github" href="https://github.com/mohammaddhameri-blip/smartboardgames" rel="noopener noreferrer" target="_blank">GitHub repository ↗</a>
+  </nav></header>
+  <main class="container">
+    <div class="eyebrow">Play • Learn • Collaborate</div>
+    <h1>Big-screen games.<br>Better teamwork.</h1>
+    <p class="intro">Interactive learning games designed for smartboards, classrooms and curious pupils. Choose a game to begin.</p>
+    <div class="stats" aria-live="polite">
+      <span class="stat"><b id="live">0</b> available games</span>
+      <span class="stat"><b id="planned">0</b> in preparation</span>
+    </div>
+    <div class="heading"><h2>Game Library</h2><span class="hint">Each published game gets a direct link</span></div>
+    <div class="grid" id="grid" aria-live="polite"></div>
+    <p class="notice" id="notice">Loading game catalogue…</p>
+  </main>
+  <footer><div class="container">Smartboard Games — built for classroom learning.</div></footer>
+  <script>
+    (async () => {
+      const grid = document.getElementById('grid');
+      const notice = document.getElementById('notice');
+      try {
+        const response = await fetch('./games.json', {cache:'no-store'});
+        if (!response.ok) throw Error('Catalogue unavailable');
+        const games = await response.json();
+        if (!Array.isArray(games)) throw Error('Invalid catalogue');
+        let live=0;
+        for (const game of games) {
+          const published=game.published===true && typeof game.path==='string' && /^([a-z0-9-]+\/)+$/i.test(game.path);
+          if(published) live++;
+          const card=document.createElement('article');
+          card.className='game';
+          const icon=document.createElement('div');
+          icon.className='game-icon';icon.setAttribute('aria-hidden','true');icon.textContent=game.icon||'🎮';
+          const title=document.createElement('h3');title.textContent=game.name||'Unnamed game';
+          const description=document.createElement('p');description.textContent=game.description||'';
+          const bottom=document.createElement('div');bottom.className='game-footer';
+          const category=document.createElement('span');category.className='category';category.textContent=game.category||'Learning';
+          bottom.append(category);
+          if(published) {
+            const link=document.createElement('a');link.className='play';
+            link.href='./'+game.path;link.textContent='Play →';link.setAttribute('aria-label','Play '+game.name);
+            bottom.append(link);
+          } else {
+            const tag=document.createElement('span');tag.className='coming';tag.textContent='Coming soon';
+            bottom.append(tag);
+          }
+          card.append(icon,title,description,bottom);
+          grid.append(card);
+        }
+        document.getElementById('live').textContent=live;
+        document.getElementById('planned').textContent=games.length-live;
+        notice.textContent=live?'Select a game to start playing.':'Games will become playable here as soon as their files are published.';
+      } catch (error) {
+        notice.textContent='Unable to load the game catalogue. Refresh to try again.';
+      }
+    })();
+  </script>
+</body>
+</html>
