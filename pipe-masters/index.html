@@ -262,7 +262,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
     const exit=(last[1]>60?[[last[0],last[1]],[last[0],91]]:[[last[0],last[1]],[96,last[1]]]);
     const paths=[path(entry),path(exit)];
     const pipe=paths.map(d=>`<path class="pipeOutline" d="${d}"/><path class="pipeInside" d="${d}"/>`).join('');
-    const guidesSvg=seg.map(s=>`<path class="guideback pupil-dash" d="${path([s.a,s.b])}"/><path class="guide pupil-dash${win?' completed':''}" stroke="${COLORS[s.colour]}" d="${path([s.a,s.b])}"><title>Pupil ${s.id}: ${s.colour}</title></path>`).join('');
+    const guidesSvg=seg.map(s=>`<path class="guideback pupil-dash" style="stroke-dasharray:none" d="${path([s.a,s.b])}"/><path class="guide pupil-dash${win?' completed':''}" style="stroke-dasharray:none" stroke="${COLORS[s.colour]}" d="${path([s.a,s.b])}"><title>Pupil ${s.id}: ${s.colour}</title></path>`).join('');
     const full=path([entry[0],...nodes,exit.at(-1)]);
     const grid=Array.from({length:9},(_,i)=>`<path class="gridline" d="M0 ${i*75} H1000"/>`).join('');
     $('puzzle').innerHTML=`<rect width="1000" height="600" fill="#eaf4f5"/>${grid}<g>${pipe}</g>${guidesSvg}<path class="waterline" d="${full}"/><circle class="endpoint" cx="${xy(entry[0])[0]}" cy="${xy(entry[0])[1]}" r="18"/><circle class="endpoint exit" cx="${xy(exit.at(-1))[0]}" cy="${xy(exit.at(-1))[1]}" r="18"/><text class="pointlabel" x="${Math.max(17,xy(entry[0])[0]-35)}" y="${Math.max(20,xy(entry[0])[1]-30)}">IN</text><text class="pointlabel exit" x="${Math.min(930,xy(exit.at(-1))[0]-30)}" y="${Math.min(580,xy(exit.at(-1))[1]+49)}">OUT</text>`;
@@ -376,7 +376,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
       ctx.fillStyle='#d8e7e7';ctx.fillRect(0,0,w,h);
       ctx.lineWidth=1;ctx.strokeStyle='#b8d0d0';
       for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}
-      for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
+      for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
     }
     if(guides)expected.forEach(e=>{
       const x=e.tx*w,y=e.ty*h;ctx.save();ctx.translate(x,y);if(e.vertical)ctx.rotate(Math.PI/2);
@@ -418,7 +418,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   function applyPreviewMirror(){
     const transform=mirrored?'scaleX(-1)':'none';
     video.style.transform=transform;
-    canvas.style.transform=transform;
+    canvas.style.transform='none';
   }
   function requestAndroidCameraPermission(){
     if(typeof window.PipeMastersAndroid?.requestCameraPermission!=='function')return Promise.resolve(true);
@@ -500,7 +500,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
       if(n<45||n>N*.28)continue;const width=maxX-minX+1,height=maxY-minY+1;if(width<5||height<5)continue;const c=names[id],cx=sx/n,cy=sy/n,covX=sxx/n-cx*cx,covY=syy/n-cy*cy,covXY=sxy/n-cx*cy;
       const angle=.5*Math.atan2(2*covXY,covX-covY),major=(covX+covY+Math.sqrt((covX-covY)**2+4*covXY**2))/2,minor=(covX+covY-Math.sqrt((covX-covY)**2+4*covXY**2))/2;
       if(major/Math.max(1,minor)<1.14)continue;
-      const item={colour:c,x:cx/W,y:cy/H,vertical:Math.abs(angle)>Math.PI/4,box:{x:minX/W,y:minY/H,w:width/W,h:height/H},count:n};
+      const item={colour:c,x:mirrored?1-cx/W:cx/W,y:cy/H,vertical:Math.abs(angle)>Math.PI/4,box:{x:mirrored?1-(maxX+1)/W:minX/W,y:minY/H,w:width/W,h:height/H},count:n};
       components.push(item);
     }
     // Keep separate cards even when pupils share a colour, instead of only the biggest one.
