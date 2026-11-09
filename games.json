@@ -1,0 +1,34 @@
+[
+  {
+    "name": "BoatBeats",
+    "description": "Race your boat by clapping along with musical beats.",
+    "category": "Music",
+    "icon": "🥁",
+    "path": "boatbeats/",
+    "published": false
+  },
+  {
+    "name": "Sketch Rally",
+    "description": "Turn your own car design into a racer for hill-climb challenges.",
+    "category": "Creative STEM",
+    "icon": "🏎️",
+    "path": "sketch-rally/",
+    "published": false
+  },
+  {
+    "name": "Motion Quest",
+    "description": "Use coloured cards to guide a character through obstacles.",
+    "category": "Movement",
+    "icon": "🟩",
+    "path": "motion-quest/",
+    "published": false
+  },
+  {
+    "name": "Boxing Game",
+    "description": "A webcam-powered boxing game for the smartboard.",
+    "category": "Physical Education",
+    "icon": "🥊",
+    "path": "boxing-game/",
+    "published": false
+  }
+]
