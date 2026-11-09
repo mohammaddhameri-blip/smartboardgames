@@ -1,0 +1,44 @@
+name: Build Pipe Masters APK
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pipe-masters/android/**'
+      - 'pipe-masters/index.html'
+      - '.github/workflows/build-pipe-masters-apk.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  android-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Keep browser and bundled APK game identical
+        run: cp pipe-masters/index.html pipe-masters/android/app/src/main/assets/index.html
+      - name: Build Android test APK
+        run: cd pipe-masters/android && gradle --no-daemon assembleDebug
+      - name: Upload APK build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PipeMasters-APK
+          path: pipe-masters/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish direct APK download
+        run: |
+          mkdir -p pipe-masters/downloads
+          cp pipe-masters/android/app/build/outputs/apk/debug/app-debug.apk pipe-masters/downloads/PipeMasters.apk
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f pipe-masters/downloads/PipeMasters.apk
+          git diff --cached --quiet || (git commit -m 'Publish Pipe Masters classroom APK [skip ci]' && git push)
