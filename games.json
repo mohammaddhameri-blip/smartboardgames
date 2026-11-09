@@ -5,7 +5,7 @@
     "category": "Music",
     "icon": "🥁",
     "path": "boatbeats/",
-    "published": false
+    "published": true
   },
   {
     "name": "Sketch Rally",
@@ -13,7 +13,23 @@
     "category": "Creative STEM",
     "icon": "🏎️",
     "path": "sketch-rally/",
-    "published": false
+    "published": true
+  },
+  {
+    "name": "Melody Trail",
+    "description": "Listen, imitate melodies and practice beats, singing and instrument sounds.",
+    "category": "Music",
+    "icon": "🎼",
+    "path": "melody-trail/",
+    "published": true
+  },
+  {
+    "name": "STEM Battleship",
+    "description": "Answer STEM questions to power your battleship and outmaneuver your opponent.",
+    "category": "STEM",
+    "icon": "🚢",
+    "path": "stem-battleship/",
+    "published": true
   },
   {
     "name": "Motion Quest",
