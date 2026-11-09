@@ -297,7 +297,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   function changeLevel(next){levelIndex=(next+LEVELS.length)%LEVELS.length;resetRound()}
   const format=t=>{const s=Math.floor(t/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
   const name=c=>c[0].toUpperCase()+c.slice(1);
-  function targetPositions(){const seg=segmentData(),xx=seg.map(s=>s.cx),yy=seg.map(s=>s.cy),minX=Math.min(...xx),maxX=Math.max(...xx),minY=Math.min(...yy);
+  function targetPositions(){const seg=segmentData(),xx=seg.map(s=>s.cx),yy=seg.map(s=>s.cy),minX=Math.min(...xx),maxX=Math.max(...xx),minY=Math.min(...yy),maxY=Math.max(...yy);
     return seg.map(s=>({...s,nx:(s.cx-minX)/Math.max(1,maxX-minX),ny:(s.cy-minY)/Math.max(1,maxY-minY),
       tx:.10+.80*(s.cx-minX)/Math.max(1,maxX-minX),ty:.10+.80*(s.cy-minY)/Math.max(1,maxY-minY)}));
   }
