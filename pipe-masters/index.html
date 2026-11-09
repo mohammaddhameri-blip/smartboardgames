@@ -97,6 +97,12 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
 .hud-panel{gap:3px;padding:5px}.hud-heading{display:none}.camera-panel .stage{aspect-ratio:2/1}
 .hud-stat{padding:3px 6px}.hud-panel .status{padding:3px 6px}.hud-panel .btn{min-height:25px}
 }
+@media(max-height:820px) and (orientation:landscape){
+  .camera-panel .stagebox{padding:5px}.panelhead.camera-heading{padding:6px 9px;min-height:38px}
+  .hud-panel{gap:5px;padding:7px}.hud-stat{padding:5px 7px}
+  .hud-panel .status{padding:5px 7px}.hud-panel .btn{min-height:33px}
+  .hud-footer .btn{min-height:27px}
+}
   </style>
 </head>
 <body>
@@ -371,7 +377,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   $('cameraBtn').onclick=openCamera;$('demoBtn').onclick=()=>switchMode('demo');$('stopBtn').onclick=()=>switchMode('idle');$('prevBtn').onclick=()=>changeLevel(levelIndex-1);$('nextBtn').onclick=()=>changeLevel(levelIndex+1);$('restartBtn').onclick=resetRound;$('successNext').onclick=()=>changeLevel(levelIndex===LEVELS.length-1?0:levelIndex+1);
   if(window.PipeMastersAndroid){$('apkDownloadLink').hidden=true;}
   $('checkUpdatesBtn').onclick=()=>{if(window.PipeMastersAndroid?.checkForUpdates){$('updateNote').textContent='Checking GitHub for the latest game…';window.PipeMastersAndroid.checkForUpdates();}else{location.reload();}};
-  $('settingsBtn').onclick=()=>{$('settingsDialog').showModal();refreshCameras()};$('settingsClose').onclick=()=>$('settingsDialog').close();$('cameraSelect').onchange=e=>{chosenDevice=e.target.value;if(mode==='camera')openCamera()};
+  $('settingsBtn').onclick=()=>{if(mode!=='idle'&&!paused&&!win&&!expired)togglePause();$('settingsDialog').showModal();refreshCameras()};$('settingsClose').onclick=()=>$('settingsDialog').close();$('cameraSelect').onchange=e=>{chosenDevice=e.target.value;if(mode==='camera')openCamera()};
   $('toleranceSelect').onchange=e=>{tolerance=Number(e.target.value);holdStart=0};$('mirrorSelect').onchange=e=>{mirrored=e.target.checked;video.style.transform=mirrored?'scaleX(-1)':'none';holdStart=0};
   const setGuides=val=>{guides=val;$('guidesSelect').checked=val;$('guideBtn').textContent=`◎ Guides: ${val?'On':'Off'}`;drawStage()};$('guidesSelect').onchange=e=>setGuides(e.target.checked);$('guideBtn').onclick=()=>setGuides(!guides);
   $('fullscreenBtn').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen?.();else document.documentElement.requestFullscreen?.()};
