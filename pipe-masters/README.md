@@ -1,16 +1,32 @@
-# Pipe Masters — Team Challenge v0.1
+# Pipe Masters — Team Challenge v0.3
 
-Webcam-based collaborative puzzle for an Android smartboard. Pupils hold coloured A4 papers in front of the camera and coordinate the colour order, position, and horizontal/vertical orientation to complete the missing pipeline.
+Pipe Masters is a collaborative classroom pipeline puzzle for Android smartboards. Pupils hold brightly coloured paper strips and arrange their positions and orientations to match the coloured missing pipe sections.
 
-## Play
+## Full-screen landscape layout (v0.3)
 
-- **Demo mode** requires no camera: drag the coloured strips in the preview and tap to rotate. Match the dashed guides.
-- **Camera mode** requires HTTPS/localhost and permission to use a compatible built-in or external webcam. Use solid-colour papers, bright even lighting, and a plain background. Pupils must match the shape and orientation of the missing pipe sections relative to one another, then hold the correct formation for 3 seconds.
-- Five progressive levels from 3 to 6 participants. Use **Settings** for camera selection, mirror preview, and scoring precision.
-- Camera analysis is performed in-browser using HSV colour segmentation, connected components, and approximate relative-position checks. No video recordings or uploads.
+The display follows a Microsoft Pinball-inspired **playfield + right sidebar** arrangement:
 
-## Important limitations
+- **Left:** The large main pipeline puzzle, with coloured dashed guides, minimal level heading and unobtrusive progress indicator
+- **Right, top:** Webcam preview with detection overlays
+- **Right, bottom:** Countdown timer, total team score, number of players, best time, live formation status, Pause, Retry, Settings, Camera/Demo, Previous/Next and Fullscreen
 
-This is an untested classroom hardware prototype. Physical webcam detection may give false positives or miss colours, particularly grey, and will need calibration with your exact papers, camera, background and lighting. Android-based smartboards vary in whether a USB webcam is exposed to the browser. Try Demo first and verify camera access on the actual board.
+The countdown defaults to **2 minutes per level**, configurable to 60, 90, 120, 180 seconds or no time limit. Pausing freezes both the countdown and camera evaluation. Completing a level awards 100 points plus remaining seconds (no points for replaying a level already scored). There are five levels for 3–6 players. These are current prototype rules, subject to classroom testing.
 
-Hosted GitHub Pages URL, when enabled: https://mohammaddhameri-blip.github.io/smartboardgames/pipe-masters/
+## Using the game
+
+- **Demo:** Select Demo and drag each coloured strip in the camera preview; tap a strip to rotate. Hold the correct formation for 3 seconds.
+- **Camera:** Point a webcam at pupils holding solid-colour A4 paper strips. Grant the camera permission, adjust mirroring or detection tolerance in Settings, and let the team form the missing route.
+- Choose Retry to reset the current round. Next/Previous allow teacher navigation; only completed levels score.
+- The camera analyses images locally via colour filtering and connected-region estimation; no video recordings or uploads.
+
+## Shared updates
+
+This GitHub file `pipe-masters/index.html` is the single source of gameplay updates. GitHub Pages loads it for browser play, and the Android APK checks for a newer copy on launch and stores the game for offline use. **Changing the browser game's HTML also updates the Android game's gameplay and layout; users do not need to reinstall the APK.** Native Android wrapper updates still require an APK rebuild.
+
+Browser game: https://mohammaddhameri-blip.github.io/smartboardgames/pipe-masters/
+
+Android APK: https://github.com/mohammaddhameri-blip/smartboardgames/raw/refs/heads/main/pipe-masters/downloads/PipeMasters.apk
+
+## Classroom limitations
+
+Camera recognition on real Android smartboard hardware remains unverified. Lighting, colour similarity (particularly grey), pupil occlusion and camera drivers affect accuracy. Test at the classroom location before using for graded competition. The native Android app is currently a WebView shell running the same HTML game rather than a native camera engine.
