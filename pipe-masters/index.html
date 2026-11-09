@@ -189,6 +189,28 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   let levelIndex=0, mode='idle',stream=null, started=0,holdStart=0,win=false, frameTimer=0, lastTime=0;
   let guides=true,mirrored=true,tolerance=.30, chosenDevice='';
   let detected=[], demo=[], dragging=null, best={};
+  let timeLimit=120, paused=false, pauseStarted=0, pausedElapsed=0, expired=false, score=0;
+  const scoredLevels=new Set();
+  const elapsedRound=()=>started?Math.max(0,performance.now()-started-pausedElapsed-(paused?performance.now()-pauseStarted:0)):0;
+  const remainingRound=()=>timeLimit?Math.max(0,timeLimit*1000-elapsedRound()):Infinity;
+  const clockText=()=>timeLimit?format(remainingRound()):'∞';
+  function updatePauseUI(){
+    $('pauseBtn').disabled=mode==='idle'||expired||win;
+    $('pauseBtn').textContent=paused&&!expired?'▶ Resume':'⏸ Pause';
+    $('pauseCover').hidden=!paused||expired;
+  }
+  function togglePause(){
+    if(mode==='idle'||expired||win)return;
+    if(paused){pausedElapsed+=performance.now()-pauseStarted;paused=false;holdStart=0;}
+    else{pauseStarted=performance.now();paused=true;holdStart=0;$('holdBar').style.width='0%';}
+    updatePauseUI();
+  }
+  function timeUp(){
+    if(expired||win)return;
+    expired=true;holdStart=0;$('timer').textContent='00:00';$('holdBar').style.width='0%';
+    updateStatus('Time is up!','Choose Retry to make another attempt.',false);
+    updatePauseUI();
+  }
   try{best=JSON.parse(localStorage.getItem('pipemasters-best')||'{}')}catch{best={}}
   const level=()=>LEVELS[levelIndex];
   const segmentData=()=>level().colors.map((colour,i)=>{
@@ -210,7 +232,9 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
     $('puzzle').classList.toggle('complete',win);
     $('levelTag').textContent=`LEVEL ${levelIndex+1} / ${LEVELS.length}`;
     $('levelTitle').textContent=l.name;
-    $('playerCount').textContent=`${l.colors.length} PLAYERS`;
+    $('playerCount').textContent=String(l.colors.length);
+    $('bestTimeLabel').textContent=best[levelIndex]?format(best[levelIndex]*1000):'—';
+    $('scoreValue').textContent=String(score).padStart(4,'0');
     $('colourKey').innerHTML=l.colors.map(c=>`<span title="${c}" class="swatch" style="background:${COLORS[c]}"></span>`).join('')+`<span class="pieces">${l.colors.length} coloured papers</span>`;
     $('progress').innerHTML=LEVELS.map((_,i)=>`<i class="${i<levelIndex?'passed':i===levelIndex?'active':''}"></i>`).join('');
     $('prevBtn').disabled=levelIndex===0;$('nextBtn').disabled=levelIndex===LEVELS.length-1;
@@ -222,7 +246,17 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
     // Offset pieces from the answer so the puzzle requires genuine rearrangement.
     if(demo.length===3){demo[0].x=.25;demo[0].y=.7;demo[1].x=.68;demo[1].y=.23;demo[2].x=.55;demo[2].y=.72}
   }
-  function resetRound(){win=false;holdStart=0;started=mode==='idle'?0:performance.now();lastTime=0;$('holdBar').style.width='0%';if(mode==='demo')newDemo();drawPuzzle();updateStatus('Form the missing route','Match every colour and direction.',false);drawStage();}
+  function resetRound(){
+    win=false;expired=false;paused=false;pauseStarted=0;pausedElapsed=0;
+    holdStart=0;started=mode==='idle'?0:performance.now();lastTime=0;
+    $('holdBar').style.width='0%';
+    $('timer').textContent=timeLimit?format(timeLimit*1000):'∞';
+    if(mode==='demo')newDemo();
+    drawPuzzle();updatePauseUI();
+    updateStatus(mode==='idle'?'Ready for your team':'Form the missing route',
+      mode==='idle'?'Start the camera or try Demo.':'Match each colour and its direction.',false);
+    drawStage();
+  }
   function changeLevel(next){levelIndex=(next+LEVELS.length)%LEVELS.length;resetRound()}
   const format=t=>{const s=Math.floor(t/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
   const name=c=>c[0].toUpperCase()+c.slice(1);
@@ -245,13 +279,27 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
     return {ready:all,progress:good/expected.length,good,detail,message,hint};
   }
   function updateStatus(message,hint,ok){$('bigStatus').textContent=message;$('bigStatus').className='bigstatus '+(ok?'ok':'warn');$('hint').textContent=hint}
-  function statusFrom(items){if(win)return;const r=evaluate(items);let p=0;
+  function statusFrom(items){if(win||expired||paused)return;const r=evaluate(items);let p=0;
     if(r.ready){if(!holdStart)holdStart=performance.now();p=Math.min(1,(performance.now()-holdStart)/3000);if(p>=1){finish();return;}}
     else holdStart=0;
     $('holdBar').style.width=`${Math.round(100*p)}%`;updateStatus(r.message,r.hint,r.ready);return r;
   }
-  function finish(){if(win)return;win=true;const elapsed=started?performance.now()-started:0;const seconds=Math.max(1,Math.round(elapsed/1000));const old=best[levelIndex];if(!old||seconds<old){best[levelIndex]=seconds;try{localStorage.setItem('pipemasters-best',JSON.stringify(best))}catch{}}
-    $('resultTime').textContent=`Completed in ${seconds}s · ${level().colors.length} teammates`;drawPuzzle();updateStatus('Pipeline complete!','Excellent teamwork — the water is flowing.',true);$('holdBar').style.width='100%';
+  function finish(){
+    if(win||expired)return;
+    win=true;
+    const elapsed=elapsedRound();
+    const seconds=Math.max(1,Math.round(elapsed/1000));
+    const old=best[levelIndex];
+    if(!old||seconds<old){best[levelIndex]=seconds;try{localStorage.setItem('pipemasters-best',JSON.stringify(best))}catch{}}
+    let gained=0;
+    if(!scoredLevels.has(levelIndex)){
+      gained=100+(timeLimit?Math.ceil(remainingRound()/1000):0);
+      score+=gained;scoredLevels.add(levelIndex);
+    }
+    $('resultTime').textContent='Completed in '+seconds+'s · '+(gained?'+'+gained+' points':'Already scored');
+    drawPuzzle();updatePauseUI();
+    updateStatus('Pipeline complete!','Great teamwork — the water is flowing.',true);
+    $('holdBar').style.width='100%';
   }
   function drawStage(){const w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);if(mode==='idle')return;
     const expect=targetPositions();
@@ -304,13 +352,22 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
     }
     return Object.values(components);
   }
-  function processCamera(){if(mode!=='camera'||!stream||video.readyState<2||win)return;detected=detectPapers();statusFrom(detected);drawStage()}
-  function tick(){if(started&&!win){$('timer').textContent=format(performance.now()-started)}if(mode==='demo'&&!win){statusFrom(demo);drawStage()}requestAnimationFrame(tick)}
+  function processCamera(){if(mode!=='camera'||!stream||video.readyState<2||win||paused||expired)return;detected=detectPapers();statusFrom(detected);drawStage()}
+  function tick(){
+    if(started&&!win&&!paused&&!expired){
+      $('timer').textContent=clockText();
+      if(timeLimit&&remainingRound()<=0)timeUp();
+    }
+    if(mode==='demo'&&!win&&!paused&&!expired){statusFrom(demo);drawStage();}
+    requestAnimationFrame(tick);
+  }
   function point(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height}}
   canvas.addEventListener('pointerdown',e=>{if(mode!=='demo'||win)return;const p=point(e);let hit=-1,distance=Infinity;demo.forEach((d,i)=>{const dist=Math.hypot((p.x-d.x)*640,(p.y-d.y)*360);if(dist<65&&dist<distance){hit=i;distance=dist}});if(hit<0)return;dragging={index:hit,start:p,orig:{x:demo[hit].x,y:demo[hit].y},moved:false};canvas.setPointerCapture(e.pointerId)});
   canvas.addEventListener('pointermove',e=>{if(!dragging||mode!=='demo')return;const p=point(e),dx=p.x-dragging.start.x,dy=p.y-dragging.start.y;const d=demo[dragging.index];if(Math.hypot(dx*640,dy*360)>7)dragging.moved=true;d.x=Math.max(.05,Math.min(.95,dragging.orig.x+dx));d.y=Math.max(.08,Math.min(.92,dragging.orig.y+dy));holdStart=0;drawStage()});
   function endDrag(){if(!dragging)return;if(!dragging.moved)demo[dragging.index].vertical=!demo[dragging.index].vertical;dragging=null;holdStart=0;drawStage()}
   canvas.addEventListener('pointerup',endDrag);canvas.addEventListener('pointercancel',()=>{dragging=null});
+  $('pauseBtn').onclick=togglePause;
+  $('timeLimitSelect').onchange=e=>{timeLimit=Number(e.target.value);resetRound()};
   $('cameraBtn').onclick=openCamera;$('demoBtn').onclick=()=>switchMode('demo');$('stopBtn').onclick=()=>switchMode('idle');$('prevBtn').onclick=()=>changeLevel(levelIndex-1);$('nextBtn').onclick=()=>changeLevel(levelIndex+1);$('restartBtn').onclick=resetRound;$('successNext').onclick=()=>changeLevel(levelIndex===LEVELS.length-1?0:levelIndex+1);
   if(window.PipeMastersAndroid){$('apkDownloadLink').hidden=true;}
   $('checkUpdatesBtn').onclick=()=>{if(window.PipeMastersAndroid?.checkForUpdates){$('updateNote').textContent='Checking GitHub for the latest game…';window.PipeMastersAndroid.checkForUpdates();}else{location.reload();}};
@@ -319,7 +376,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   const setGuides=val=>{guides=val;$('guidesSelect').checked=val;$('guideBtn').textContent=`◎ Guides: ${val?'On':'Off'}`;drawStage()};$('guidesSelect').onchange=e=>setGuides(e.target.checked);$('guideBtn').onclick=()=>setGuides(!guides);
   $('fullscreenBtn').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen?.();else document.documentElement.requestFullscreen?.()};
   window.addEventListener('pagehide',()=>stopCamera());
-  drawPuzzle();updateStatus('Waiting for your team','Start the camera or try the interactive demo.',false);requestAnimationFrame(tick);
+  resetRound();requestAnimationFrame(tick);
   </script>
 </body>
 </html>
