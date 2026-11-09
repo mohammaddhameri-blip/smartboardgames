@@ -20,6 +20,83 @@
     .footnote{padding:15px 5px;color:#91a9ba;font-size:12px;text-align:center}.dialog{border:1px solid #3a5d72;border-radius:20px;background:#142435;color:#f0f9fe;padding:24px;width:min(470px,calc(100vw - 30px));box-shadow:0 30px 90px #0009}.dialog::backdrop{background:#030b12bd}.dialog h2{margin:0 0 7px}.dialog p{color:#a9c0d0;margin:0 0 16px}.field{display:flex;flex-direction:column;gap:6px;margin:14px 0;color:#ccdde7;font-weight:750}.field select{padding:10px;border-radius:9px;border:1px solid #527082;background:#263b4a;color:white}.switch{display:flex;gap:9px;align-items:center;margin:12px 0}.switch input{width:18px;height:18px;accent-color:#38c5e8}.dialogmenu{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}.successbanner{position:absolute;inset:0;background:#062437db;color:white;display:none;place-content:center;text-align:center;gap:8px;backdrop-filter:blur(4px)}.successbanner.show{display:grid}.successbanner .star{font-size:55px}.successbanner b{font-size:36px}.successbanner p{margin:0;color:#bce6f4}.successbanner button{margin:auto;margin-top:12px;min-width:180px}
     @media(max-width:1050px){.layout{grid-template-columns:1fr}.stagebox{max-width:770px;margin:0 auto}.panelhead{padding:12px 15px}.boardwrap{padding:9px}}@media(max-width:550px){header{margin-bottom:12px}.brandmark{width:43px;height:43px}.header-right{width:100%;justify-content:space-between}.panel{border-radius:13px}.layout{gap:11px}.timer{font-size:22px}.panelhead h2{font-size:16px}.boardfooter{padding:0 10px 10px}.subhead{font-size:10px}.controls .btn,.controlrow .btn{font-size:13px;padding:8px 9px}.scoreline{gap:6px}.pill{font-size:11px}}
     @media(prefers-reduced-motion:reduce){.board .waterline{animation:none}.btn{transition:none}}
+
+/* v0.3 — Pinball-style split: large playfield left, webcam + HUD right */
+html,body{height:100%;width:100%;overflow:hidden}
+body{background:#091521}
+.shell{height:100dvh;width:100%;max-width:none;padding:9px;margin:0;overflow:hidden}
+.layout{height:100%;display:grid;grid-template-columns:minmax(0,1fr) clamp(315px,26vw,440px);gap:10px}
+.panel{border-radius:13px;box-shadow:none}
+.puzzle-panel{position:relative;min-height:0;display:flex;flex-direction:column;background:#eff5f4;border:2px solid #385468}
+.boardwrap{flex:1;min-height:0;position:relative;padding:0}
+.board{display:block;width:100%;height:100%;aspect-ratio:auto;border:0;border-radius:0;background:#eff5f4}
+.board .gridline{display:none}
+.board .pipeOutline{stroke-width:25}
+.board .pipeInside{stroke-width:17}
+.board .guide{stroke-dasharray:25 14}
+.board .guideback{stroke-dasharray:25 14}
+.playfield-title{position:absolute;z-index:2;left:15px;top:12px;padding:7px 12px;border-radius:8px;border:1px solid #d8e5e9;background:#f1f7f7e8;color:#234959;pointer-events:none}
+.arcade-title{font-size:clamp(14px,1.3vw,20px);font-weight:950;letter-spacing:.08em}
+.arcade-title span{font-size:10px;opacity:.6;letter-spacing:0}
+.playfield-level{display:flex;gap:7px;align-items:center;flex-wrap:wrap;font-size:clamp(11px,.85vw,14px)}
+.playfield-level span{color:#287e9b;font-weight:850}
+.playfield-level strong{color:#536b76}
+.boardfooter{position:absolute;bottom:10px;left:12px;right:12px;padding:7px 10px;border-radius:9px;border:1px solid #d2e4e7;background:#eaf3f3eb;gap:10px}
+.boardfooter .pieces{color:#506875}
+.sidebar{display:flex;flex-direction:column;gap:9px;min-height:0;height:100%}
+.camera-panel{flex:none;min-height:0}
+.panelhead.camera-heading{padding:8px 10px;min-height:43px;gap:6px}
+.camera-heading-text{display:flex;flex-direction:column;gap:1px;min-width:0}
+.camera-heading-text strong{font-size:13px;letter-spacing:.09em;font-weight:950}
+.camera-heading-text .muted{font-size:11px;line-height:1.2}
+.camera-heading .pill{padding:5px 7px;font-size:10px;white-space:nowrap}
+.camera-panel .stagebox{padding:7px}
+.camera-panel .stage{aspect-ratio:16/9;border-radius:8px}
+.placeholder{gap:4px;padding:9px}.placeholder .camera-icon{font-size:23px}.placeholder b{font-size:14px}.placeholder span:last-child{font-size:11px}
+.cameraTag{padding:4px 7px;font-size:10px;top:6px;left:6px}
+.hud-panel{flex:1;min-height:0;display:flex;flex-direction:column;gap:7px;overflow:auto;padding:10px}
+.hud-heading{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:13px;font-weight:950;letter-spacing:.09em}
+.hud-dot{font-size:10px;color:#83c7cf;letter-spacing:0}
+.hud-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.hud-stat{background:#0c1c2b;border:1px solid #345064;border-radius:8px;padding:7px 9px;display:flex;flex-direction:column;gap:2px}
+.hud-stat>span{color:#a2b9c8;font-size:10px;letter-spacing:.12em;font-weight:850}
+.hud-stat strong{font-size:clamp(16px,1.7vw,24px);line-height:1.1;font-weight:950;font-variant-numeric:tabular-nums}
+.hud-stat.time-stat strong{color:#78dcf6}
+.hud-panel .status{padding:7px 9px;border-radius:8px;background:#192d3b;border:1px solid #334d5c}
+.hud-panel .bigstatus{font-size:clamp(13px,1.1vw,17px);min-height:0}
+.hud-panel .hint{min-height:0;font-size:11px;line-height:1.25;margin-top:3px}
+.hud-panel .meter{margin-top:6px;height:6px}
+.hud-panel .controls{padding:0;display:grid;gap:6px}
+.camera-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+.game-controls{grid-template-columns:repeat(3,minmax(0,1fr))}
+.navigation-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+.hud-panel .btn{padding:6px 7px;min-height:36px;font-size:clamp(11px,.9vw,14px);border-radius:8px}
+.hud-footer{display:flex;justify-content:space-between;gap:6px;margin-top:auto}
+.hud-footer .btn{font-size:11px;min-height:30px}
+.pausecover{position:absolute;inset:0;background:#061929c9;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#fff}
+.pausecover[hidden]{display:none}
+.pausecover span{font-size:42px}.pausecover strong{font-size:40px;letter-spacing:.18em}.pausecover small{color:#d0e6ed}
+.successbanner{z-index:7}
+.dialog{max-height:90dvh;overflow:auto}
+@media(max-width:850px) and (orientation:landscape){
+.shell{padding:5px}.layout{grid-template-columns:minmax(0,1fr) 36vw;gap:6px}.sidebar{gap:5px}
+.panelhead.camera-heading{padding:4px 7px;min-height:29px}.camera-panel .stagebox{padding:4px}
+.hud-panel{padding:5px;gap:4px}.hud-heading{display:none}.hud-stats{gap:4px}.hud-stat{padding:4px 5px}
+.hud-stat strong{font-size:15px}.hud-stat>span{font-size:9px}.hud-panel .status{padding:4px 6px}
+.hud-panel .bigstatus{font-size:11px}.hud-panel .hint{font-size:10px}
+.hud-panel .btn{min-height:27px;font-size:10px;padding:3px 5px}.hud-footer .btn{min-height:25px}
+.playfield-title{top:5px;left:5px;padding:4px 6px}.boardfooter{bottom:5px;left:5px;right:5px;padding:4px 6px}
+}
+@media(orientation:portrait){
+html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-height:100dvh;overflow:visible}
+.layout{height:auto;display:flex;flex-direction:column}.puzzle-panel{height:auto;min-height:350px}
+.boardwrap{min-height:320px}.board{height:auto;aspect-ratio:5/3}.boardfooter{position:static;margin:0 8px 8px}
+.sidebar{height:auto}.hud-panel{min-height:430px;overflow:visible}
+}
+@media(max-height:560px) and (orientation:landscape){
+.hud-panel{gap:3px;padding:5px}.hud-heading{display:none}.camera-panel .stage{aspect-ratio:2/1}
+.hud-stat{padding:3px 6px}.hud-panel .status{padding:3px 6px}.hud-panel .btn{min-height:25px}
+}
   </style>
 </head>
 <body>
