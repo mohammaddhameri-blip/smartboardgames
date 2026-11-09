@@ -1,5 +1,13 @@
 [
   {
+    "name": "Pipe Masters",
+    "description": "Team up with coloured paper strips to complete a pipeline using a webcam.",
+    "category": "Teamwork",
+    "icon": "🧩",
+    "path": "pipe-masters/",
+    "published": true
+  },
+  {
     "name": "BoatBeats",
     "description": "Race your boat by clapping along with musical beats.",
     "category": "Music",
