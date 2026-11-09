@@ -1,0 +1,41 @@
+{
+  "id": "/smartboardgames/stem-battleship/",
+  "name": "STEM BATTLESHIP by MrDhameri",
+  "short_name": "STEM Battleship",
+  "description": "Cross-platform STEM Battleship: Play vs bot, Same Device, or online matches with configurable subjects, levels and naval combat.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#030f21",
+  "theme_color": "#05192f",
+  "orientation": "any",
+  "categories": [
+    "games",
+    "education"
+  ],
+  "lang": "en",
+  "icons": [
+    {
+      "src": "./icons/steam-battleship.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/mohammaddhameri-blip/stem-battleship/main/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/mohammaddhameri-blip/stem-battleship/main/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
