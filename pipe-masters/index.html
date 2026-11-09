@@ -26,7 +26,7 @@
   <div class="shell">
     <header>
       <div class="brandmark" aria-hidden="true">🧩</div>
-      <div class="brand"><strong>PIPE MASTERS</strong><small>TEAMWORK CHALLENGE · PROTOTYPE v0.1</small></div>
+      <div class="brand"><strong>PIPE MASTERS</strong><small>TEAMWORK CHALLENGE · PROTOTYPE v0.2</small></div>
       <div class="header-right">
         <span class="pill" id="cameraState">● CAMERA OFF</span>
         <button class="btn small ghost" id="fullscreenBtn" type="button">⛶ Fullscreen</button>
@@ -79,7 +79,7 @@
         <div class="controlrow"><button class="btn ghost" id="guideBtn" type="button">◎ Guides: On</button><span class="muted" style="align-self:center;flex:2">Demo: drag to move, tap to rotate.</span></div>
       </section>
     </main>
-    <div class="footnote">Local camera processing only · No video is recorded or uploaded · Use HTTPS or localhost for camera access</div>
+    <div class="footnote">Local camera processing only · No video is recorded or uploaded · Camera access requires HTTPS on the web · Android uses a secure local origin</div>
   </div>
   <dialog id="settingsDialog" class="dialog" aria-label="Game settings">
     <h2>Camera settings</h2><p>Adjust detection for your classroom.</p>
@@ -88,6 +88,12 @@
     <label class="switch"><input id="mirrorSelect" type="checkbox" checked> Mirror camera preview</label>
     <label class="switch"><input id="guidesSelect" type="checkbox" checked> Show target guides in camera view</label>
     <p class="muted">Use evenly lit A4 coloured paper. Grey can be difficult to distinguish from clothing; use an uncluttered background.</p>
+    <div style="border-top:1px solid #334f61;padding-top:12px;margin-top:12px">
+      <b>Game updates</b>
+      <p class="muted" style="margin:5px 0 11px">The browser and Android game use the same updates. Android checks automatically when opened and keeps a saved version for offline play.</p>
+      <button class="btn small" type="button" id="checkUpdatesBtn">↻ Check for latest version</button>
+      <p class="muted" id="updateNote" style="margin-top:8px">On the web, this reloads the game. In the Android app, it checks GitHub for new gameplay code.</p>
+    </div>
     <div class="dialogmenu"><button class="btn primary" id="settingsClose" type="button">Done</button></div>
   </dialog>
   <script>
@@ -228,6 +234,7 @@
   function endDrag(){if(!dragging)return;if(!dragging.moved)demo[dragging.index].vertical=!demo[dragging.index].vertical;dragging=null;holdStart=0;drawStage()}
   canvas.addEventListener('pointerup',endDrag);canvas.addEventListener('pointercancel',()=>{dragging=null});
   $('cameraBtn').onclick=openCamera;$('demoBtn').onclick=()=>switchMode('demo');$('stopBtn').onclick=()=>switchMode('idle');$('prevBtn').onclick=()=>changeLevel(levelIndex-1);$('nextBtn').onclick=()=>changeLevel(levelIndex+1);$('restartBtn').onclick=resetRound;$('successNext').onclick=()=>changeLevel(levelIndex===LEVELS.length-1?0:levelIndex+1);
+  $('checkUpdatesBtn').onclick=()=>{if(window.PipeMastersAndroid?.checkForUpdates){$('updateNote').textContent='Checking GitHub for the latest game…';window.PipeMastersAndroid.checkForUpdates();}else{location.reload();}};
   $('settingsBtn').onclick=()=>{$('settingsDialog').showModal();refreshCameras()};$('settingsClose').onclick=()=>$('settingsDialog').close();$('cameraSelect').onchange=e=>{chosenDevice=e.target.value;if(mode==='camera')openCamera()};
   $('toleranceSelect').onchange=e=>{tolerance=Number(e.target.value);holdStart=0};$('mirrorSelect').onchange=e=>{mirrored=e.target.checked;video.style.transform=mirrored?'scaleX(-1)':'none';holdStart=0};
   const setGuides=val=>{guides=val;$('guidesSelect').checked=val;$('guideBtn').textContent=`◎ Guides: ${val?'On':'Off'}`;drawStage()};$('guidesSelect').onchange=e=>setGuides(e.target.checked);$('guideBtn').onclick=()=>setGuides(!guides);
