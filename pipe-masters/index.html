@@ -535,6 +535,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   }
   async function openCamera(){
     const hadRound=mode!=='idle'&&!!started&&!expired&&!win;
+    if(hadRound)freezeTracking();
     if(phoneChannel)disconnectPhone();
     stopCamera(false);stopNativeCamera();
     try{
@@ -557,7 +558,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
       await refreshCameraSources();restoreTracking(hadRound);
       frameTimer=setInterval(processCamera,170);logCamera('camera-opened',{track:stream.getVideoTracks()[0]?.label||'camera'});
     }catch(error){
-      if(window.PipeMastersAndroid?.startNativeCamera&&!['NotAllowedError','SecurityError'].includes(error?.name)){
+      if(window.PipeMastersAndroid?.startNativeCamera){
         logCamera('web-camera-failed-trying-native',{name:error.name,message:error.message});
         startNativeCamera(hadRound);return;
       }
@@ -651,6 +652,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
     if(!$('phonePairDialog').open)$('phonePairDialog').showModal();
   }
   async function pairPhone(){
+    if(mode!=='idle'&&!win&&!expired)freezeTracking();
     disconnectPhone();phoneRoom=newRoomCode();showPhonePair();phoneStatus('Opening online pairing room…');
     if(!window.supabase?.createClient){phoneStatus('Internet required for this pairing method. Pairing library did not load.');return}
     try{
@@ -715,7 +717,10 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   $('cameraBtn').onclick=openCamera;
   $('pairPhoneBtn').onclick=pairPhone;
   $('newPhoneCodeBtn').onclick=pairPhone;
-  $('phonePairClose').onclick=()=>$('phonePairDialog').close();
+  $('phonePairClose').onclick=()=>{
+    $('phonePairDialog').close();
+    if(recoveryPaused&&((mode==='camera'&&stream)||(mode==='native'&&nativeImage)))restoreTracking(true);
+  };
   $('cameraPairBtn').onclick=()=>{$('cameraRecoveryDialog').close();pairPhone()};
   $('cameraRetryBtn').onclick=()=>{$('cameraRecoveryDialog').close();openCamera()};
   $('cameraDismissBtn').onclick=()=>$('cameraRecoveryDialog').close();
