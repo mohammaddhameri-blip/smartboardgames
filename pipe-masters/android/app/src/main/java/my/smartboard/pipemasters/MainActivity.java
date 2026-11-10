@@ -7,6 +7,26 @@ import android.content.pm.PackageManager;
 import android.content.Intent;
 import android.provider.Settings;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.os.HandlerThread;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
+import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.Image;
+import android.media.ImageReader;
+import android.util.Base64;
+import android.util.Size;
+import android.view.Surface;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.nio.ByteBuffer;
+import java.io.OutputStream;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -46,6 +66,7 @@ public final class MainActivity extends Activity {
     private static final String UPDATE_URL = "https://raw.githubusercontent.com/mohammaddhameri-blip/smartboardgames/main/pipe-masters/index.html";
     private static final int CAMERA_REQUEST = 1104;
     private static final int CAMERA_PREFLIGHT_REQUEST = 1105;
+    private static final int REPORT_EXPORT_REQUEST = 1106;
     private static final int MAX_GAME_BYTES = 900_000;
 
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -55,6 +76,14 @@ public final class MainActivity extends Activity {
     private PermissionRequest pending;
     private boolean nativeCameraPreflightPending = false;
     private volatile boolean updating = false;
+    private String pendingBugReport;
+    private CameraDevice nativeCamera;
+    private CameraCaptureSession nativeSession;
+    private ImageReader nativeReader;
+    private HandlerThread cameraThread;
+    private Handler cameraHandler;
+    private volatile boolean nativeRequested = false;
+    private long lastNativeFrame = 0;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -255,6 +284,178 @@ public final class MainActivity extends Activity {
         });
     }
 
+
+    private void script(String js) {
+        main.post(() -> { if(view!=null)view.evaluateJavascript(js,null); });
+    }
+    private void nativeCameraError(String reason) {
+        script("window.pipeMastersNativeCameraError && window.pipeMastersNativeCameraError("+JSONObject.quote(reason)+");");
+        main.post(this::stopNativeCameraInternal);
+    }
+    @SuppressLint("MissingPermission")
+    private void startNativeCameraInternal(String preferred) {
+        stopNativeCameraInternal();
+        if(Build.VERSION.SDK_INT>=23 && checkSelfPermission(Manifest.permission.CAMERA)!=PackageManager.PERMISSION_GRANTED){
+            nativeCameraError("Android Camera permission is not granted.");return;
+        }
+        try {
+            CameraManager manager=(CameraManager)getSystemService(CAMERA_SERVICE);
+            if(manager==null)throw new IOException("Android CameraManager unavailable.");
+            String[] all=manager.getCameraIdList();
+            if(all.length==0)throw new IOException("No camera exposed through Android Camera2.");
+            String chosen=null;
+            for(String id:all){
+                Integer facing=manager.getCameraCharacteristics(id).get(CameraCharacteristics.LENS_FACING);
+                if("external".equals(preferred)&&facing!=null&&facing==CameraCharacteristics.LENS_FACING_EXTERNAL){chosen=id;break;}
+                if(!"external".equals(preferred)&&facing!=null&&facing==CameraCharacteristics.LENS_FACING_FRONT){chosen=id;break;}
+            }
+            if(chosen==null){
+                if("external".equals(preferred))throw new IOException("No external camera exposed through Android Camera2.");
+                chosen=all[0];
+            }
+            CameraCharacteristics characteristics=manager.getCameraCharacteristics(chosen);
+            StreamConfigurationMap map=characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            Size[] sizes=map==null?null:map.getOutputSizes(ImageFormat.YUV_420_888);
+            if(sizes==null||sizes.length==0)throw new IOException("Camera cannot provide YUV video frames.");
+            Size picked=sizes[0];int best=Integer.MAX_VALUE;
+            for(Size size:sizes){
+                int cost=Math.abs(size.getWidth()-640)+Math.abs(size.getHeight()-480);
+                if(size.getWidth()<320||size.getHeight()<240)cost+=100000;
+                if(cost<best){best=cost;picked=size;}
+            }
+            nativeReader=ImageReader.newInstance(picked.getWidth(),picked.getHeight(),ImageFormat.YUV_420_888,2);
+            cameraThread=new HandlerThread("PipeMastersCamera2");cameraThread.start();
+            cameraHandler=new Handler(cameraThread.getLooper());
+            nativeRequested=true;lastNativeFrame=0;
+            nativeReader.setOnImageAvailableListener(reader->{
+                Image frame=null;
+                try{
+                    frame=reader.acquireLatestImage();
+                    if(frame==null||!nativeRequested)return;
+                    long now=SystemClock.elapsedRealtime();
+                    if(now-lastNativeFrame<180)return;
+                    lastNativeFrame=now;
+                    byte[] jpeg=compressYuv(frame);
+                    if(jpeg.length>0&&jpeg.length<140000&&nativeRequested){
+                        String encoded=Base64.encodeToString(jpeg,Base64.NO_WRAP);
+                        script("window.pipeMastersNativeFrame && window.pipeMastersNativeFrame("+
+                            JSONObject.quote("data:image/jpeg;base64,"+encoded)+");");
+                    }
+                }catch(Exception ignored){/* Skip invalid image; next frame may succeed. */}
+                finally{if(frame!=null)frame.close();}
+            },cameraHandler);
+            manager.openCamera(chosen,new CameraDevice.StateCallback(){
+                @Override public void onOpened(CameraDevice camera){
+                    if(!nativeRequested){camera.close();return;}
+                    nativeCamera=camera;
+                    try{
+                        Surface output=nativeReader.getSurface();
+                        CaptureRequest.Builder capture=camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                        capture.addTarget(output);
+                        camera.createCaptureSession(Arrays.asList(output),new CameraCaptureSession.StateCallback(){
+                            @Override public void onConfigured(CameraCaptureSession session){
+                                if(!nativeRequested){session.close();return;}
+                                nativeSession=session;
+                                try{
+                                    session.setRepeatingRequest(capture.build(),null,cameraHandler);
+                                    script("window.pipeMastersNativeCameraStarted && window.pipeMastersNativeCameraStarted();");
+                                }catch(Exception e){nativeCameraError("Could not start native camera frames: "+e.getMessage());}
+                            }
+                            @Override public void onConfigureFailed(CameraCaptureSession session){
+                                nativeCameraError("Native camera stream configuration failed.");
+                            }
+                        },cameraHandler);
+                    }catch(Exception e){nativeCameraError("Native camera session failed: "+e.getMessage());}
+                }
+                @Override public void onDisconnected(CameraDevice camera){
+                    camera.close();nativeCameraError("Native camera disconnected or is in use.");
+                }
+                @Override public void onError(CameraDevice camera,int error){
+                    camera.close();nativeCameraError("Android Camera2 error code "+error);
+                }
+            },cameraHandler);
+        }catch(Exception e){nativeCameraError("Could not open Android Camera2: "+e.getMessage());}
+    }
+    private static byte[] compressYuv(Image image)throws IOException{
+        int width=image.getWidth(),height=image.getHeight();
+        Image.Plane[] planes=image.getPlanes();
+        if(planes.length<3)throw new IOException("Unsupported YUV frame.");
+        byte[] nv21=new byte[width*height*3/2];
+        ByteBuffer y=planes[0].getBuffer(),u=planes[1].getBuffer(),v=planes[2].getBuffer();
+        int offset=0;
+        for(int row=0;row<height;row++){
+            int base=row*planes[0].getRowStride();
+            for(int col=0;col<width;col++)
+                nv21[offset++]=y.get(base+col*planes[0].getPixelStride());
+        }
+        for(int row=0;row<height/2;row++){
+            int uBase=row*planes[1].getRowStride(),vBase=row*planes[2].getRowStride();
+            for(int col=0;col<width/2;col++){
+                nv21[offset++]=v.get(vBase+col*planes[2].getPixelStride());
+                nv21[offset++]=u.get(uBase+col*planes[1].getPixelStride());
+            }
+        }
+        ByteArrayOutputStream out=new ByteArrayOutputStream(30000);
+        if(!new YuvImage(nv21,ImageFormat.NV21,width,height,null).compressToJpeg(
+            new Rect(0,0,width,height),65,out))throw new IOException("JPEG compression failed.");
+        return out.toByteArray();
+    }
+    private void stopNativeCameraInternal(){
+        nativeRequested=false;
+        if(nativeSession!=null){try{nativeSession.stopRepeating();}catch(Exception ignored){}
+            nativeSession.close();nativeSession=null;}
+        if(nativeCamera!=null){nativeCamera.close();nativeCamera=null;}
+        if(nativeReader!=null){nativeReader.close();nativeReader=null;}
+        if(cameraThread!=null){cameraThread.quitSafely();cameraThread=null;cameraHandler=null;}
+    }
+    private String getNativeCameraDiagnostics(){
+        JSONObject report=new JSONObject();
+        try{
+            report.put("model",Build.MANUFACTURER+" "+Build.MODEL);
+            report.put("androidVersion",Build.VERSION.RELEASE);
+            report.put("sdk",Build.VERSION.SDK_INT);
+            report.put("cameraPermission",Build.VERSION.SDK_INT<23||
+                checkSelfPermission(Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED);
+            report.put("nativeCameraActive",nativeRequested);
+            CameraManager manager=(CameraManager)getSystemService(CAMERA_SERVICE);
+            JSONArray cameras=new JSONArray();
+            if(manager!=null)for(String id:manager.getCameraIdList()){
+                JSONObject cam=new JSONObject();cam.put("id",id);
+                Integer facing=manager.getCameraCharacteristics(id).get(CameraCharacteristics.LENS_FACING);
+                cam.put("facing",facing==null?"unknown":facing==CameraCharacteristics.LENS_FACING_FRONT?"front":
+                    facing==CameraCharacteristics.LENS_FACING_BACK?"back":
+                    facing==CameraCharacteristics.LENS_FACING_EXTERNAL?"external":"unknown");
+                cameras.put(cam);
+            }
+            report.put("cameras",cameras);
+        }catch(Exception e){try{report.put("diagnosticError",e.toString());}catch(Exception ignored){}}
+        return report.toString();
+    }
+    private void beginBugReportExport(String json){
+        if(json==null||json.length()>250000)return;
+        pendingBugReport=json;
+        try{
+            Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/json");
+            intent.putExtra(Intent.EXTRA_TITLE,"PipeMasters-camera-report.json");
+            startActivityForResult(intent,REPORT_EXPORT_REQUEST);
+        }catch(Exception e){
+            Toast.makeText(this,"Report picker unavailable: "+e.getMessage(),Toast.LENGTH_LONG).show();
+        }
+    }
+    @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
+        super.onActivityResult(requestCode,resultCode,data);
+        if(requestCode!=REPORT_EXPORT_REQUEST)return;
+        String report=pendingBugReport;pendingBugReport=null;
+        if(resultCode!=RESULT_OK||data==null||data.getData()==null||report==null)return;
+        try(OutputStream out=getContentResolver().openOutputStream(data.getData())){
+            if(out==null)throw new IOException("No output stream");
+            out.write(report.getBytes(StandardCharsets.UTF_8));
+            Toast.makeText(this,"Camera report saved.",Toast.LENGTH_SHORT).show();
+        }catch(Exception e){Toast.makeText(this,"Report save failed: "+e.getMessage(),Toast.LENGTH_LONG).show();}
+    }
+
     public final class GameBridge {
         @JavascriptInterface public void requestCameraPermission() {
             main.post(() -> preflightCameraPermission());
@@ -275,7 +476,17 @@ public final class MainActivity extends Activity {
                 }
             });
         }
-        @JavascriptInterface public String getAppVersion() { return "Android shell 0.4.0"; }
+        @JavascriptInterface public String getCameraDiagnostics() { return getNativeCameraDiagnostics(); }
+        @JavascriptInterface public void saveBugReport(String json) {
+            main.post(() -> beginBugReportExport(json));
+        }
+        @JavascriptInterface public void startNativeCamera(String preferred) {
+            main.post(() -> startNativeCameraInternal(preferred));
+        }
+        @JavascriptInterface public void stopNativeCamera() {
+            main.post(MainActivity.this::stopNativeCameraInternal);
+        }
+        @JavascriptInterface public String getAppVersion() { return "Android shell 0.5.0"; }
     }
 
     @Override public void onBackPressed() {
@@ -284,6 +495,7 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onDestroy() {
         if (pending != null) pending.deny();
+        stopNativeCameraInternal();
         io.shutdownNow();
         if (view != null) { view.loadUrl("about:blank"); view.destroy(); }
         super.onDestroy();
