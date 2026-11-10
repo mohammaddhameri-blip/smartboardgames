@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#101d2b">
-  <title>Pipe Masters — Team Challenge v0.5</title>
+  <title>Pipe Masters — Team Challenge v0.6</title>
   <style>
     :root{color-scheme:dark;--bg:#0b1622;--panel:#152434;--line:#2d4153;--muted:#9eafbd;--ink:#eef6fc;--accent:#4cc6f2;--green:#64dfad;--yellow:#f8bd58}
     *{box-sizing:border-box}body{margin:0;font:500 16px/1.45 system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at 80% 0,#1c3042,#0b1622 55%);color:var(--ink);min-height:100dvh}
@@ -103,13 +103,20 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   .hud-panel .status{padding:5px 7px}.hud-panel .btn{min-height:33px}
   .hud-footer .btn{min-height:27px}
 }
-  </style>
+  
+/* v0.6 — multiple camera sources, recovery dialog and privacy-friendly phone tracking */
+.stage.phone{background:#102c39}.stage.phone video{display:none}
+.dialog .paircode{font-size:30px;letter-spacing:.17em;font-weight:950;color:#76e2ff}
+.dialog .pairqr{display:flex;justify-content:center;background:#fff;padding:9px;border-radius:10px;width:fit-content;min-height:120px;margin:8px auto}
+.pairlink{overflow-wrap:anywhere;font-size:12px;color:#9ce7fc}
+.recovery-actions{display:flex;flex-wrap:wrap;gap:8px}.recovery-actions button{flex:1}
+</style>
 </head>
 <body>
   <div class="shell">
     <main class="layout" aria-label="Pipe Masters team challenge">
       <section class="panel puzzle-panel" aria-label="Pipeline puzzle">
-        <div class="playfield-title"><div class="arcade-title">PIPE MASTERS <span>v0.5</span></div>
+        <div class="playfield-title"><div class="arcade-title">PIPE MASTERS <span>v0.6</span></div>
           <div class="playfield-level"><span id="levelTag">LEVEL 1 / 5</span><strong id="levelTitle">First Flow</strong></div></div>
         <div class="boardwrap">
           <svg class="board" id="puzzle" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" aria-label="Pipeline with coloured missing sections" role="img"></svg>
@@ -143,7 +150,8 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
             <div class="meter" aria-label="Formation hold progress"><span id="holdBar"></span></div></div>
           <div class="controls camera-controls">
             <button class="btn primary" id="cameraBtn" type="button">📷 Selfie camera</button>
-            <button class="btn" id="demoBtn" type="button">✋ Demo</button>
+            <button class="btn" id="pairPhoneBtn" type="button">📱 Pair phone</button>
+             <button class="btn" id="demoBtn" type="button">✋ Demo</button>
             <button class="btn ghost" id="stopBtn" type="button" hidden>Stop</button>
           </div>
           <div class="controls game-controls">
@@ -165,7 +173,13 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   </div>
   <dialog id="settingsDialog" class="dialog" aria-label="Game settings">
     <h2>Game settings</h2><p>Adjust the timer and camera detection for your classroom.</p>
-    <div class="field"><strong>Camera source: front-facing (selfie)</strong><span class="muted">On Android, Pipe Masters prioritises the built-in selfie camera. No USB webcam is required.</span></div>
+    
+    <label class="field">Camera source
+      <select id="cameraSourceSelect"><option value="auto">Auto (built-in / front camera)</option></select>
+      <span class="muted">Select an internal camera, USB webcam or Android phone in USB webcam mode if recognised by this device.</span>
+    </label>
+    <button class="btn small" id="refreshCameraBtn" type="button">↻ Scan cameras</button>
+    <button class="btn small" id="downloadBugBtn" type="button">⬇ Download camera report</button>
     <button class="btn small" type="button" id="cameraPermissionsBtn" hidden>⚙ Android camera permission settings</button>
     <label class="field">Pupils / coloured dashes<select id="pupilCountSelect"><option value="12">12 pupils</option><option value="15">15 pupils</option><option value="18">18 pupils</option><option value="21" selected>21 pupils</option><option value="24">24 pupils</option><option value="27">27 pupils</option><option value="29">29 pupils</option><option value="30">30 pupils</option></select></label>
     <label class="field">Time per level<select id="timeLimitSelect"><option value="60">1 minute</option><option value="90">90 seconds</option><option value="120" selected>2 minutes</option><option value="180">3 minutes</option><option value="0">No time limit</option></select></label>
@@ -182,6 +196,32 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
     </div>
     <div class="dialogmenu"><button class="btn primary" id="settingsClose" type="button">Done</button></div>
   </dialog>
+  <dialog id="cameraRecoveryDialog" class="dialog" aria-label="Camera recovery">
+    <h2>📷 Camera unavailable</h2>
+    <p id="cameraFailureMessage">Camera access failed.</p>
+    <div class="recovery-actions">
+      <button class="btn primary" id="cameraRetryBtn" type="button">↻ Retry</button>
+      <button class="btn" id="cameraSwitchBtn" type="button">Select camera</button>
+      <button class="btn" id="cameraPairBtn" type="button">📱 Pair phone</button>
+      <button class="btn" id="cameraReportBtn" type="button">⬇ Bug report</button>
+    </div>
+    <div class="dialogmenu"><button class="btn ghost" id="cameraDismissBtn" type="button">Close</button></div>
+  </dialog>
+  <dialog id="phonePairDialog" class="dialog" aria-label="Pair an Android phone">
+    <h2>📱 Pair tracking phone</h2>
+    <p>Scan the code on your phone or open the phone page and enter this code.</p>
+    <div class="paircode" id="phoneRoom">—</div>
+    <div id="phoneQr" class="pairqr" aria-label="Phone pairing QR code"></div>
+    <a id="phoneLink" class="pairlink" target="_blank" rel="noopener noreferrer"></a>
+    <p class="muted" id="phonePairStatus">Connecting…</p>
+    <p class="muted">Online pairing requires internet on both devices. Only paper detection coordinates are transmitted — no pupil video.</p>
+    <div class="dialogmenu">
+      <button class="btn" id="newPhoneCodeBtn" type="button">New code</button>
+      <button class="btn primary" id="phonePairClose" type="button">Done</button>
+    </div>
+  </dialog>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script>
   'use strict';
   const COLORS={red:'#e24e52',cyan:'#16b7dc',green:'#42b66d',yellow:'#f0b829',purple:'#a877cd',grey:'#858d99',blue:'#3278e6',orange:'#e78c37'};
@@ -200,6 +240,11 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   let guides=true,mirrored=true,tolerance=.30;
   let detected=[], demo=[], dragging=null, best={};
   let timeLimit=120, paused=false, pauseStarted=0, pausedElapsed=0, expired=false, score=0;
+  let recoveryPaused=false,lastCameraFrame=0,phoneChannel=null,phoneClient=null,phoneRoom='',phoneLastSeen=0,phoneSeq=-1,phoneTimeout=0;
+  const cameraEvents=[];
+  const logCamera=(event,details={})=>{cameraEvents.push({at:new Date().toISOString(),event,details});if(cameraEvents.length>60)cameraEvents.shift()};
+  const PHONE_URL='https://mohammaddhameri-blip.github.io/smartboardgames/pipe-masters/phone.html';
+  const SB_URL='https://qekcgsfeomjckctiubgm.supabase.co',SB_KEY='sb_publishable_yJbCYOLDeMreuqM01g_oqA_eF5YEWwq';
   const scoredLevels=new Set();
   const elapsedRound=()=>started?Math.max(0,performance.now()-started-pausedElapsed-(paused?performance.now()-pauseStarted:0)):0;
   const remainingRound=()=>timeLimit?Math.max(0,timeLimit*1000-elapsedRound()):Infinity;
@@ -371,6 +416,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   }
   function markerSize(){const width=Math.max(18,Math.min(38,Math.round(810/(pupilCount+7))));return {w:width,h:Math.max(9,Math.round(width*.46))};}
   function drawStage(){const w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);if(mode==='idle')return;
+    if(mode==='phone'){ctx.fillStyle='#113445';ctx.fillRect(0,0,w,h);ctx.fillStyle='#8dc8df';ctx.font='bold 11px system-ui';ctx.fillText('PHONE DETECTION — NO VIDEO SENT',12,h-12)}
     const expected=targetPositions(), marker=markerSize();
     if(mode==='demo'){
       ctx.fillStyle='#d8e7e7';ctx.fillRect(0,0,w,h);
@@ -380,7 +426,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
     }
     if(guides)expected.forEach(e=>{
       const x=e.tx*w,y=e.ty*h;ctx.save();ctx.translate(x,y);if(e.vertical)ctx.rotate(Math.PI/2);
-      ctx.strokeStyle=COLORS[e.colour];ctx.globalAlpha=mode==='camera'?.74:.65;ctx.lineWidth=2;
+      ctx.strokeStyle=COLORS[e.colour];ctx.globalAlpha=(mode==='camera'||mode==='phone')?.74:.65;ctx.lineWidth=2;
       ctx.setLineDash([4,3]);ctx.strokeRect(-marker.w/2,-marker.h/2,marker.w,marker.h);ctx.setLineDash([]);
       ctx.fillStyle=COLORS[e.colour];ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillText(String(e.id),0,0);ctx.restore();
@@ -398,7 +444,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
         ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 9px system-ui';
         ctx.fillText(matched?.id||'',0,0);ctx.restore();
       });
-    }else if(mode==='camera'){
+    }else if(mode==='camera'||mode==='phone'){
       const r=evaluate(detected);
       detected.forEach(d=>{
         const x=d.x*w,y=d.y*h,matched=r.observations.get(d);
@@ -410,11 +456,11 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
       });
     }
   }
-  function switchMode(next){stopCamera(false);mode=next;$('stage').classList.toggle('idle',next==='idle');$('stage').classList.toggle('demo',next==='demo');$('cameraState').classList.toggle('online',next==='camera');
+  function switchMode(next){stopCamera(false);if(phoneChannel)disconnectPhone();mode=next;$('stage').classList.toggle('idle',next==='idle');$('stage').classList.toggle('demo',next==='demo');$('cameraState').classList.toggle('online',next==='camera');
     $('cameraState').textContent=next==='camera'?'● CAMERA LIVE':next==='demo'?'● DEMO MODE':'● CAMERA OFF';$('modeLabel').textContent=next==='camera'?'Live tracking':next==='demo'?'Interactive demo':'Choose a mode';$('cameraTag').textContent=next==='camera'?'LIVE CAMERA':next==='demo'?'DRAG + TAP TO ROTATE':'';
     $('stopBtn').hidden=next==='idle';$('cameraBtn').textContent=next==='camera'?'↻ Restart selfie':'📷 Selfie camera';resetRound();
   }
-  function stopCamera(keepMode=true){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}if(video.srcObject)video.srcObject=null;if(!keepMode)clearInterval(frameTimer);frameTimer=0;}
+  function stopCamera(keepMode=true){if(stream){stream.getTracks().forEach(t=>{t.onended=null;t.stop()});stream=null;}if(video.srcObject)video.srcObject=null;if(frameTimer)clearInterval(frameTimer);frameTimer=0;}
   function applyPreviewMirror(){
     const transform=mirrored?'scaleX(-1)':'none';
     video.style.transform=transform;
@@ -423,68 +469,82 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   function requestAndroidCameraPermission(){
     if(typeof window.PipeMastersAndroid?.requestCameraPermission!=='function')return Promise.resolve(true);
     return new Promise(resolve=>{
-      window.pipeMastersNativeCameraPermission=allowed=>{delete window.pipeMastersNativeCameraPermission;resolve(allowed===true)};
+      const timeout=setTimeout(()=>{delete window.pipeMastersNativeCameraPermission;resolve(false)},12000);
+      window.pipeMastersNativeCameraPermission=allowed=>{clearTimeout(timeout);delete window.pipeMastersNativeCameraPermission;resolve(allowed===true)};
       try{window.PipeMastersAndroid.requestCameraPermission()}
-      catch{delete window.pipeMastersNativeCameraPermission;resolve(false)}
+      catch{clearTimeout(timeout);delete window.pipeMastersNativeCameraPermission;resolve(false)}
     });
   }
-  async function acquireSelfieCamera(){
-    const media=navigator.mediaDevices;
-    const quality={width:{ideal:1280},height:{ideal:720},frameRate:{ideal:15,max:20}};
-    // Prefer Android's selfie camera rather than the default rear camera.
+  async function refreshCameraSources(){
+    const sel=$('cameraSourceSelect'),old=sel.value;
     try{
-      return await media.getUserMedia({audio:false,video:{...quality,facingMode:{exact:'user'}}});
-    }catch(error){
+      if(!navigator.mediaDevices?.enumerateDevices)throw Error('Camera enumeration unavailable');
+      const items=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput');
+      sel.innerHTML='<option value="auto">Auto (built-in / front camera)</option>';
+      for(let i=0;i<items.length;i++){
+        const opt=document.createElement('option');opt.value=items[i].deviceId;
+        opt.textContent=items[i].label||'Camera '+(i+1);sel.append(opt);
+      }
+      if([...sel.options].some(o=>o.value===old))sel.value=old;
+      logCamera('cameras-enumerated',{count:items.length,labels:items.map(d=>d.label||'Unlabelled')});
+    }catch(error){logCamera('enumeration-failed',{name:error.name,message:error.message})}
+  }
+  async function acquireSelectedCamera(){
+    const media=navigator.mediaDevices,source=$('cameraSourceSelect').value;
+    const quality={width:{ideal:1280},height:{ideal:720},frameRate:{ideal:15,max:20}};
+    if(source!=='auto')return media.getUserMedia({audio:false,video:{...quality,deviceId:{exact:source}}});
+    try{return await media.getUserMedia({audio:false,video:{...quality,facingMode:{exact:'user'}}})}
+    catch(error){
       if(!['OverconstrainedError','NotFoundError','TypeError'].includes(error?.name))throw error;
     }
-    // Some Android WebViews do not implement exact facingMode.
-    const devices=await media.enumerateDevices?.().catch(()=>[])||[];
-    const selfie=devices.find(device=>device.kind==='videoinput'&&/front|selfie|user-facing|user facing/i.test(device.label));
-    if(selfie){
-      return media.getUserMedia({audio:false,video:{...quality,deviceId:{exact:selfie.deviceId}}});
+    try{return await media.getUserMedia({audio:false,video:{...quality,facingMode:{ideal:'user'}}})}
+    catch(error){
+      if(!['OverconstrainedError','NotFoundError','TypeError'].includes(error?.name))throw error;
     }
-    const fallback=await media.getUserMedia({audio:false,video:{...quality,facingMode:{ideal:'user'}}});
-    const track=fallback.getVideoTracks()[0];
-    if(track&&(track.getSettings?.().facingMode==='environment'||/rear|back camera|environment/i.test(track.label||''))){
-      fallback.getTracks().forEach(t=>t.stop());
-      const error=new Error('No front-facing camera was found. Pipe Masters does not use the rear camera.');
-      error.name='NotFoundError';
-      throw error;
-    }
-    return fallback;
+    // IMAGO and USB cameras may have no facingMode; do not reject a valid generic camera.
+    return media.getUserMedia({audio:false,video:{width:{ideal:640},height:{ideal:360}}});
+  }
+  function freezeTracking(){
+    if(started&&!paused&&!expired&&!win){paused=true;recoveryPaused=true;pauseStarted=performance.now();holdStart=0;updatePauseUI()}
+  }
+  function restoreTracking(hadRound){
+    if(hadRound&&started&&!expired&&!win){
+      holdStart=0;
+      if(recoveryPaused){pausedElapsed+=performance.now()-pauseStarted;paused=false;recoveryPaused=false;updatePauseUI()}
+      $('holdBar').style.width='0%';
+      updateStatus('Camera reconnected','Continue with the same round and remaining time.',false);
+    }else{recoveryPaused=false;resetRound()}
+  }
+  function cameraFailure(error){
+    const name=String(error?.name||'CameraError'),message=String(error?.message||'Camera access could not be established.');
+    logCamera('camera-failed',{name,message,source:$('cameraSourceSelect').selectedOptions[0]?.textContent||'auto'});
+    freezeTracking();stopCamera(false);
+    $('cameraState').textContent='● CAMERA ERROR';$('cameraState').classList.remove('online');
+    $('modeLabel').textContent='Tracking interrupted';
+    updateStatus('Camera unavailable',name+': '+message,false);
+    $('cameraFailureMessage').textContent=name+': '+message+' You can retry, select another camera, pair a phone or download a diagnostic report.';
+    if(!$('cameraRecoveryDialog').open)$('cameraRecoveryDialog').showModal();
   }
   async function openCamera(){
+    const hadRound=mode!=='idle'&&!!started&&!expired&&!win;
+    if(phoneChannel)disconnectPhone();
     stopCamera(false);
     try{
-      updateStatus('Starting selfie camera…','Android will ask for camera permission if needed.',false);
-      if(!await requestAndroidCameraPermission()){
-        switchMode('idle');
-        updateStatus('Camera permission denied','Enable Camera in Android Settings → Apps → Pipe Masters → Permissions. Also enable the system Camera access switch.',false);
-        return;
-      }
-      if(!navigator.mediaDevices?.getUserMedia){
-        switchMode('idle');
-        updateStatus('Camera unavailable','On Android, update Android System WebView and allow camera access. In browsers, open the secure HTTPS game link.',false);
-        return;
-      }
-      stream=await acquireSelfieCamera();
-      video.srcObject=stream;
-      await video.play();
+      updateStatus('Opening camera…','Checking permissions and available camera sources.',false);
+      if(!await requestAndroidCameraPermission())throw Object.assign(new Error('Android app camera permission not granted or request timed out.'),{name:'NotAllowedError'});
+      if(!navigator.mediaDevices?.getUserMedia)throw Object.assign(new Error('Camera API unavailable. Use HTTPS or the Android APK.'),{name:'NotSupportedError'});
+      stream=await acquireSelectedCamera();
+      video.srcObject=stream;await video.play();
+      stream.getVideoTracks().forEach(track=>{track.onended=()=>cameraFailure(Object.assign(new Error('Camera disconnected or taken by another app.'),{name:'NotReadableError'}))});
       mode='camera';$('stage').className='stage';
-      $('cameraState').textContent='● SELFIE LIVE';$('cameraState').classList.add('online');
-      $('modeLabel').textContent='Front camera tracking';$('cameraTag').textContent='FRONT CAMERA';
-      $('stopBtn').hidden=false;$('cameraBtn').textContent='↻ Restart selfie';
-      applyPreviewMirror();resetRound();frameTimer=setInterval(processCamera,170);
-    }catch(err){
-      stopCamera();mode='idle';$('stage').className='stage idle';
-      $('cameraState').textContent='● CAMERA OFF';$('cameraState').classList.remove('online');
-      $('modeLabel').textContent='Selfie camera';$('stopBtn').hidden=true;
-      $('cameraBtn').textContent='📷 Selfie camera';$('cameraTag').textContent='';
-      const blocked=err?.name==='NotAllowedError'||err?.name==='SecurityError';
-      updateStatus(blocked?'Camera permission blocked':'Could not start selfie camera',
-        blocked?'Allow Camera for Pipe Masters in Android Settings and check the system-wide Camera access switch. Restart the app after changing permission.':
-        `${err?.name||'Error'}: ${err?.message||'The selfie camera could not be opened.'}`,false);
-    }
+      $('cameraState').textContent='● CAMERA LIVE';$('cameraState').classList.add('online');
+      $('modeLabel').textContent='Local camera tracking';$('cameraTag').textContent='LIVE CAMERA';
+      $('stopBtn').hidden=false;$('cameraBtn').textContent='↻ Restart camera';
+      applyPreviewMirror();lastCameraFrame=performance.now();
+      if($('cameraRecoveryDialog').open)$('cameraRecoveryDialog').close();
+      await refreshCameraSources();restoreTracking(hadRound);
+      frameTimer=setInterval(processCamera,170);logCamera('camera-opened',{track:stream.getVideoTracks()[0]?.label||'camera'});
+    }catch(error){cameraFailure(error)}
   }
   function detectPapers(){const W=off.width,H=off.height,N=W*H;try{octx.drawImage(video,0,0,W,H)}catch{return []}let pix;try{pix=octx.getImageData(0,0,W,H).data}catch{return []}
     const label=new Uint8Array(N),names=['','red','yellow','green','cyan','purple','grey','blue','orange'];const accepted=new Set(segmentData().map(d=>d.colour));
@@ -506,14 +566,90 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
     // Keep separate cards even when pupils share a colour, instead of only the biggest one.
     return components.sort((a,b)=>b.count-a.count).slice(0,pupilCount*3);
   }
-  function processCamera(){if(mode!=='camera'||!stream||video.readyState<2||win||paused||expired)return;detected=detectPapers();statusFrom(detected);drawStage()}
+  function processCamera(){
+    if(mode!=='camera'||!stream||win||paused||expired)return;
+    if(video.readyState<2){if(performance.now()-lastCameraFrame>6000)cameraFailure(Object.assign(new Error('Camera stopped producing frames.'),{name:'NotReadableError'}));return}
+    lastCameraFrame=performance.now();detected=detectPapers();statusFrom(detected);drawStage();
+  }
   function tick(){
     if(started&&!win&&!paused&&!expired){
       $('timer').textContent=clockText();
       if(timeLimit&&remainingRound()<=0)timeUp();
     }
     if(mode==='demo'&&!win&&!paused&&!expired){statusFrom(demo);drawStage();}
+    if(mode==='phone'&&!win&&!expired&&phoneLastSeen&&performance.now()-phoneLastSeen>6000){
+      phoneLastSeen=0;cameraFailure(Object.assign(new Error('The paired phone stopped sending tracking data. Check its camera and network.'),{name:'NetworkError'}));
+    }
     requestAnimationFrame(tick);
+  }
+  function newRoomCode(){const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',bytes=new Uint8Array(8);crypto.getRandomValues(bytes);return Array.from(bytes,b=>alphabet[b%alphabet.length]).join('')}
+  function phoneStatus(message){$('phonePairStatus').textContent=message;logCamera('phone-status',{message})}
+  function disconnectPhone(){
+    if(phoneTimeout){clearInterval(phoneTimeout);phoneTimeout=0}
+    if(phoneChannel&&phoneClient){const previous=phoneChannel;phoneChannel=null;phoneClient.removeChannel(previous).catch(()=>{})}
+    phoneLastSeen=0;phoneSeq=-1;
+  }
+  function showPhonePair(){
+    const url=PHONE_URL+'?room='+encodeURIComponent(phoneRoom);
+    $('phoneRoom').textContent=phoneRoom;$('phoneLink').href=url;$('phoneLink').textContent=url;
+    const qr=$('phoneQr');qr.textContent='';
+    if(window.QRCode)new QRCode(qr,{text:url,width:110,height:110,correctLevel:QRCode.CorrectLevel.M});
+    else{qr.textContent='QR unavailable — open the link on your phone.';qr.style.color='#152535'}
+    if(!$('phonePairDialog').open)$('phonePairDialog').showModal();
+  }
+  async function pairPhone(){
+    disconnectPhone();phoneRoom=newRoomCode();showPhonePair();phoneStatus('Opening online pairing room…');
+    if(!window.supabase?.createClient){phoneStatus('Internet required for this pairing method. Pairing library did not load.');return}
+    try{
+      phoneClient=phoneClient||window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+      const ch=phoneClient.channel('pipe-masters:camera:'+phoneRoom,{config:{private:false,broadcast:{ack:true}}});phoneChannel=ch;
+      ch.on('broadcast',{event:'phone-hello'},async()=>{
+        if(ch!==phoneChannel)return;phoneStatus('Phone connected. Start its camera.');
+        try{await ch.send({type:'broadcast',event:'host-ready',payload:{pupilCount,version:1}})}catch(error){logCamera('phone-reply-error',{message:error.message})}
+      }).on('broadcast',{event:'tracking'},({payload})=>{
+        if(ch!==phoneChannel||!Array.isArray(payload?.items)||payload.items.length>100)return;
+        const seq=Number(payload.seq);if(!Number.isInteger(seq)||seq<=phoneSeq)return;
+        const validColours=new Set(Object.keys(COLORS));
+        const items=payload.items.filter(d=>validColours.has(d?.colour)&&
+          [d.x,d.y,d.box?.x,d.box?.y,d.box?.w,d.box?.h].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=1)&&typeof d.vertical==='boolean')
+          .slice(0,pupilCount*3).map(d=>({colour:d.colour,x:d.x,y:d.y,vertical:d.vertical,box:d.box}));
+        const hadRound=mode!=='idle'&&!!started&&!expired&&!win;
+        phoneSeq=seq;phoneLastSeen=performance.now();
+        if(mode!=='phone'){
+          stopCamera(false);mode='phone';$('stage').className='stage phone';
+          $('cameraState').textContent='● PHONE LIVE';$('cameraState').classList.add('online');
+          $('modeLabel').textContent='Paired phone colour tracking';$('cameraTag').textContent='PHONE TRACKING';
+          $('stopBtn').hidden=false;
+          if($('cameraRecoveryDialog').open)$('cameraRecoveryDialog').close();
+          if($('phonePairDialog').open)$('phonePairDialog').close();
+          restoreTracking(hadRound);logCamera('phone-tracking-started');
+        }
+        detected=items;
+        if(!win&&!expired&&!paused)statusFrom(detected);
+        drawStage();
+      });
+      ch.subscribe(status=>{
+        if(ch!==phoneChannel)return;
+        if(status==='SUBSCRIBED')phoneStatus('Room ready. Scan QR or enter the code on your phone.');
+        else if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status))phoneStatus('Disconnected. Check internet and request a new code.');
+      });
+    }catch(error){phoneStatus('Pairing failed: '+String(error?.message||error))}
+  }
+  async function downloadCameraReport(){
+    const report={app:'Pipe Masters',version:'0.6',created:new Date().toISOString(),browser:navigator.userAgent,
+      secureContext:window.isSecureContext,origin:location.origin,mode,
+      cameraAPI:!!navigator.mediaDevices?.getUserMedia,selectedCamera:$('cameraSourceSelect').selectedOptions[0]?.textContent,
+      recentEvents:cameraEvents,android:null,permission:null,devices:[]};
+    try{report.permission=(await navigator.permissions.query({name:'camera'})).state}catch{report.permission='unavailable'}
+    try{report.devices=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput').map(d=>({kind:d.kind,label:d.label||'Unlabelled'}))}
+    catch(e){report.deviceError={name:e.name,message:e.message}}
+    try{if(window.PipeMastersAndroid?.getCameraDiagnostics)report.android=JSON.parse(window.PipeMastersAndroid.getCameraDiagnostics())}
+    catch(e){report.android={error:String(e)}}
+    const data=JSON.stringify(report,null,2);
+    if(window.PipeMastersAndroid?.saveBugReport){window.PipeMastersAndroid.saveBugReport(data);return}
+    const blob=new Blob([data],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='PipeMasters-camera-report-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
   }
   function point(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height}}
   canvas.addEventListener('pointerdown',e=>{if(mode!=='demo'||win)return;const p=point(e);let hit=-1,distance=Infinity;demo.forEach((d,i)=>{const dist=Math.hypot((p.x-d.x)*640,(p.y-d.y)*360);if(dist<65&&dist<distance){hit=i;distance=dist}});if(hit<0)return;dragging={index:hit,start:p,orig:{x:demo[hit].x,y:demo[hit].y},moved:false};canvas.setPointerCapture(e.pointerId)});
@@ -523,14 +659,27 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   $('pauseBtn').onclick=togglePause;
   $('timeLimitSelect').onchange=e=>{timeLimit=Number(e.target.value);resetRound()};
   $('pupilCountSelect').onchange=e=>{pupilCount=Number(e.target.value);scoredLevels.clear();score=0;resetRound()};
-  $('cameraBtn').onclick=openCamera;$('demoBtn').onclick=()=>switchMode('demo');$('stopBtn').onclick=()=>switchMode('idle');$('prevBtn').onclick=()=>changeLevel(levelIndex-1);$('nextBtn').onclick=()=>changeLevel(levelIndex+1);$('restartBtn').onclick=resetRound;$('successNext').onclick=()=>changeLevel(levelIndex===LEVELS.length-1?0:levelIndex+1);
+  $('cameraBtn').onclick=openCamera;
+  $('pairPhoneBtn').onclick=pairPhone;
+  $('newPhoneCodeBtn').onclick=pairPhone;
+  $('phonePairClose').onclick=()=>$('phonePairDialog').close();
+  $('cameraPairBtn').onclick=()=>{$('cameraRecoveryDialog').close();pairPhone()};
+  $('cameraRetryBtn').onclick=()=>{$('cameraRecoveryDialog').close();openCamera()};
+  $('cameraDismissBtn').onclick=()=>$('cameraRecoveryDialog').close();
+  $('cameraSwitchBtn').onclick=()=>{$('cameraRecoveryDialog').close();$('settingsDialog').showModal();refreshCameraSources()};
+  $('cameraReportBtn').onclick=downloadCameraReport;
+  $('downloadBugBtn').onclick=downloadCameraReport;
+  $('refreshCameraBtn').onclick=refreshCameraSources;
+  $('cameraSourceSelect').onchange=()=>{logCamera('camera-selected',{label:$('cameraSourceSelect').selectedOptions[0]?.textContent});if(mode==='camera'||recoveryPaused)openCamera()};
+  navigator.mediaDevices?.addEventListener?.('devicechange',refreshCameraSources);
+  refreshCameraSources();$('demoBtn').onclick=()=>switchMode('demo');$('stopBtn').onclick=()=>switchMode('idle');$('prevBtn').onclick=()=>changeLevel(levelIndex-1);$('nextBtn').onclick=()=>changeLevel(levelIndex+1);$('restartBtn').onclick=resetRound;$('successNext').onclick=()=>changeLevel(levelIndex===LEVELS.length-1?0:levelIndex+1);
   if(window.PipeMastersAndroid){$('apkDownloadLink').hidden=true;$('cameraPermissionsBtn').hidden=false;}
   $('checkUpdatesBtn').onclick=()=>{if(window.PipeMastersAndroid?.checkForUpdates){$('updateNote').textContent='Checking GitHub for the latest game…';window.PipeMastersAndroid.checkForUpdates();}else{location.reload();}};
   $('settingsBtn').onclick=()=>{if(mode!=='idle'&&!paused&&!win&&!expired)togglePause();$('settingsDialog').showModal()};$('settingsClose').onclick=()=>$('settingsDialog').close();$('cameraPermissionsBtn').onclick=()=>window.PipeMastersAndroid?.openCameraSettings?.();
   $('toleranceSelect').onchange=e=>{tolerance=Number(e.target.value);holdStart=0};$('mirrorSelect').onchange=e=>{mirrored=e.target.checked;applyPreviewMirror();holdStart=0};
   const setGuides=val=>{guides=val;$('guidesSelect').checked=val;$('guideBtn').textContent=`◎ Guides: ${val?'On':'Off'}`;drawStage()};$('guidesSelect').onchange=e=>setGuides(e.target.checked);$('guideBtn').onclick=()=>setGuides(!guides);
   $('fullscreenBtn').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen?.();else document.documentElement.requestFullscreen?.()};
-  window.addEventListener('pagehide',()=>stopCamera());
+  window.addEventListener('pagehide',()=>{stopCamera();disconnectPhone()});
   resetRound();requestAnimationFrame(tick);
   </script>
 </body>
