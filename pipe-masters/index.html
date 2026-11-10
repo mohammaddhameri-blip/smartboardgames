@@ -719,7 +719,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   $('newPhoneCodeBtn').onclick=pairPhone;
   $('phonePairClose').onclick=()=>{
     $('phonePairDialog').close();
-    if(recoveryPaused&&((mode==='camera'&&stream)||(mode==='native'&&nativeImage)))restoreTracking(true);
+    if(recoveryPaused&&((mode==='camera'&&stream)||(mode==='native'&&nativeImage)||mode==='demo'))restoreTracking(true);
   };
   $('cameraPairBtn').onclick=()=>{$('cameraRecoveryDialog').close();pairPhone()};
   $('cameraRetryBtn').onclick=()=>{$('cameraRecoveryDialog').close();openCamera()};
