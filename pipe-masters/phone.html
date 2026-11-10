@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1622"><title>Pipe Masters — Phone Tracking</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b1622;color:#f1faff;font:15px/1.5 system-ui,Arial,sans-serif}
+main{max-width:680px;margin:auto;padding:18px}h1{font-size:24px;margin:0 0 5px}p{color:#b8cbd9;margin:7px 0 15px}
+section{background:#172838;border:1px solid #39536a;border-radius:14px;padding:16px;margin:12px 0}button,input{font:inherit}
+button{background:#32b9db;border:0;border-radius:9px;padding:12px 14px;color:#09212e;font-weight:800;cursor:pointer}
+button.secondary{background:#29445a;color:#f0f9ff}button:disabled{opacity:.5}input{background:#081b2a;color:#fff;border:1px solid #5b7589;border-radius:8px;padding:12px;min-width:0;width:100%;text-transform:uppercase;font-weight:800;letter-spacing:.12em}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.row>*{flex:1}.state{font-weight:750;color:#aaddf4}.preview{position:relative;background:#020c15;border-radius:10px;overflow:hidden;aspect-ratio:16/9}
+video,canvas{width:100%;height:100%;object-fit:fill;position:absolute;inset:0}canvas{pointer-events:none}video.mirror{transform:scaleX(-1)}
+.stats{display:flex;justify-content:space-between;margin:10px 0;font-weight:750;color:#a4e6ca}.note{font-size:12px;color:#a9bfd0}.error{color:#ffb3a6}label{display:flex;gap:7px;align-items:center}.badge{display:inline-block;border:1px solid #3b6f70;padding:3px 8px;border-radius:15px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+</head><body><main>
+<header><h1>📱 Pipe Masters Camera</h1><p>Hold the phone steady facing your team. The phone detects coloured paper; only coordinates and colours are sent to the smartboard.</p></header>
+<section>
+<label for="room">Pairing code from the smartboard</label>
+<div class="row"><input id="room" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="8-character code"><button id="connect" type="button">Connect</button></div>
+<p class="state" id="connection">Enter the code, then connect.</p>
+</section>
+<section>
+<div class="row"><button id="start" type="button" disabled>📷 Start selfie camera</button><button id="flip" type="button" class="secondary">↻ Change camera</button></div>
+<div class="stats"><span id="tracking">Camera off</span><span id="frames">0 packets sent</span></div>
+<div class="preview"><video id="video" autoplay muted playsinline class="mirror"></video><canvas id="overlay" width="480" height="270"></canvas></div>
+<label style="margin-top:12px"><input id="mirror" type="checkbox" checked style="width:auto"> Mirror selfie preview and coordinates</label>
+<p class="note">For reliable detection, use solid, brightly coloured paper, a well-lit room and enough distance to see all pupils. This online pairing method requires internet on both devices; a phone hotspot alone without internet cannot establish this connection.</p>
+</section>
+<button class="secondary" id="stop" type="button">Stop camera / disconnect</button>
+</main><script>
+'use strict';
+const SB_URL='https://qekcgsfeomjckctiubgm.supabase.co', SB_KEY='sb_publishable_yJbCYOLDeMreuqM01g_oqA_eF5YEWwq';
+const $=id=>document.getElementById(id);
+const video=$('video'),overlay=$('overlay'),ctx=overlay.getContext('2d');
+const off=document.createElement('canvas');off.width=480;off.height=270;
+const octx=off.getContext('2d',{willReadFrequently:true});
+let pupilCount=30, mirrored=true, facing='user', client=null, channel=null, ready=false, connected=false, stream=null, timer=0, helloTimer=0, seq=0, busy=false, sent=0;
+const roomFromUrl=new URLSearchParams(location.search).get('room')||'';
+$('room').value=roomFromUrl.replace(/[^A-Z0-9]/gi,'').slice(0,8).toUpperCase();
+function status(s,error=false){$('connection').textContent=s;$('connection').classList.toggle('error',error)}
+function transmit(event,payload){if(!channel||!connected)return Promise.resolve('offline');return channel.send({type:'broadcast',event,payload});}
+function stopCamera(){if(timer){clearInterval(timer);timer=0}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}video.srcObject=null;ctx.clearRect(0,0,overlay.width,overlay.height);$('tracking').textContent='Camera off';}
+async function disconnect(){stopCamera();ready=false;connected=false;$('start').disabled=true;if(helloTimer){clearInterval(helloTimer);helloTimer=0}if(channel&&client){await client.removeChannel(channel);channel=null}status('Disconnected');}
+async function connect(){
+const code=$('room').value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);$('room').value=code;
+if(code.length!==8){status('Enter the 8-character smartboard code.',true);return}
+if(!window.supabase?.createClient){status('Internet connection needed for online pairing.',true);return}
+await disconnect();status('Connecting to smartboard…');
+try{
+client=client||window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+const ch=client.channel('pipe-masters:camera:'+code,{config:{private:false,broadcast:{ack:true}}});channel=ch;
+ch.on('broadcast',{event:'host-ready'},({payload})=>{
+ if(ch!==channel)return;ready=true;pupilCount=Math.min(30,Math.max(1,Number(payload?.pupilCount)||30));
+ status('Paired ✓ Start the phone camera.');$('start').disabled=false;
+});
+ch.subscribe(async state=>{
+ if(ch!==channel)return;
+ if(state==='SUBSCRIBED'){connected=true;status('Looking for smartboard…');await transmit('phone-hello',{version:1});
+  helloTimer=setInterval(()=>{if(!ready)transmit('phone-hello',{version:1}).catch(()=>{})},2500);
+ }else if(['TIMED_OUT','CHANNEL_ERROR','CLOSED'].includes(state)){connected=false;ready=false;$('start').disabled=true;stopCamera();status('Connection lost. Reconnect both devices.',true)}
+});
+}catch(e){status('Pairing failed: '+String(e?.message||e),true)}
+}
+async function startCamera(){
+if(!ready){status('Connect to the smartboard first.',true);return}
+stopCamera();try{
+if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera API is unavailable. Open this HTTPS page in Chrome.');
+const quality={width:{ideal:1280},height:{ideal:720},frameRate:{ideal:15,max:20}};
+try{stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{...quality,facingMode:{exact:facing}}});}
+catch(e){if(!['OverconstrainedError','NotFoundError','TypeError'].includes(e.name))throw e;stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{...quality,facingMode:{ideal:facing}}});}
+video.srcObject=stream;await video.play();stream.getVideoTracks().forEach(track=>track.addEventListener('ended',()=>{stopCamera();status('Camera disconnected.',true)}));
+$('start').textContent='↻ Restart camera';$('tracking').textContent='Tracking active';
+timer=setInterval(sendTracking,280);
+}catch(e){stopCamera();status('Camera failed: '+String(e?.name||'Error')+' — '+String(e?.message||''),true)}
+}
+function detectPapers(){const W=off.width,H=off.height,N=W*H;try{octx.drawImage(video,0,0,W,H)}catch{return []}let pix;try{pix=octx.getImageData(0,0,W,H).data}catch{return []}
+    const label=new Uint8Array(N),names=['','red','yellow','green','cyan','purple','grey','blue','orange'];const accepted=new Set(names.slice(1));
+    for(let p=0,i=0;p<N;p++,i+=4){const R=pix[i]/255,G=pix[i+1]/255,B=pix[i+2]/255,max=Math.max(R,G,B),min=Math.min(R,G,B),d=max-min,v=max,s=max?d/max:0;
+      if(v<.17)continue;let h=0;if(d){if(max===R)h=((G-B)/d+6)%6;else if(max===G)h=(B-R)/d+2;else h=(R-G)/d+4;h*=60}
+      let c='';if(s<.18&&v>.24&&v<.69)c='grey';else if(s>.30){if(h<16||h>345)c='red';else if(h>=24&&h<42)c='orange';else if(h>=42&&h<73)c='yellow';else if(h>=73&&h<164)c='green';else if(h>=164&&h<209)c='cyan';else if(h>=209&&h<258)c='blue';else if(h>=258&&h<338)c='purple'}
+      if(c&&accepted.has(c))label[p]=names.indexOf(c);
+    }
+    const queue=new Int32Array(N),components=[];for(let p=0;p<N;p++){const id=label[p];if(!id)continue;let head=0,tail=0;queue[tail++]=p;label[p]=0;let n=0,sx=0,sy=0,sxx=0,syy=0,sxy=0,minX=W,minY=H,maxX=0,maxY=0;
+      while(head<tail){const a=queue[head++],x=a%W,y=(a/W)|0;n++;sx+=x;sy+=y;sxx+=x*x;syy+=y*y;sxy+=x*y;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;
+        if(x>0&&label[a-1]===id){label[a-1]=0;queue[tail++]=a-1}if(x<W-1&&label[a+1]===id){label[a+1]=0;queue[tail++]=a+1}if(y>0&&label[a-W]===id){label[a-W]=0;queue[tail++]=a-W}if(y<H-1&&label[a+W]===id){label[a+W]=0;queue[tail++]=a+W}
+      }
+      if(n<45||n>N*.28)continue;const width=maxX-minX+1,height=maxY-minY+1;if(width<5||height<5)continue;const c=names[id],cx=sx/n,cy=sy/n,covX=sxx/n-cx*cx,covY=syy/n-cy*cy,covXY=sxy/n-cx*cy;
+      const angle=.5*Math.atan2(2*covXY,covX-covY),major=(covX+covY+Math.sqrt((covX-covY)**2+4*covXY**2))/2,minor=(covX+covY-Math.sqrt((covX-covY)**2+4*covXY**2))/2;
+      if(major/Math.max(1,minor)<1.14)continue;
+      const item={colour:c,x:mirrored?1-cx/W:cx/W,y:cy/H,vertical:Math.abs(angle)>Math.PI/4,box:{x:mirrored?1-(maxX+1)/W:minX/W,y:minY/H,w:width/W,h:height/H},count:n};
+      components.push(item);
+    }
+    // Keep separate cards even when pupils share a colour, instead of only the biggest one.
+    return components.sort((a,b)=>b.count-a.count).slice(0,pupilCount*3);
+  }
+function drawDetections(items){
+ctx.clearRect(0,0,480,270);
+for(const d of items){const b=d.box;ctx.strokeStyle={red:'#e24e52',cyan:'#16b7dc',green:'#42b66d',yellow:'#f0b829',purple:'#a877cd',grey:'#858d99',blue:'#3278e6',orange:'#e78c37'}[d.colour]||'#fff';ctx.lineWidth=2;ctx.strokeRect(b.x*480,b.y*270,b.w*480,b.h*270)}
+}
+async function sendTracking(){
+if(busy||!ready||!connected||!stream||document.hidden||video.readyState<2)return;
+busy=true;
+try{
+const items=detectPapers().map(d=>({colour:d.colour,x:d.x,y:d.y,vertical:d.vertical,box:d.box}));
+drawDetections(items);
+$('tracking').textContent=items.length+' paper pieces detected';
+const response=await transmit('tracking',{seq:++seq,items});
+if(response==='ok'){sent++;$('frames').textContent=sent+' packets sent'}
+else if(response!=='ok')status('Network issue: tracking may be delayed.',true);
+}catch(e){status('Tracking error: '+String(e?.message||e),true)}
+finally{busy=false}
+}
+$('connect').onclick=connect;
+$('start').onclick=startCamera;
+$('flip').onclick=()=>{facing=facing==='user'?'environment':'user';$('start').textContent=facing==='user'?'📷 Start selfie camera':'📷 Start rear camera';if(stream)startCamera()};
+$('mirror').onchange=e=>{mirrored=e.target.checked;video.classList.toggle('mirror',mirrored)};
+$('stop').onclick=disconnect;
+window.addEventListener('pagehide',()=>{stopCamera();if(channel&&client)client.removeChannel(channel)});
+if($('room').value.length===8)connect();
+</script></body></html>
