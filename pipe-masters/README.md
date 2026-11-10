@@ -1,36 +1,23 @@
-# Pipe Masters — Team Challenge v0.5
+# Pipe Masters — Team Challenge v0.6
 
-Pipe Masters is a collaborative classroom pipeline puzzle for Android smartboards. Each pupil holds one brightly coloured paper strip and arranges their position and orientation to match one individually coloured missing pipe dash.
+Pipe Masters is a collaborative coloured-paper pipe puzzle for school smartboards, hosted at https://mohammaddhameri-blip.github.io/smartboardgames/pipe-masters/.
 
-## Full-screen landscape layout (v0.5)
+## Layout and gameplay
+The Microsoft Pinball-style layout is retained: the left playfield contains the coloured pipe dashes; the upper-right camera panel shows local video or remote paper detections; the lower-right control panel includes countdown, scores, players, Pause, Retry, Settings and navigation. The existing 5 levels, pupil counts (12–30), 3-second successful formation hold, time settings and scoring remain.
 
-The display follows a Microsoft Pinball-inspired **playfield + right sidebar** arrangement:
+## Camera access and recovery (v0.6)
+- **Auto (built-in/front):** first tries the front-facing camera, then falls back to a generic camera. On the IMAGO AIOS, cameras may not advertise a front-facing identity.
+- **Select a camera:** Settings → Camera source → available cameras. Standard USB webcams and Android phones in USB webcam mode appear when exposed through the smartboard's browser/WebView.
+- **Native Android camera (updated APK):** selecting Native Android camera or a failed WebView request can attempt Camera2 video capture through a Java bridge. Frames are compressed and analysed locally by the existing HTML colour detector. This is an experimental hardware-specific fallback, not a bypass for administrator restrictions.
+- **Recovery:** when camera access fails or the stream ends/stalls, the timer pauses. Retry, Select Camera, Pair Phone and Download Bug Report are offered. Reconnection preserves the current level and remaining time.
+- **Bug report:** records errors, permission status, camera labels, browser details and (on the new APK) native Camera2 inventory. No pupil photos or video are added. On Android, the system document picker saves the JSON file.
 
-- **Left:** The large main pipeline puzzle, with one independently coloured dash per pupil (neighbouring dashes differ), minimal level heading and unobtrusive progress indicator
-- **Right, top:** Selfie-camera preview with detection overlays
-- **Right, bottom:** Countdown timer, total team score, number of pupils, best time, live formation status, Pause, Retry, Settings, Camera/Demo, Previous/Next and Fullscreen
+## Wireless phone tracking (online)
+Tap **Pair phone** on the smartboard. Scan its QR code or open https://mohammaddhameri-blip.github.io/smartboardgames/pipe-masters/phone.html on the phone and enter the 8-character code. Press **Start selfie camera**. The phone detects coloured paper shapes locally, and sends only paper colours, positions, boxes and orientations over a temporary Supabase Realtime channel (using the same existing backend as Sketch Rally). No continuous live video is sent. The upper-right smartboard panel therefore displays a schematic detection view rather than video in phone mode.
 
-The countdown defaults to **2 minutes per level**, configurable to 60, 90, 120, 180 seconds or no time limit. Pausing freezes both the countdown and camera evaluation. Completing a level awards 100 points plus remaining seconds (no points for replaying a level already scored). There are five levels, and the number of pupils/dashes can be set to 12, 15, 18, 21 (default), 24, 27, 29, or 30. Every dash is an individual target; colours repeat across nonadjacent targets. These are current prototype rules, subject to classroom testing.
+Both devices require internet for this pairing method, whether connected over school Wi-Fi or a hotspot. **Offline-only Wi-Fi / hotspot pairing is not yet implemented.** That will require a separate local signalling service or Android companion app, plus device testing.
 
-## Using the game
+## APK builds and updates
+The Android project lives at `pipe-masters/android/`. On pushes to Android source, GitHub Actions workflow `.github/workflows/build-pipe-masters-apk.yml` builds a debug APK and, when successful, publishes `pipe-masters/downloads/PipeMasters.apk`. Web gameplay updates are checked by the existing APK, but **native camera code requires installing a new APK**. Debug signing may change between GitHub build runners; if Android reports an incompatible signature, the older debug APK must be uninstalled before installing this test build.
 
-- **Demo:** Select Demo and drag each coloured strip in the camera preview; tap a strip to rotate. Hold the correct formation for 3 seconds.
-- **Camera:** Use the Android phone or tablet's built-in front-facing (selfie) camera to view pupils holding solid-colour A4 paper strips. No external webcam is needed. Grant the camera permission, adjust mirroring or detection tolerance in Settings, and let the team form the missing route.
-- Choose Retry to reset the current round. Next/Previous allow teacher navigation; only completed levels score.
-- The camera analyses images locally via colour filtering and connected-region estimation. It retains multiple separate strips of the same colour and attempts to match each detected paper to one target dash. No video recordings or uploads.
-
-## Shared updates
-
-This GitHub file `pipe-masters/index.html` is the single source of gameplay updates. GitHub Pages loads it for browser play, and the Android APK checks for a newer copy on launch and stores the game for offline use. **Changing the browser game's HTML also updates the Android game's gameplay and layout; users do not need to reinstall the APK.** Native Android wrapper updates still require an APK rebuild.
-
-Browser game: https://mohammaddhameri-blip.github.io/smartboardgames/pipe-masters/
-
-Android APK: https://github.com/mohammaddhameri-blip/smartboardgames/raw/refs/heads/main/pipe-masters/downloads/PipeMasters.apk
-
-## Classroom limitations
-
-Camera recognition on real Android smartboard hardware remains unverified. Lighting, colour similarity (particularly grey), pupil occlusion and camera drivers affect accuracy. Test at the classroom location before using for graded competition. The native Android app is currently a WebView shell running the same HTML game rather than a native camera engine.
-
-## Individual pupil dashes (v0.5)
-
-A long section of missing pipe is no longer a single target. The game divides it into the chosen number of individual dashes, distributed proportionally along the pipe. Neighbouring dashes receive different colours and each pupil should hold one paper to represent one dash. The Android selfie camera remains the default. Practical reliability with 21–30 participants requires classroom testing; individual paper visibility, lighting, distance, and overlapping pupils may limit detection.
+Camera and USB compatibility on the IMAGO AIOS remain **unverified** until tested on the physical smartboard. The existing app cannot forcibly disable or override other apps' overlays, permissions or firmware camera access policies.
