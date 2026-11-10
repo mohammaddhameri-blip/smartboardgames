@@ -486,7 +486,7 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public void stopNativeCamera() {
             main.post(MainActivity.this::stopNativeCameraInternal);
         }
-        @JavascriptInterface public String getAppVersion() { return "Android shell 0.5.0"; }
+        @JavascriptInterface public String getAppVersion() { return "Android shell 0.6.0"; }
     }
 
     @Override public void onBackPressed() {
