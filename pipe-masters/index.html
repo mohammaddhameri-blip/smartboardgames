@@ -105,7 +105,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
 }
   
 /* v0.6 — multiple camera sources, recovery dialog and privacy-friendly phone tracking */
-.stage.phone{background:#102c39}.stage.phone video{display:none}
+.stage.phone{background:#102c39}.stage.phone video,.stage.native video{display:none}
 .dialog .paircode{font-size:30px;letter-spacing:.17em;font-weight:950;color:#76e2ff}
 .dialog .pairqr{display:flex;justify-content:center;background:#fff;padding:9px;border-radius:10px;width:fit-content;min-height:120px;margin:8px auto}
 .pairlink{overflow-wrap:anywhere;font-size:12px;color:#9ce7fc}
@@ -241,6 +241,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   let detected=[], demo=[], dragging=null, best={};
   let timeLimit=120, paused=false, pauseStarted=0, pausedElapsed=0, expired=false, score=0;
   let recoveryPaused=false,lastCameraFrame=0,phoneChannel=null,phoneClient=null,phoneRoom='',phoneLastSeen=0,phoneSeq=-1,phoneTimeout=0;
+  let nativeImage=null,nativeStarting=false,nativePendingHadRound=false,nativeStartTimeout=0;
   const cameraEvents=[];
   const logCamera=(event,details={})=>{cameraEvents.push({at:new Date().toISOString(),event,details});if(cameraEvents.length>60)cameraEvents.shift()};
   const PHONE_URL='https://mohammaddhameri-blip.github.io/smartboardgames/pipe-masters/phone.html';
@@ -329,7 +330,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
     if(demo.length===3){demo[0].x=.25;demo[0].y=.7;demo[1].x=.68;demo[1].y=.23;demo[2].x=.55;demo[2].y=.72}
   }
   function resetRound(){
-    win=false;expired=false;paused=false;pauseStarted=0;pausedElapsed=0;
+    win=false;expired=false;paused=false;recoveryPaused=false;pauseStarted=0;pausedElapsed=0;
     holdStart=0;started=mode==='idle'?0:performance.now();lastTime=0;
     $('holdBar').style.width='0%';
     $('timer').textContent=timeLimit?format(timeLimit*1000):'∞';
@@ -417,6 +418,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   function markerSize(){const width=Math.max(18,Math.min(38,Math.round(810/(pupilCount+7))));return {w:width,h:Math.max(9,Math.round(width*.46))};}
   function drawStage(){const w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);if(mode==='idle')return;
     if(mode==='phone'){ctx.fillStyle='#113445';ctx.fillRect(0,0,w,h);ctx.fillStyle='#8dc8df';ctx.font='bold 11px system-ui';ctx.fillText('PHONE DETECTION — NO VIDEO SENT',12,h-12)}
+    if(mode==='native'&&nativeImage){ctx.save();if(mirrored){ctx.translate(w,0);ctx.scale(-1,1)}ctx.drawImage(nativeImage,0,0,w,h);ctx.restore()}
     const expected=targetPositions(), marker=markerSize();
     if(mode==='demo'){
       ctx.fillStyle='#d8e7e7';ctx.fillRect(0,0,w,h);
@@ -426,7 +428,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
     }
     if(guides)expected.forEach(e=>{
       const x=e.tx*w,y=e.ty*h;ctx.save();ctx.translate(x,y);if(e.vertical)ctx.rotate(Math.PI/2);
-      ctx.strokeStyle=COLORS[e.colour];ctx.globalAlpha=(mode==='camera'||mode==='phone')?.74:.65;ctx.lineWidth=2;
+      ctx.strokeStyle=COLORS[e.colour];ctx.globalAlpha=(mode==='camera'||mode==='phone'||mode==='native')?.74:.65;ctx.lineWidth=2;
       ctx.setLineDash([4,3]);ctx.strokeRect(-marker.w/2,-marker.h/2,marker.w,marker.h);ctx.setLineDash([]);
       ctx.fillStyle=COLORS[e.colour];ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillText(String(e.id),0,0);ctx.restore();
@@ -444,7 +446,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
         ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 9px system-ui';
         ctx.fillText(matched?.id||'',0,0);ctx.restore();
       });
-    }else if(mode==='camera'||mode==='phone'){
+    }else if(mode==='camera'||mode==='phone'||mode==='native'){
       const r=evaluate(detected);
       detected.forEach(d=>{
         const x=d.x*w,y=d.y*h,matched=r.observations.get(d);
@@ -456,9 +458,14 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
       });
     }
   }
-  function switchMode(next){stopCamera(false);if(phoneChannel)disconnectPhone();mode=next;$('stage').classList.toggle('idle',next==='idle');$('stage').classList.toggle('demo',next==='demo');$('cameraState').classList.toggle('online',next==='camera');
+  function switchMode(next){stopCamera(false);stopNativeCamera();if(phoneChannel)disconnectPhone();mode=next;$('stage').classList.toggle('idle',next==='idle');$('stage').classList.toggle('demo',next==='demo');$('cameraState').classList.toggle('online',next==='camera');
     $('cameraState').textContent=next==='camera'?'● CAMERA LIVE':next==='demo'?'● DEMO MODE':'● CAMERA OFF';$('modeLabel').textContent=next==='camera'?'Live tracking':next==='demo'?'Interactive demo':'Choose a mode';$('cameraTag').textContent=next==='camera'?'LIVE CAMERA':next==='demo'?'DRAG + TAP TO ROTATE':'';
     $('stopBtn').hidden=next==='idle';$('cameraBtn').textContent=next==='camera'?'↻ Restart selfie':'📷 Selfie camera';resetRound();
+  }
+  function stopNativeCamera(){
+    if(nativeStartTimeout){clearTimeout(nativeStartTimeout);nativeStartTimeout=0}
+    nativeStarting=false;nativeImage=null;
+    try{window.PipeMastersAndroid?.stopNativeCamera?.()}catch(e){logCamera('native-stop-error',{message:String(e)})}
   }
   function stopCamera(keepMode=true){if(stream){stream.getTracks().forEach(t=>{t.onended=null;t.stop()});stream=null;}if(video.srcObject)video.srcObject=null;if(frameTimer)clearInterval(frameTimer);frameTimer=0;}
   function applyPreviewMirror(){
@@ -481,6 +488,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
       if(!navigator.mediaDevices?.enumerateDevices)throw Error('Camera enumeration unavailable');
       const items=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput');
       sel.innerHTML='<option value="auto">Auto (built-in / front camera)</option>';
+      if(window.PipeMastersAndroid?.startNativeCamera)sel.add(new Option('Native Android camera (APK)','native'));
       for(let i=0;i<items.length;i++){
         const opt=document.createElement('option');opt.value=items[i].deviceId;
         opt.textContent=items[i].label||'Camera '+(i+1);sel.append(opt);
@@ -518,7 +526,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   function cameraFailure(error){
     const name=String(error?.name||'CameraError'),message=String(error?.message||'Camera access could not be established.');
     logCamera('camera-failed',{name,message,source:$('cameraSourceSelect').selectedOptions[0]?.textContent||'auto'});
-    freezeTracking();stopCamera(false);
+    freezeTracking();stopCamera(false);stopNativeCamera();
     $('cameraState').textContent='● CAMERA ERROR';$('cameraState').classList.remove('online');
     $('modeLabel').textContent='Tracking interrupted';
     updateStatus('Camera unavailable',name+': '+message,false);
@@ -528,10 +536,14 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   async function openCamera(){
     const hadRound=mode!=='idle'&&!!started&&!expired&&!win;
     if(phoneChannel)disconnectPhone();
-    stopCamera(false);
+    stopCamera(false);stopNativeCamera();
     try{
       updateStatus('Opening camera…','Checking permissions and available camera sources.',false);
       if(!await requestAndroidCameraPermission())throw Object.assign(new Error('Android app camera permission not granted or request timed out.'),{name:'NotAllowedError'});
+      if($('cameraSourceSelect').value==='native'){
+        if(!window.PipeMastersAndroid?.startNativeCamera)throw Object.assign(new Error('Native camera only available in updated Android APK.'),{name:'NotSupportedError'});
+        startNativeCamera(hadRound);return;
+      }
       if(!navigator.mediaDevices?.getUserMedia)throw Object.assign(new Error('Camera API unavailable. Use HTTPS or the Android APK.'),{name:'NotSupportedError'});
       stream=await acquireSelectedCamera();
       video.srcObject=stream;await video.play();
@@ -544,9 +556,47 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
       if($('cameraRecoveryDialog').open)$('cameraRecoveryDialog').close();
       await refreshCameraSources();restoreTracking(hadRound);
       frameTimer=setInterval(processCamera,170);logCamera('camera-opened',{track:stream.getVideoTracks()[0]?.label||'camera'});
-    }catch(error){cameraFailure(error)}
+    }catch(error){
+      if(window.PipeMastersAndroid?.startNativeCamera&&!['NotAllowedError','SecurityError'].includes(error?.name)){
+        logCamera('web-camera-failed-trying-native',{name:error.name,message:error.message});
+        startNativeCamera(hadRound);return;
+      }
+      cameraFailure(error);
+    }
   }
-  function detectPapers(){const W=off.width,H=off.height,N=W*H;try{octx.drawImage(video,0,0,W,H)}catch{return []}let pix;try{pix=octx.getImageData(0,0,W,H).data}catch{return []}
+  function startNativeCamera(hadRound){
+    nativePendingHadRound=hadRound;nativeStarting=true;
+    nativeStartTimeout=setTimeout(()=>{
+      if(nativeStarting)cameraFailure(Object.assign(new Error('Native camera did not start within 12 seconds.'),{name:'TimeoutError'}))
+    },12000);
+    try{window.PipeMastersAndroid.startNativeCamera($('cameraSourceSelect').selectedOptions[0]?.textContent?.match(/usb|external/i)?'external':'front')}
+    catch(error){cameraFailure(error)}
+  }
+  window.pipeMastersNativeCameraStarted=()=>{
+    if(!nativeStarting)return;
+    clearTimeout(nativeStartTimeout);nativeStartTimeout=0;nativeStarting=false;
+    mode='native';$('stage').className='stage native';
+    $('cameraState').textContent='● NATIVE CAMERA';$('cameraState').classList.add('online');
+    $('modeLabel').textContent='Native Android camera';$('cameraTag').textContent='NATIVE CAMERA';
+    $('stopBtn').hidden=false;
+    if($('cameraRecoveryDialog').open)$('cameraRecoveryDialog').close();
+    lastCameraFrame=performance.now();restoreTracking(nativePendingHadRound);logCamera('native-camera-started');
+  };
+  window.pipeMastersNativeCameraError=message=>{
+    cameraFailure(Object.assign(new Error(String(message||'Android native camera failed')),{name:'NativeCameraError'}))
+  };
+  window.pipeMastersNativeFrame=encoded=>{
+    if(mode!=='native'||typeof encoded!=='string'||encoded.length>190000||!encoded.startsWith('data:image/jpeg;base64,'))return;
+    const img=new Image();
+    img.onload=()=>{
+      if(mode!=='native')return;
+      nativeImage=img;lastCameraFrame=performance.now();
+      if(!paused&&!win&&!expired){detected=detectPapers();statusFrom(detected)}
+      drawStage();
+    };
+    img.src=encoded;
+  };
+  function detectPapers(){const W=off.width,H=off.height,N=W*H;try{octx.drawImage(mode==='native'?nativeImage:video,0,0,W,H)}catch{return []}let pix;try{pix=octx.getImageData(0,0,W,H).data}catch{return []}
     const label=new Uint8Array(N),names=['','red','yellow','green','cyan','purple','grey','blue','orange'];const accepted=new Set(segmentData().map(d=>d.colour));
     for(let p=0,i=0;p<N;p++,i+=4){const R=pix[i]/255,G=pix[i+1]/255,B=pix[i+2]/255,max=Math.max(R,G,B),min=Math.min(R,G,B),d=max-min,v=max,s=max?d/max:0;
       if(v<.17)continue;let h=0;if(d){if(max===R)h=((G-B)/d+6)%6;else if(max===G)h=(B-R)/d+2;else h=(R-G)/d+4;h*=60}
@@ -577,6 +627,9 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
       if(timeLimit&&remainingRound()<=0)timeUp();
     }
     if(mode==='demo'&&!win&&!paused&&!expired){statusFrom(demo);drawStage();}
+    if(mode==='native'&&!paused&&!win&&!expired&&lastCameraFrame&&performance.now()-lastCameraFrame>6500){
+      lastCameraFrame=0;cameraFailure(Object.assign(new Error('Native camera stopped delivering frames.'),{name:'NotReadableError'}));
+    }
     if(mode==='phone'&&!win&&!expired&&phoneLastSeen&&performance.now()-phoneLastSeen>6000){
       phoneLastSeen=0;cameraFailure(Object.assign(new Error('The paired phone stopped sending tracking data. Check its camera and network.'),{name:'NetworkError'}));
     }
@@ -616,7 +669,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
         const hadRound=mode!=='idle'&&!!started&&!expired&&!win;
         phoneSeq=seq;phoneLastSeen=performance.now();
         if(mode!=='phone'){
-          stopCamera(false);mode='phone';$('stage').className='stage phone';
+          stopCamera(false);stopNativeCamera();mode='phone';$('stage').className='stage phone';
           $('cameraState').textContent='● PHONE LIVE';$('cameraState').classList.add('online');
           $('modeLabel').textContent='Paired phone colour tracking';$('cameraTag').textContent='PHONE TRACKING';
           $('stopBtn').hidden=false;
@@ -670,7 +723,7 @@ html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-heigh
   $('cameraReportBtn').onclick=downloadCameraReport;
   $('downloadBugBtn').onclick=downloadCameraReport;
   $('refreshCameraBtn').onclick=refreshCameraSources;
-  $('cameraSourceSelect').onchange=()=>{logCamera('camera-selected',{label:$('cameraSourceSelect').selectedOptions[0]?.textContent});if(mode==='camera'||recoveryPaused)openCamera()};
+  $('cameraSourceSelect').onchange=()=>{logCamera('camera-selected',{label:$('cameraSourceSelect').selectedOptions[0]?.textContent});if(mode==='camera'||mode==='native'||mode==='phone'||recoveryPaused)openCamera()};
   navigator.mediaDevices?.addEventListener?.('devicechange',refreshCameraSources);
   refreshCameraSources();$('demoBtn').onclick=()=>switchMode('demo');$('stopBtn').onclick=()=>switchMode('idle');$('prevBtn').onclick=()=>changeLevel(levelIndex-1);$('nextBtn').onclick=()=>changeLevel(levelIndex+1);$('restartBtn').onclick=resetRound;$('successNext').onclick=()=>changeLevel(levelIndex===LEVELS.length-1?0:levelIndex+1);
   if(window.PipeMastersAndroid){$('apkDownloadLink').hidden=true;$('cameraPermissionsBtn').hidden=false;}
