@@ -6,7 +6,7 @@ if(!api){console.error("Sketch Boat game bridge unavailable");return;}
 const SB_URL="https://qekcgsfeomjckctiubgm.supabase.co";
 const SB_KEY="sb_publishable_yJbCYOLDeMreuqM01g_oqA_eF5YEWwq";
 const ALPHABET="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-let panel="garage",tool="draw",track=api.getTrack(),previous=null,dragging=false,changed=false;
+let panel="garage",tool="draw",track=api.getTrack(),dragging=false,changed=false;
 let client=null,channel=null,room="",paired=false,lastState="",sendLock=false;
 const canvas=$("trackCanvas"),context=canvas.getContext("2d");
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -43,88 +43,125 @@ function loadTrackInputs(){
  $("trackLength").value=String(track.distance);
  $("trackPreset").value=["calm","winding","islands","slalom"].includes(track.preset)?track.preset:"calm";
 }
-function yValue(t,x){
- const n=t.values.length-1,p=clamp(x,0,1)*n,i=Math.min(n-1,Math.floor(p)),u=p-i;
- const a=t.values[Math.max(0,i-1)],b=t.values[i],c=t.values[i+1],d=t.values[Math.min(n,i+2)];
- return clamp(.5*((2*b)+(-a+c)*u+(2*a-5*b+4*c-d)*u*u+(-a+3*b-3*c+d)*u*u*u),.04,.96);
-}
-function pointAt(t,x){return 30+1140*x;}
-function centerAt(t,x){return 320+(yValue(t,x)-.5)*255;}
+// Sketch Rally-style track editor: one thin continuous freehand centreline.
+// Track width is a race-physics setting, never a drawing brush or editor border.
+function toCanvas(point){return {x:point.x*1200,y:point.y*680};}
 function drawTrack(){
  const w=canvas.width,h=canvas.height;
  context.clearRect(0,0,w,h);
- const water=context.createLinearGradient(0,0,w,h);water.addColorStop(0,"#1c688c");water.addColorStop(1,"#104d70");context.fillStyle=water;context.fillRect(0,0,w,h);
- context.strokeStyle="#a9ecf4";context.globalAlpha=.16;context.lineWidth=1;
- for(let y=30;y<h;y+=46)for(let x=0;x<w;x+=100){context.beginPath();context.moveTo(x,y);context.quadraticCurveTo(x+23,y-8,x+40,y);context.stroke();}
+ const bg=context.createLinearGradient(0,0,w,h);
+ bg.addColorStop(0,"#12516f");bg.addColorStop(1,"#186d89");context.fillStyle=bg;context.fillRect(0,0,w,h);
+ context.strokeStyle="#cbf4ff";context.globalAlpha=.13;context.lineWidth=1;
+ for(let y=30;y<h;y+=50)for(let x=0;x<w;x+=97){
+  context.beginPath();context.moveTo(x,y);context.quadraticCurveTo(x+19,y-5,x+41,y);context.stroke();
+ }
  context.globalAlpha=1;
- const curve=new Path2D();for(let i=0;i<=300;i++){const x=i/300,px=pointAt(track,x),py=centerAt(track,x);i?curve.lineTo(px,py):curve.moveTo(px,py);}
  context.lineCap="round";context.lineJoin="round";
- context.strokeStyle="#073f5e";context.lineWidth=track.width+34;context.stroke(curve);
- context.strokeStyle="#d0ead9";context.lineWidth=track.width+15;context.stroke(curve);
- const aqua=context.createLinearGradient(0,200,0,500);aqua.addColorStop(0,"#41a8c6");aqua.addColorStop(1,"#2598ba");
- context.strokeStyle=aqua;context.lineWidth=track.width;context.stroke(curve);
- context.strokeStyle="#f2fff5";context.lineWidth=2;context.globalAlpha=.45;context.setLineDash([8,14]);context.stroke(curve);context.setLineDash([]);context.globalAlpha=1;
- context.strokeStyle="#f6e4ad";context.lineWidth=5;
- for(const x of [.01,.99]){const cx=pointAt(track,x),cy=centerAt(track,x);context.beginPath();context.moveTo(cx,cy-track.width*.53);context.lineTo(cx,cy+track.width*.53);context.stroke();}
- const startX=pointAt(track,.01),startY=centerAt(track,.01),finishX=pointAt(track,.99),finishY=centerAt(track,.99);
- context.fillStyle="#ffffff";context.font="bold 18px system-ui";context.fillText("START",startX-6,startY-track.width*.62-10);
- context.fillText("FINISH",finishX-60,finishY-track.width*.62-10);
- track.rocks.forEach((r,i)=>{
-  const x=pointAt(track,r.x),y=centerAt(track,r.x)+r.offset;
-  context.fillStyle="#455968";context.strokeStyle="#ffd79c";context.lineWidth=4;
-  context.beginPath();context.ellipse(x,y,r.r,r.r*.82,i*.2,0,Math.PI*2);context.fill();context.stroke();
-  context.fillStyle="#ffffff";context.font="bold 12px system-ui";context.fillText("◆",x-5,y+4);
- });
- context.fillStyle="#e1f9fe";context.font="bold 14px system-ui";
- const km=track.distance/2600;context.fillText(km+" km · "+track.rocks.length+" rocks",23,34);
+ const pts=Array.isArray(track.points)?track.points:[];
+ if(pts.length){
+  context.beginPath();
+  pts.forEach((p,i)=>i?context.lineTo(p.x*w,p.y*h):context.moveTo(p.x*w,p.y*h));
+  context.strokeStyle="#10293f";context.lineWidth=10;context.stroke();
+  context.strokeStyle="#c4f26b";context.lineWidth=5;context.stroke();
+  if(pts.length>1){
+   const first=toCanvas(pts[0]),last=toCanvas(pts[pts.length-1]);
+   context.fillStyle="#f5faff";context.font="bold 15px system-ui";
+   context.fillText("START",clamp(first.x+10,12,w-90),clamp(first.y-16,20,h-12));
+   context.fillText("FINISH",clamp(last.x+10,12,w-90),clamp(last.y-16,20,h-12));
+   context.fillStyle="#c4f26b";
+   context.beginPath();context.arc(first.x,first.y,9,0,Math.PI*2);context.fill();
+   context.fillStyle="#fff";context.beginPath();context.arc(last.x,last.y,9,0,Math.PI*2);context.fill();
+  }
+ }
+ for(const rock of track.rocks){
+  const x=rock.x*w,y=rock.y*h;
+  context.fillStyle="#566773";context.strokeStyle="#ffda93";context.lineWidth=3;
+  context.beginPath();context.ellipse(x,y,rock.r,rock.r*.78,.3,0,Math.PI*2);
+  context.fill();context.stroke();
+ }
+ context.font="bold 14px system-ui";context.fillStyle="#edfcff";
+ context.fillText((track.distance/2600)+" km · "+track.rocks.length+" rocks · FREEHAND ROUTE",17,31);
 }
 function position(e){
- const rect=canvas.getBoundingClientRect();
- return {x:clamp((e.clientX-rect.left)/rect.width,0,1),y:clamp((e.clientY-rect.top)/rect.height*680,0,680)};
+ const r=canvas.getBoundingClientRect();
+ return {x:clamp((e.clientX-r.left)/r.width,.01,.99),y:clamp((e.clientY-r.top)/r.height,.03,.97)};
 }
-function addPoint(e){
- const p=position(e),index=Math.round(p.x*64),v=clamp(.5+(p.y-320)/255,.08,.92);
- if(tool==="draw"){
-  if(previous){
-   const start=previous.index,end=index,a=Math.min(start,end),b=Math.max(start,end);
-   for(let i=a;i<=b;i++){const u=start===end?1:(i-start)/(end-start);track.values[i]=clamp(previous.y+(v-previous.y)*u,.08,.92);}
-  }else track.values[index]=v;
-  previous={index,y:v};track.preset="custom";changed=true;
- }else if(tool==="rock"){
-  if(!changed && track.rocks.length<15){
-   const offset=clamp(p.y-centerAt(track,p.x),-track.width*.40,track.width*.40);
-   if(p.x>.06&&p.x<.94){track.rocks.push({x:p.x,offset,r:20});changed=true;}
-   else notify("Place obstacles away from the start and finish.");
-  }
- }else{
-  const idx=track.rocks.findIndex(r=>Math.hypot((r.x-p.x)*1140,(centerAt(track,r.x)+r.offset-p.y))<35);
-  if(idx>=0){track.rocks.splice(idx,1);changed=true;}else notify("Tap an existing rock to erase it.");
+function recordPoint(e){
+ const p=position(e),arr=track.points;
+ if(arr.length>=1600)return;
+ if(!arr.length||Math.hypot((p.x-arr[arr.length-1].x)*1200,(p.y-arr[arr.length-1].y)*680)>=2.6){
+  arr.push(p);changed=true;drawTrack();
  }
- drawTrack();
 }
 let undoHistory=[];
 function remember(){undoHistory.push(JSON.stringify(track));if(undoHistory.length>25)undoHistory.shift();}
+function apply(){
+ const result=api.setTrack(track);
+ if(result.ok){track=api.getTrack();drawTrack();notify("✓ Freehand track saved. Sharp corners will remain sharp.");}
+ else notify(result.message||"Could not save track.");
+}
 canvas.addEventListener("pointerdown",e=>{
  if(state().running)return;
- dragging=true;changed=false;previous=null;remember();canvas.setPointerCapture(e.pointerId);addPoint(e);
+ dragging=true;changed=false;remember();
+ canvas.setPointerCapture(e.pointerId);
+ if(tool==="draw"){
+  // One gesture draws a complete track in arbitrary 2D. No x-monotonicity,
+  // smoothing, minimum corner radius, or road-width restrictions.
+  track.points=[];track.rocks=[];track.preset="custom";
+  recordPoint(e);
+ }else if(tool==="rock"){
+  const p=position(e);
+  if(track.rocks.length<20){track.rocks.push({x:p.x,y:p.y,r:17});changed=true;drawTrack();}
+  else notify("Maximum 20 rocks. Remove one to add another.");
+ }else{
+  const p=position(e),idx=track.rocks.findIndex(r=>Math.hypot((r.x-p.x)*1200,(r.y-p.y)*680)<32);
+  if(idx>=0){track.rocks.splice(idx,1);changed=true;drawTrack();}
+  else notify("Tap an existing rock to erase it.");
+ }
 });
-canvas.addEventListener("pointermove",e=>{if(dragging&&tool==="draw")addPoint(e);});
-function finishEdit(){if(!dragging)return;dragging=false;previous=null;if(changed){api.setTrack(track);notify("✓ Track saved on this smartboard.");}}
-canvas.addEventListener("pointerup",finishEdit);canvas.addEventListener("pointercancel",finishEdit);
+canvas.addEventListener("pointermove",e=>{if(dragging&&tool==="draw")recordPoint(e);});
+function finishEdit(){
+ if(!dragging)return;dragging=false;
+ if(tool==="draw"){
+  const pts=track.points;
+  let length=0;for(let i=1;i<pts.length;i++)length+=Math.hypot((pts[i].x-pts[i-1].x)*1200,(pts[i].y-pts[i-1].y)*680);
+  if(pts.length<3||length<35){
+   track=JSON.parse(undoHistory.pop());drawTrack();
+   notify("Draw a continuous route at least 35 pixels long. Previous track restored.");return;
+  }
+ }
+ if(changed)apply();
+ else {undoHistory.pop();drawTrack();}
+}
+canvas.addEventListener("pointerup",finishEdit);
+canvas.addEventListener("pointercancel",finishEdit);
 document.querySelectorAll("[data-track-tool]").forEach(el=>el.addEventListener("click",()=>{
- tool=el.dataset.trackTool;document.querySelectorAll("[data-track-tool]").forEach(b=>b.classList.toggle("active",b===el));
- $("trackEditorHint").textContent=tool==="draw"?"✎ Drag to draw the route":tool==="rock"?"◆ Tap to place a rock":"⌫ Tap a rock to remove it";
+ tool=el.dataset.trackTool;
+ document.querySelectorAll("[data-track-tool]").forEach(b=>b.classList.toggle("active",b===el));
+ $("trackEditorHint").textContent=tool==="draw"?"✎ Drag anywhere to draw a NEW freehand route · sharp hairpins allowed":tool==="rock"?"◆ Tap to place rocks":"⌫ Tap a rock to remove it";
 }));
-$("undoTrack").addEventListener("click",()=>{if(!undoHistory.length)return;track=JSON.parse(undoHistory.pop());api.setTrack(track);loadTrackInputs();drawTrack();notify("Last track change undone.");});
-$("resetTrack").addEventListener("click",()=>{remember();const old=track;api.presetTrack("calm");track=api.getTrack();track.width=old.width;track.distance=old.distance;api.setTrack(track);loadTrackInputs();drawTrack();notify("Course reset to open water.");});
+$("undoTrack").addEventListener("click",()=>{
+ if(!undoHistory.length){notify("Nothing to undo.");return;}
+ track=JSON.parse(undoHistory.pop());apply();loadTrackInputs();notify("Previous track restored.");
+});
+$("resetTrack").addEventListener("click",()=>{
+ if(state().running)return;remember();
+ const old=track;api.presetTrack("calm");track=api.getTrack();
+ track.width=old.width;track.distance=old.distance;apply();loadTrackInputs();notify("Reset to an open-water line.");
+});
 $("trackPreset").addEventListener("change",e=>{
  if(state().running)return;remember();
- const old=track;api.presetTrack(e.target.value);track=api.getTrack();track.width=old.width;track.distance=old.distance;
- api.setTrack(track);loadTrackInputs();drawTrack();notify("Course preset applied. You may reshape it.");
+ const old=track;api.presetTrack(e.target.value);track=api.getTrack();
+ track.width=old.width;track.distance=old.distance;
+ apply();loadTrackInputs();notify("Preset loaded. Drag a NEW route to replace it.");
 });
-$("trackWidth").addEventListener("input",e=>{track.width=Number(e.target.value);$("trackWidthValue").textContent=e.target.value;drawTrack();});
-$("trackWidth").addEventListener("change",()=>{api.setTrack(track);notify("Waterway width saved.");});
-$("trackLength").addEventListener("change",e=>{track.distance=Number(e.target.value);api.setTrack(track);drawTrack();notify("Race distance saved.");});
+$("trackWidth").addEventListener("input",e=>{
+ track.width=Number(e.target.value);
+ $("trackWidthValue").textContent=e.target.value;
+ // Width is deliberately NOT rendered in the editor, as requested.
+});
+$("trackWidth").addEventListener("change",()=>{api.setTrack(track);track=api.getTrack();notify("Race waterway width saved. Drawing line stays thin.");});
+$("trackLength").addEventListener("change",e=>{track.distance=Number(e.target.value);apply();notify("Race length saved.");});
 function randomCode(){const buf=new Uint8Array(8);crypto.getRandomValues(buf);return Array.from(buf,x=>ALPHABET[x%ALPHABET.length]).join("");}
 function linkForRoom(){const u=new URL("host.html",location.href);u.searchParams.set("room",room);return u.href;}
 function updatePairUI(){
