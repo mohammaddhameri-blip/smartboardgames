@@ -18,7 +18,7 @@ button{border:1px solid var(--border);border-radius:11px;background:#263e50;colo
 <section class="pane on" id="design">
 <h2>Create your dirt bike</h2><p class="sub">Draw a complete bike on paper or right here. The game replaces all tyres with the same motocross tyres.</p>
 <label class="capture">📷 Take a picture / Choose photo<input id="photoInput" type="file" accept="image/*" capture="environment"></label>
-<div class="two" style="margin-top:8px"><button id="drawBtn">✏ Draw on screen</button><button id="demoBtn">🏍 Load demo bike</button></div>
+<div class="two" style="margin-top:8px"><button id="drawBtn">✏ Draw on screen</button><button id="demoBtn">🏍 Load demo bike</button></div><button id="pairBtn" style="width:100%;margin-top:8px" class="soft">📱 Pair host phone camera</button><div id="pairArea" class="status hidden"><b>Phone pairing code: <span id="pairCode" style="color:#ffbc6d;letter-spacing:.1em;font-size:20px"></span></b><div id="pairStatus" class="help">Connecting...</div><div style="font-size:11px;word-break:break-all" id="pairLink"></div><button id="copyPair" style="width:100%;margin-top:8px">Copy phone link</button><p class="help">Open the link on your phone. The phone and smartboard need internet access.</p></div>
 <div class="cap">Paper cleanup and alignment</div><div class="two scan-tools"><button id="rotateL">↶ Rotate −90°</button><button id="rotateR">↷ Rotate +90°</button></div>
 <div class="preview-wrap"><canvas id="scan" width="480" height="300" aria-label="Drawing and editable bike markers"></canvas></div>
 <div class="slider-row"><span>Remove notebook lines</span><b id="cleanVal">65%</b></div><input class="range" id="clean" type="range" min="0" max="100" value="65">
@@ -50,6 +50,7 @@ button{border:1px solid var(--border);border-radius:11px;background:#263e50;colo
 <div class="sheet hidden" id="drawSheet"><div class="dialog"><div class="dialog-head"><div><h2>Draw your motorcycle</h2><p class="sub" style="margin:0">Use the whole canvas. Draw two wheels, a frame and shock absorbers.</p></div><button id="drawClose">✕</button></div><div class="row wrap" style="margin-bottom:12px"><div id="swatches" class="swatches"></div><label class="row help">Brush <input type="range" id="brush" min="2" max="20" value="5"></label><button id="undoDraw">↶ Undo</button><button id="clearDraw">Clear</button></div><div class="draw-frame"><canvas id="drawCanvas" width="900" height="480"></canvas></div><div class="two" style="margin-top:12px"><button id="drawCancel">Cancel</button><button class="hot" id="useDrawing">✓ Use my drawing</button></div></div></div>
 <div class="sheet hidden" id="leaderSheet"><div class="dialog" style="max-width:650px"><div class="dialog-head"><h2>🏆 Race leaderboards</h2><button id="leadersClose">✕</button></div><div class="two" style="margin-bottom:12px"><button data-board="challenge" class="selected">Best Overall</button><button data-board="freestyle">Freestyle</button></div><div id="leaderList" class="leader-list"></div><p class="help">Results shown are saved locally on this device.</p></div></div>
 <div class="sheet hidden" id="settingsSheet"><div class="dialog" style="max-width:480px"><div class="dialog-head"><h2>⚙ Settings</h2><button id="settingsClose">✕</button></div><p class="sub">Sketch Moto v1.0 · Live browser and Android WebView editions.</p><div class="stack"><button id="fullSetting">⛶ Toggle full screen</button><a href="https://github.com/mohammaddhameri-blip/smartboardgames/releases/download/sketch-moto-latest/SketchMoto-latest.apk" id="apkLink" style="display:block;text-align:center;padding:11px;border:1px solid #56778b;border-radius:11px;color:#ffd49c;text-decoration:none;font-weight:800">⬇ Android APK (GitHub Releases)</a><button id="resetScores" class="danger">Clear local leaderboards</button></div><p class="help">The APK link becomes active once the GitHub Android build succeeds. The Android wrapper loads this same updated web game.</p></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script>
 (function(){
 "use strict";
@@ -58,7 +59,7 @@ var scene=$("scene"), ctx=scene.getContext("2d"), scan=$("scan"), sc=scan.getCon
 var drawCanvas=$("drawCanvas"),dc=drawCanvas.getContext("2d");
 var points={rear:{x:.25,y:.75},front:{x:.76,y:.75},rearShock:{x:.37,y:.38},frontShock:{x:.70,y:.28}},selectedPoint="rear";
 var original=null,processed=null,sourceImage=null,inkPixels=null,angle=0,cleanStrength=.65,photoDirty=false,designs=[],selectedId=null,mode="challenge",level=1,active=null,sim=null,runState="preview",results=[],boardMode="challenge",paintColor="#26384c",brushSize=5,drawHistory=[],isDrawing=false;
-var keys={designs:"sketchMotoDesignsV1",results:"sketchMotoResultsV1"};
+var keys={designs:"sketchMotoDesignsV1",results:"sketchMotoResultsV1"};var room="",pairClient=null,pairChannel=null,pendingPhoneName="";
 function store(){try{localStorage.setItem(keys.designs,JSON.stringify(designs));localStorage.setItem(keys.results,JSON.stringify(results))}catch(e){$("scanStatus").textContent="Device storage is full. Drawings can still be used this session."}}
 try{designs=JSON.parse(localStorage.getItem(keys.designs)||"[]");results=JSON.parse(localStorage.getItem(keys.results)||"[]")}catch(e){designs=[];results=[]}
 function uiText(id,s){$(id).textContent=s} function showPane(p){document.querySelectorAll(".tab").forEach(function(b){b.classList.toggle("on",b.dataset.pane===p)});document.querySelectorAll(".pane").forEach(function(e){e.classList.toggle("on",e.id===p)})}
@@ -91,7 +92,7 @@ function rotate(dir){if(!sourceImage)return;angle=(angle+dir+360)%360;processPho
 $("rotateL").onclick=function(){rotate(-90)};$("rotateR").onclick=function(){rotate(90)};
 $("photoInput").onchange=function(){var f=this.files&&this.files[0];if(!f)return;if(f.size>15*1024*1024){alert("Please choose an image smaller than 15 MB.");return}var fr=new FileReader();fr.onload=function(){loadData(fr.result,true)};fr.readAsDataURL(f);this.value=""};
 $("demoBtn").onclick=function(){points={rear:{x:.25,y:.75},front:{x:.76,y:.75},rearShock:{x:.37,y:.38},frontShock:{x:.70,y:.28}};loadData(demoImage(),false)};
-function register(){if(!processed){alert("Take a photo or draw your motorcycle first.");return}var name=prompt("Register this drawing under whose name?","");if(name===null)return;name=name.trim().slice(0,38);if(!name){alert("Enter a racer name to continue.");return}var spec=updateSpecs();var id=String(Date.now())+Math.random().toString(36).slice(2,6);var d=Object.assign({id:id,name:name,img:processed,original:original,pts:JSON.parse(JSON.stringify(points)),created:Date.now()},spec);designs.push(d);if(designs.length>35)designs.shift();selectedId=id;store();renderRoster();preview();showPane("ride");uiText("scanStatus",name+"'s bike registered. Its geometry is locked for each Challenge run.")}
+function register(){if(!processed){alert("Take a photo or draw your motorcycle first.");return}var name=prompt("Register this drawing under whose name?",pendingPhoneName||"");if(name===null)return;name=name.trim().slice(0,38);pendingPhoneName="";if(!name){alert("Enter a racer name to continue.");return}var spec=updateSpecs();var id=String(Date.now())+Math.random().toString(36).slice(2,6);var d=Object.assign({id:id,name:name,img:processed,original:original,pts:JSON.parse(JSON.stringify(points)),created:Date.now()},spec);designs.push(d);if(designs.length>35)designs.shift();selectedId=id;store();renderRoster();preview();showPane("ride");uiText("scanStatus",name+"'s bike registered. Its geometry is locked for each Challenge run.")}
 $("register").onclick=register;
 function renderRoster(){var el=$("roster");el.innerHTML="";designs.forEach(function(d){var b=document.createElement("button");b.className="rider"+(d.id===selectedId?" on":"");var image=document.createElement("img");image.src=d.img;b.appendChild(image);var name=document.createElement("span");name.textContent=d.name;var small=document.createElement("small");small.textContent="Frame "+d.mass+"kg · "+d.wb.toFixed(2)+"m";name.appendChild(small);b.appendChild(name);b.onclick=function(){selectedId=d.id;renderRoster();preview()};el.appendChild(b)});if(!designs.length)el.innerHTML='<p class="help">No pupil bikes registered yet. The demo is ready for testing.</p>';var d=selectedBike();uiText("activeInfo",(d.name||"Demo")+" · "+d.mass+" kg frame · "+d.wb.toFixed(2)+" m wheelbase")}
 function selectedBike(){return designs.find(function(d){return d.id===selectedId})||demoSpec()}
@@ -156,6 +157,32 @@ function drawLocation(e){var r=drawCanvas.getBoundingClientRect();return {x:clam
 drawCanvas.addEventListener("pointerdown",function(e){isDrawing=true;drawHistory.push(dc.getImageData(0,0,900,480));if(drawHistory.length>15)drawHistory.shift();drawCanvas.setPointerCapture(e.pointerId);var p=drawLocation(e);dc.beginPath();dc.moveTo(p.x,p.y);dc.lineTo(p.x+.01,p.y+.01);dc.strokeStyle=paintColor;dc.lineWidth=Number($("brush").value);dc.lineCap="round";dc.lineJoin="round";dc.stroke()});
 drawCanvas.addEventListener("pointermove",function(e){if(!isDrawing)return;var p=drawLocation(e);dc.lineTo(p.x,p.y);dc.stroke()});drawCanvas.addEventListener("pointerup",function(){isDrawing=false});$("undoDraw").onclick=function(){if(drawHistory.length)dc.putImageData(drawHistory.pop(),0,0)};$("clearDraw").onclick=initDrawing;
 $("useDrawing").onclick=function(){var c=document.createElement("canvas");c.width=480;c.height=300;var g=c.getContext("2d");g.fillStyle="white";g.fillRect(0,0,480,300);g.drawImage(drawCanvas,0,0,480,300);closeSheet("drawSheet");points={rear:{x:.25,y:.75},front:{x:.76,y:.75},rearShock:{x:.37,y:.38},frontShock:{x:.70,y:.28}};loadData(c.toDataURL("image/png"),true)};
+
+var SB_URL="https://qekcgsfeomjckctiubgm.supabase.co", SB_KEY="sb_publishable_yJbCYOLDeMreuqM01g_oqA_eF5YEWwq";
+function roomCode(){var alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",nums=new Uint32Array(8);crypto.getRandomValues(nums);return Array.from(nums,function(n){return alphabet[n%alphabet.length]}).join("")}
+$("pairBtn").onclick=async function(){
+  $("pairArea").classList.remove("hidden");
+  if(pairChannel&&pairClient){await pairClient.removeChannel(pairChannel);pairChannel=null}
+  room=roomCode();uiText("pairCode",room);
+  var url=new URL("phone.html",location.href);url.search="?room="+room;uiText("pairLink",url.href);
+  uiText("pairStatus","Connecting to camera room...");
+  if(!window.supabase||!window.supabase.createClient){uiText("pairStatus","Connection library did not load. Internet is required.");return}
+  try{
+    pairClient=pairClient||window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+    var channel=pairClient.channel("sketch-moto:camera:"+room,{config:{private:false,broadcast:{ack:true}}});pairChannel=channel;
+    channel.on("broadcast",{event:"phone-hello"},function(){uiText("pairStatus","Phone connected. Take a picture on the phone.")})
+      .on("broadcast",{event:"snapshot"},function(msg){
+        var p=msg.payload||{};
+        if(typeof p.image!=="string"||!/^data:image\/(jpeg|png);base64,/.test(p.image)||p.image.length>240000){uiText("pairStatus","Image was invalid or too large. Retake with a smaller image.");return}
+        pendingPhoneName=typeof p.name==="string"?p.name.slice(0,38):"";
+        loadData(p.image,true);showPane("design");uiText("pairStatus","Photo received from phone. Review alignment and register it.");
+        channel.send({type:"broadcast",event:"host-received",payload:{ok:true}});
+      });
+    channel.subscribe(function(status){if(channel!==pairChannel)return;uiText("pairStatus",status==="SUBSCRIBED"?"Room ready. Enter code on phone or open the link.":status==="CHANNEL_ERROR"?"Connection error. Try a new pairing code.":"Camera room: "+status)});
+  }catch(err){uiText("pairStatus","Could not connect. Check your internet connection.")}
+};
+$("copyPair").onclick=function(){var link=$("pairLink").textContent;if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(link).then(function(){uiText("pairStatus","Phone link copied.")}).catch(function(){uiText("pairStatus","Copy the link shown above.")});else uiText("pairStatus","Copy the link shown above.")};
+window.addEventListener("pagehide",function(){if(pairChannel&&pairClient)pairClient.removeChannel(pairChannel)});
 $("demoBtn").click();if(designs.length){selectedId=designs[designs.length-1].id}renderRoster();preview();requestAnimationFrame(animate);
 })();
 </script></body></html>
