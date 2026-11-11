@@ -13,6 +13,7 @@ Games imported from the user's original repositories:
 | Game | Individual library link | Original repository |
 |---|---|---|
 | BoatBeats | [Play](https://mohammaddhameri-blip.github.io/smartboardgames/boatbeats/) | [Source](https://github.com/mohammaddhameri-blip/boatbeats) |
+| Sketch Boat | [Play](https://mohammaddhameri-blip.github.io/smartboardgames/sketch-boat/) | [This repository](./sketch-boat/) |
 | Sketch Rally | [Play](https://mohammaddhameri-blip.github.io/smartboardgames/sketch-rally/) | [Source](https://github.com/mohammaddhameri-blip/sketch-rally) |
 | Melody Trail | [Play](https://mohammaddhameri-blip.github.io/smartboardgames/melody-trail/) | [Source](https://github.com/mohammaddhameri-blip/melody-trail) |
 | STEM Battleship | [Play](https://mohammaddhameri-blip.github.io/smartboardgames/stem-battleship/) | [Source](https://github.com/mohammaddhameri-blip/stem-battleship) |
@@ -24,6 +25,7 @@ Games imported from the user's original repositories:
 - `index.html` — the library website.
 - `games.json` — game metadata and visibility.
 - `boatbeats/` — playable BoatBeats.
+- `sketch-boat/` — Sketch Boat automatic racing, drawing/photo import, PWA and Android shell.
 - `sketch-rally/` — Sketch Rally smartboard game and `phone.html` controller page.
 - `melody-trail/` — playable Melody Trail browser game.
 - `stem-battleship/` — playable STEM Battleship browser files.
