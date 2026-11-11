@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c1422">
+<meta name="description" content="Sketch Boat host phone: scan, register and start boat races on the school smartboard.">
+<link rel="manifest" href="./host.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>Sketch Boat v1.1 · Host Phone</title>
+<style>
+:root{color-scheme:dark;--bg:#0c1422;--panel:#17283e;--text:#f2f8ff;--muted:#a9bed3;--line:#415c75;--green:#c4f26b;--blue:#80d7ff}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,'Segoe UI',sans-serif}
+main{max-width:540px;padding:15px 14px 60px;margin:auto}
+header{display:flex;align-items:center;gap:12px;margin:7px 0 18px}
+.mark{height:49px;width:49px;border-radius:14px;background:var(--green);display:grid;place-items:center;color:#0b1424;font-size:25px}
+h1{font-size:21px;letter-spacing:-.6px;margin:0}header p{color:var(--muted);margin:1px 0;font-size:12px}
+.small-green{font-size:12px;color:var(--green)}
+.panel{border:1px solid #354c63;border-radius:17px;background:var(--panel);padding:17px;margin:12px 0;box-shadow:0 8px 35px #040a1424}
+.panel h2{margin:0 0 12px;font-size:16px;letter-spacing:-.2px}
+.row{display:flex;gap:9px;align-items:center}.row>*{min-width:0;flex:1}
+button,.file-button{min-height:43px;border:1px solid #536e88;border-radius:10px;background:#273e55;color:#f4f8ff;font-weight:800;padding:10px 11px;cursor:pointer;font-size:13px}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.primary{background:var(--green);color:#10222b;border-color:var(--green)}
+.secondary{background:#235470;border-color:#3a7898}
+.full{display:block;width:100%;margin-top:10px;min-height:49px}
+.field{min-height:44px;border-radius:10px;border:1px solid #5f7a90;color:#f3faff;padding:10px;background:#0d1b2d;font-size:15px;width:100%}
+.room{letter-spacing:.15em;text-transform:uppercase;font-weight:850;text-align:center}
+.status{font-size:12px;color:#b8cde1;padding-top:9px;min-height:24px}.good{color:var(--green)}.bad{color:#ff9ba7}
+label{font-size:11px;color:#b6cade;font-weight:750;display:block;margin:12px 0 5px}
+.hidden{display:none!important}
+.video-frame{border-radius:13px;overflow:hidden;position:relative;background:#091727;margin-top:12px;min-height:180px;aspect-ratio:4/3;display:grid;place-items:center;border:1px solid #3e5e76}
+.video-frame video{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.video-frame.off video{display:none}
+.video-frame .hint{color:#93acc6;text-align:center;font-size:13px;max-width:200px;padding:20px}
+.video-frame:not(.off) .hint{display:none}
+.file-button{display:flex;justify-content:center;align-items:center;text-align:center;border-style:dashed;margin-top:10px}.file-button input{display:none}
+.racer-list{display:grid;gap:7px;max-height:320px;overflow-y:auto}
+.racer{display:flex;align-items:center;gap:8px;padding:9px 10px;background:#213750;border:1px solid #365673;border-radius:10px}
+.racer-name{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px}
+.racer button{min-height:30px;font-size:11px;padding:5px 8px}
+.racer-placeholder{color:#8da6bd;font-size:12px}
+.start-button{font-size:17px;min-height:61px}
+.tagline{color:#93acc6;font-size:11px;margin-top:8px}
+.badge{display:inline-block;border-radius:99px;color:#c4f26b;background:#294535;font-size:11px;padding:6px 9px;font-weight:850}
+.danger{color:#ffb1b6;border-color:#96596a;background:#522e3b}
+.editor-backdrop{position:fixed;inset:0;z-index:100;background:#06101bf0;display:grid;place-items:center;padding:12px;overflow-y:auto}
+.editor-panel{width:min(540px,100%);background:#16283e;border:1px solid #56748c;border-radius:18px;padding:14px;max-height:95dvh;overflow-y:auto}
+.editor-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.editor-top strong{font-size:18px}
+.editor-help{color:#b1c8dc;font-size:12px;margin:8px 0}
+#editCanvas{width:100%;height:auto;display:block;object-fit:contain;border-radius:10px;background:#f2f5f5;touch-action:none;cursor:crosshair}
+.editor-row{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}.editor-row>*{flex:1;min-width:0}
+.editor-row label{flex:1 0 100%}
+.rotate-label{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#cce0f0;margin-top:9px}
+.rotate-label output{color:var(--green);font-weight:850}
+input[type=range]{width:100%;accent-color:var(--green)}
+#assignCanvas{width:100%;max-height:160px;object-fit:contain;display:block;background:#f2f5f5;border-radius:9px}
+.privacy{font-size:10px;color:#819db4;line-height:1.5;padding:0 5px}
+@media(max-width:390px){.panel{padding:12px}.editor-panel{padding:11px}.row button{font-size:12px}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+</head>
+<body>
+<main>
+<header><div class="mark">⛵</div><div><h1>Sketch Boat <span class="small-green">v1.1</span></h1><p>Host Phone · by MrDhameri</p></div></header>
+<section class="panel">
+ <h2>Connect to smartboard</h2>
+ <label for="room">8-character code on smartboard</label>
+ <div class="row"><input id="room" class="field room" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="ABCD1234"><button id="connect" class="primary" type="button">Connect</button></div>
+ <div id="connectionStatus" class="status" role="status">Pair the host phone from Sketch Boat on the smartboard.</div>
+ <p class="tagline">Both devices need internet access. They can use the same Wi-Fi or different networks.</p>
+</section>
+<section class="panel">
+ <div class="row" style="justify-content:space-between"><h2 style="margin:0">1. Photograph a boat</h2><span class="badge" id="modeBadge">POWERBOAT</span></div>
+ <div id="videoFrame" class="video-frame off"><video id="video" autoplay playsinline muted></video><span class="hint">Connect, then open your phone camera to scan pupils' sketches.</span></div>
+ <div class="row" style="margin-top:10px"><button id="startCamera" type="button" disabled>📷 Start camera</button><button id="switchCamera" type="button" disabled>↺ Switch camera</button></div>
+ <button class="primary full" id="capture" type="button" disabled>📸 Take picture of drawing</button>
+ <label class="file-button full">↑ Choose a photo instead<input type="file" id="filePhoto" accept="image/*" disabled></label>
+ <div class="status" id="photoStatus">Take a photo first. Then the app asks whose drawing it is.</div>
+</section>
+<section class="panel">
+ <h2>2. Registered racers</h2>
+ <div id="rosterList" class="racer-list" aria-live="polite"><div class="racer-placeholder">No registered boat drawings.</div></div>
+ <div class="tagline">Choose Rescan to replace an existing pupil's boat or Remove to delete it.</div>
+</section>
+<section class="panel">
+ <h2>3. Race controls</h2>
+ <label for="gameMode">Game mode</label>
+ <select id="gameMode" class="field" disabled><option value="quick">🚤 Quick Race</option><option value="challenge">🏆 Challenge</option><option value="sailing">⛵ Sailing</option><option value="test">🧪 Test</option></select>
+ <p id="raceStatus" class="status">Start the race once pupil boats have been registered.</p>
+ <button id="startRace" class="primary full start-button" type="button" disabled>🏁 BEGIN RACE ON SMARTBOARD</button>
+</section>
+<p class="privacy">The phone sends the scanned sketch to the paired smartboard through a temporary Realtime channel. The smartboard stores racer designs locally. Avoid photographing pupils' personal information.</p>
+</main>
+<div id="editorDialog" class="editor-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+ <section class="editor-panel">
+  <div class="editor-top"><strong id="editorTitle">Review scanned drawing</strong><button id="cancelEdit" type="button">✕ Close</button></div>
+  <p class="editor-help">Rotate freely, crop if necessary and reduce paper lines. Bow points right (powerboat); sails face upward (sailing).</p>
+  <canvas id="editCanvas" width="420" height="295" aria-label="Preview edited drawing; drag a rectangle to select a crop"></canvas>
+  <div class="rotate-label"><span>Rotate photo</span><output id="rotationValue">0°</output></div>
+  <input id="photoRotation" type="range" min="-180" max="180" value="0" step="1">
+  <div class="editor-row"><button id="rotateLeft" type="button">↶ 90°</button><button id="rotateRight" type="button">↷ 90°</button><button id="cropPhoto" type="button">✂ Apply crop</button><button id="resetCrop" type="button">Reset</button></div>
+  <div class="rotate-label"><span>White-background cleanup</span><output id="cleanupValue">210</output></div>
+  <input id="cleanup" type="range" min="140" max="245" value="210">
+  <label><input type="checkbox" id="removeLines" checked> Remove faint blue notebook lines</label>
+  <p class="editor-help">For cropping: drag across the photo to draw a rectangle, then tap Apply crop.</p>
+  <div class="editor-row"><button id="retake" type="button">↺ Retake</button><button id="nextAssign" class="primary" type="button">✓ Continue to registration</button></div>
+ </section>
+</div>
+<div id="assignDialog" class="editor-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
+ <section class="editor-panel">
+  <div class="editor-top"><strong id="assignTitle">Register this boat</strong><button id="cancelAssign" type="button">✕ Close</button></div>
+  <canvas id="assignCanvas" width="420" height="295"></canvas>
+  <label for="racerName">Who drew this boat?</label>
+  <input id="racerName" class="field" maxlength="28" autocomplete="off" placeholder="Enter pupil's name">
+  <p id="assignStatus" class="status">The drawing will be registered on the smartboard.</p>
+  <div class="editor-row"><button id="backToEdit" type="button">← Edit photo</button><button id="registerBoat" class="primary" type="button">＋ Register drawing</button></div>
+ </section>
+</div>
+<script src="./host.js" defer></script>
+</body>
+</html>
