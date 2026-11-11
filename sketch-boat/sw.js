@@ -1,5 +1,5 @@
-const CACHE="sketch-boat-v1.1.0";
-const ASSETS=["./","./index.html","./style.css","./rally-ui.css","./app.js","./pairing-and-track.js","./manifest.webmanifest","./host.html","./host.js","./host.webmanifest","./icon.svg"];
+const CACHE="sketch-boat-v1.2.0";
+const ASSETS=["./","./index.html","./style.css","./rally-ui.css","./track-geometry.js","./app.js","./pairing-and-track.js","./manifest.webmanifest","./host.html","./host.js","./host.webmanifest","./icon.svg"];
 self.addEventListener("install",event=>{
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
 });
