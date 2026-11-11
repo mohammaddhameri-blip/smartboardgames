@@ -1,0 +1,26 @@
+name: Sketch Boat Track Physics Tests
+on:
+  push:
+    paths:
+      - "sketch-boat/*.js"
+      - "sketch-boat/tests/**"
+      - ".github/workflows/sketch-boat-track-tests.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  freehand-track:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify browser script syntax
+        run: |
+          node --check sketch-boat/track-geometry.js
+          node --check sketch-boat/app.js
+          node --check sketch-boat/pairing-and-track.js
+          node --check sketch-boat/host.js
+      - name: Run sharp-corner and race simulation regression tests
+        run: node --test sketch-boat/tests/freehand-track.test.mjs
