@@ -14,16 +14,13 @@ const modes = {
   sailing:{name:"Sailing Challenge",title:"Design your sailboat",subtitle:"WIND-POWERED SAILING CHALLENGE",help:"Side view: draw the hull below and the mast and sail above. Without a usable sail, the boat cannot power itself.",kind:"sail"},
   test:{name:"Boat Testing",title:"Design your powerboat",subtitle:"PHYSICS TESTING LAB",help:"Observe speed, steering, collisions and recovery with the same physics used in races.",kind:"power"}
 };
-function makeTrack(preset="calm"){
- const values=Array.from({length:65},(_,i)=>{const x=i/64;if(preset==="winding")return .5+.24*Math.sin(x*13)+.08*Math.sin(x*27);if(preset==="islands")return .5+.18*Math.sin(x*19)+.05*Math.cos(x*31);if(preset==="slalom")return .5+.3*Math.sin(x*27)+.055*Math.sin(x*43);return .5+.045*Math.sin(x*9);});
- const rocks=preset==="islands"?[{x:.28,offset:-35,r:22},{x:.57,offset:35,r:23},{x:.79,offset:-30,r:21}]:preset==="slalom"?[{x:.22,offset:30,r:19},{x:.46,offset:-30,r:19},{x:.7,offset:33,r:19}]:[];
- return {values,width:200,distance:2600,rocks,preset};
-}
-function validTrack(raw){
- if(!raw||!Array.isArray(raw.values)||raw.values.length!==65)return makeTrack();
- return {values:raw.values.map(v=>clamp(Number(v)||.5,.08,.92)),width:clamp(Number(raw.width)||200,125,280),distance:[2600,5200,7800,13000].includes(Number(raw.distance))?Number(raw.distance):2600,rocks:(Array.isArray(raw.rocks)?raw.rocks:[]).slice(0,15).map(r=>({x:clamp(Number(r.x)||.5,.05,.95),offset:clamp(Number(r.offset)||0,-90,90),r:clamp(Number(r.r)||20,12,30)})),preset:String(raw.preset||"custom")};
-}
+const Geo=window.SketchBoatTrack;
+if(!Geo)throw Error("Sketch Boat track geometry library did not load");
+function makeTrack(name="calm"){return Geo.preset(name);}
+function validTrack(raw){return Geo.normalize(raw);}
 const state={mode:"quick",boats:[],chosen:null,level:1,race:null,lastResults:[],history:{power:{},sail:{}},customTrack:makeTrack(),photo:null,photoAngle:0,photoThreshold:205,tool:"pen",drawing:false,stepAccumulator:0,lastFrame:0};
+let geoRef=null,geoCache=null;
+function getGeo(){if(geoRef!==state.customTrack){geoRef=state.customTrack;geoCache=Geo.makeGeometry(state.customTrack);}return geoCache;}
 const draw=$("drawCanvas"), dc=draw.getContext("2d",{willReadFrequently:true}), view=$("raceCanvas"), ctx=view.getContext("2d");
 const boatImgs=new Map();
 const palette=["#c1f38b","#f9bc73","#ff8ca0","#7ce0ec","#c3adff","#f2da83","#98bdfc","#ff9f63"];
@@ -261,14 +258,9 @@ function updateCourseHint(){
 }
 $("raceLevel").addEventListener("change",e=>{if(state.race?.running)return;state.level=Number(e.target.value);updateCourseHint();drawIdle();});
 function isCustom(){return state.mode==="quick"||state.mode==="test";}
-function getCourse(lvl=state.level){return isCustom()?{name:"Designed Watercourse",width:state.customTrack.width,limit:Math.round(38+state.customTrack.distance/75),obstacles:state.customTrack.rocks.length}:tracks[lvl-1];}
+function getCourse(lvl=state.level){return isCustom()?{name:"Designed Watercourse",width:state.customTrack.width,limit:Math.round(60+state.customTrack.distance/42),obstacles:state.customTrack.rocks.length}:tracks[lvl-1];}
 function pathY(x,lvl=state.level){
- if(isCustom()){
-  const arr=state.customTrack.values,n=arr.length-1,p=clamp(x/END_X,0,1)*n,i=Math.min(n-1,Math.floor(p)),u=p-i;
-  const a=arr[Math.max(0,i-1)],b=arr[i],c=arr[i+1],d=arr[Math.min(n,i+2)];
-  const smooth=.5*((2*b)+(-a+c)*u+(2*a-5*b+4*c-d)*u*u+(-a+3*b-3*c+d)*u*u*u);
-  return 265+(clamp(smooth,.06,.94)-.5)*250;
- }
+ if(isCustom())return Geo.at(getGeo(),x).y;
  const t=tracks[lvl-1],p=x/t.freq;return 265+t.amp*(.68*Math.sin(p+.25)+.24*Math.sin(p*1.64-1.3));
 }
 function curvature(x,lvl){
@@ -277,7 +269,7 @@ function curvature(x,lvl){
  return Math.abs(second)/Math.pow(1+slope*slope,1.5);
 }
 function obstacles(level){
- if(isCustom())return state.customTrack.rocks.map(r=>({x:r.x*END_X,y:pathY(r.x*END_X,level)+r.offset,r:r.r}));
+ if(isCustom())return getGeo().rocks;
  const t=tracks[level-1],arr=[];
  for(let i=0;i<t.obstacles;i++){
   const x=540+i*470+((i+level)%2)*60;
@@ -286,7 +278,12 @@ function obstacles(level){
  }return arr;
 }
 function spawn(b,i,count){
- return {boat:b,x:65-i*27,y:pathY(80,state.level)+(i-(count-1)/2)*37,vx:0,vy:0,a:0,omega:0,time:0,finished:false,failed:false,collisions:0,spin:0,wall:0,top:0,lastRecovery:0,spinUntil:0,stuck:0,freeze:0};
+ const racer={boat:b,x:65-i*27,y:pathY(80,state.level)+(i-(count-1)/2)*37,vx:0,vy:0,a:0,omega:0,time:0,finished:false,failed:false,collisions:0,spin:0,wall:0,top:0,lastRecovery:0,spinUntil:0,stuck:0,freeze:0};
+ if(isCustom()){
+  const geo=getGeo(),s=12-Math.floor(i/2)*62,p=Geo.at(geo,s),lane=(i%2?1:-1)*Math.min(geo.width*.18,24);
+  racer.x=p.x-p.ty*lane;racer.y=p.y+p.tx*lane;racer.s=s;racer.a=p.a;
+ }
+ return racer;
 }
 function start(){
  if(state.race?.running)return;
@@ -302,7 +299,8 @@ function start(){
   $("raceLevel").value=state.level;updateCourseHint();
  }
  const racers=boats.map((b,i)=>spawn(b,i,boats.length));
- state.race={mode:state.mode,level:state.level,racers,timer:0,running:true,done:false,obstacles:obstacles(state.level),camera:0};
+ const free=isCustom(),geo=free?getGeo():null,first=free?Geo.at(geo,0):null;
+ state.race={mode:state.mode,level:state.level,racers,timer:0,running:true,done:false,obstacles:obstacles(state.level),camera:0,custom:free,geo,cameraX:first?.x||0,cameraY:first?.y||0,zoom:free?clamp(.93/geo.scale,.25,1.3):1};
  state.lastResults=[];$("emptyState").classList.add("hidden");$("raceBanner").classList.add("hidden");
  $("startRace").disabled=true;$("resetRace").disabled=false;$("nextLevel").classList.add("hidden");
  $("raceInfo").textContent=state.mode==="sailing"?"Wind drives the sails. All boats use the same conditions.":"Shared engine and automatic controller. Physics decides the results.";
@@ -321,6 +319,7 @@ function scoreFailure(r){
 }
 function step(dt){
  const race=state.race;if(!race||!race.running)return;
+ if(race.custom){stepFreeCourse(dt);return;}
  race.timer+=dt;const level=race.level,t=getCourse(level);
  for(const r of race.racers){
   if(r.finished||r.failed)continue;
@@ -382,6 +381,75 @@ function step(dt){
   if(race.timer>=t.limit)scoreFailure(r);
  }
  if(race.mode!=="sailing")collideBoats(race.racers);
+ if(race.racers.every(r=>r.finished||r.failed))finish();
+}
+// A polyline has its own local arc length, independent of screen X.
+// Boats integrate genuine 2D position/velocity, with restricted nearest-segment
+// projection so a racer cannot teleport forwards across a switchback.
+function stepFreeCourse(dt){
+ const race=state.race,geo=race.geo,curr=race.timer+=dt,lim=getCourse(race.level).limit;
+ for(const r of race.racers){
+  if(r.finished||r.failed)continue;
+  const s=r.boat.stats,speed=Math.hypot(r.vx,r.vy);
+  const ahead=clamp(38+speed*.60,40,185);
+  const target=Geo.at(geo,clamp(r.s+ahead,0,geo.length+20));
+  const steer=Math.atan2(target.y-r.y,target.x-r.x);
+  const error=wrap(steer-r.a);
+  const maxYaw=clamp(s.turn*1.28,.55,3.2);
+  const torque=clamp(error*4.1-r.omega*3.1,-maxYaw*2.7,maxYaw*2.7);
+  r.omega=clamp(r.omega+torque*dt,-maxYaw,maxYaw);
+  r.a=wrap(r.a+r.omega*dt);
+
+  let bend=0;
+  for(const look of [35,65,105,155,230]){
+   bend=Math.max(bend,Geo.curvature(geo,Math.min(geo.length,r.s+look)));
+  }
+  // Steering capacity and corner radius limit achievable speed.
+  const safe=clamp(Math.sqrt((25+s.turn*5)/Math.max(.0008,bend)),24,220);
+  const fX=Math.cos(r.a),fY=Math.sin(r.a);
+  const throttle=speed>safe+5?-0.65:speed>safe?0.08:1;
+  const thrust=23500*throttle;
+  const resistance=s.drag*speed*speed;
+  const lateral=-fY*r.vx+fX*r.vy;
+  const sideForce=-lateral*s.mass*1.65;
+  const ax=(thrust*fX-(speed>0?resistance*r.vx/speed:0)-fY*sideForce)/s.mass;
+  const ay=(thrust*fY-(speed>0?resistance*r.vy/speed:0)+fX*sideForce)/s.mass;
+  r.vx+=ax*dt;r.vy+=ay*dt;
+  const velocity=Math.hypot(r.vx,r.vy);
+  if(velocity>245){r.vx*=245/velocity;r.vy*=245/velocity;}
+  r.x+=r.vx*dt;r.y+=r.vy*dt;
+
+  const near=Geo.nearest(geo,r.x,r.y,r.s,Math.max(120,speed*.5+65));
+  const stepLimit=Math.max(4,velocity*dt+2);
+  r.s=clamp(near.s,r.s-stepLimit,r.s+stepLimit);
+  r.top=Math.max(r.top,velocity);
+  if(Math.abs(r.omega)>1.3&&velocity>85)r.spin+=dt;
+  const boundary=Math.max(20,geo.width*.5-15);
+  if(near.distance>boundary&&r.s>-10){
+   const nx=(r.x-near.x)/(near.distance||1),ny=(r.y-near.y)/(near.distance||1);
+   r.x=near.x+nx*boundary;r.y=near.y+ny*boundary;
+   const vn=r.vx*nx+r.vy*ny;
+   if(vn>0){r.vx-=1.25*vn*nx;r.vy-=1.25*vn*ny;}
+   r.vx*=.89;r.vy*=.89;r.omega-=wrap(r.a-Math.atan2(near.ty,near.tx))*.2;
+   r.collisions++;r.wall++;
+  }
+  for(const rock of race.obstacles){
+   const dx=r.x-rock.x,dy=r.y-rock.y,d=Math.hypot(dx,dy),min=rock.r+15;
+   if(d<min&&d>0){
+    const nx=dx/d,ny=dy/d,vn=r.vx*nx+r.vy*ny;
+    r.x=rock.x+nx*min;r.y=rock.y+ny*min;
+    if(vn<0){r.vx-=1.32*vn*nx;r.vy-=1.32*vn*ny;}
+    r.omega+=Math.sign(wrap(Math.atan2(ny,nx)-r.a))*.3;
+    r.collisions++;
+   }
+  }
+  // Progress depends on traversing the sequential path, not crossing the finish in world XY.
+  if(r.s>=geo.length-5){r.finished=true;r.time=curr;}
+  if(r.s<-geo.length*.6)scoreFailure(r);
+  if(velocity<8&&curr>7)r.stuck+=dt;else r.stuck=0;
+  if(r.stuck>18||curr>=lim)scoreFailure(r);
+ }
+ collideBoats(race.racers);
  if(race.racers.every(r=>r.finished||r.failed))finish();
 }
 function collideBoats(arr){
@@ -522,10 +590,41 @@ function drawPowerTrack(race,time){
   if(x<0||x>WIDTH)continue;ctx.fillStyle="#ffe6b2";ctx.font="bold 11px system-ui";ctx.fillText(q===0?"START":"",x-15,y-t.width*.62);
  }
 }
+function drawFreeCourse(race,time){
+ const geo=race?.geo||getGeo();
+ waterBackground(time);
+ const b=geo.bounds,zoom=race?race.zoom:Math.min(1.35,1020/(b.maxX-b.minX+geo.width+1),540/(b.maxY-b.minY+geo.width+1));
+ const cameraX=race?race.cameraX:(b.minX+b.maxX)/2;
+ const cameraY=race?race.cameraY:(b.minY+b.maxY)/2;
+ ctx.save();
+ ctx.setTransform(zoom,0,0,zoom,WIDTH/2-cameraX*zoom,HEIGHT/2-cameraY*zoom);
+ const route=new Path2D();
+ geo.world.forEach((p,i)=>i?route.lineTo(p.x,p.y):route.moveTo(p.x,p.y));
+ ctx.lineCap="round";ctx.lineJoin="round";
+ ctx.strokeStyle="#103b56";ctx.lineWidth=geo.width+16;ctx.stroke(route);
+ ctx.strokeStyle="#d2e9d7";ctx.lineWidth=geo.width+6;ctx.stroke(route);
+ ctx.strokeStyle="#369fbd";ctx.lineWidth=geo.width;ctx.stroke(route);
+ ctx.setLineDash([14,19]);ctx.strokeStyle="#d9fcfd";ctx.globalAlpha=.33;ctx.lineWidth=2.8;ctx.stroke(route);ctx.setLineDash([]);ctx.globalAlpha=1;
+ for(const rock of geo.rocks){
+  ctx.beginPath();ctx.ellipse(rock.x,rock.y,rock.r,rock.r*.78,.22,0,TAU);
+  ctx.fillStyle="#4f6170";ctx.fill();ctx.strokeStyle="#ead3a1";ctx.lineWidth=3;ctx.stroke();
+ }
+ for(const [place,s] of [["START",0],["FINISH",geo.length]]){
+  const p=Geo.at(geo,s);
+  ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a);
+  ctx.fillStyle="#f0f8ef";ctx.font="bold 18px system-ui";ctx.textAlign="center";
+  ctx.fillText(place,0,-geo.width*.5-19);
+  ctx.strokeStyle="#e9f7ff";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(0,-geo.width*.48);ctx.lineTo(0,geo.width*.48);ctx.stroke();
+  ctx.restore();
+ }
+ ctx.restore();
+}
 function renderBoat(r,camera,side=false){
  const img=imageFor(r.boat);if(!img.complete)return;
- const s=r.boat.stats,b=s.bounds,x=(r.x-camera)*1.17,y=side?345+Math.sin(r.x*.055+state.race.timer*3)*4:r.y*1.17+43;
- const targetLen=clamp(s.length*4.9,45,96),targetWidth=clamp(s.width*4.2,18,52);
+ const s=r.boat.stats,b=s.bounds,free=!!state.race?.custom,zoom=free?state.race.zoom:1;
+ const x=free?(r.x-state.race.cameraX)*zoom+WIDTH/2:(r.x-camera)*1.17;
+ const y=free?(r.y-state.race.cameraY)*zoom+HEIGHT/2:side?345+Math.sin(r.x*.055+state.race.timer*3)*4:r.y*1.17+43;
+ const targetLen=clamp(s.length*4.9,45,96)*zoom,targetWidth=clamp(s.width*4.2,18,52)*zoom;
  ctx.save();ctx.translate(x,y);if(!side)ctx.rotate(r.a);
  ctx.fillStyle="#d8fbfd";ctx.globalAlpha=.32;ctx.beginPath();ctx.ellipse(-targetLen*.28,0,targetLen*.9,targetWidth*.95,0,0,TAU);ctx.fill();ctx.globalAlpha=1;
  const srcW=Math.max(5,b.maxX-b.minX+6),srcH=Math.max(5,b.maxY-b.minY+6);
@@ -557,6 +656,7 @@ function render(time){
  const race=state.race;
  const cam=race?.camera||0;ctx.clearRect(0,0,WIDTH,HEIGHT);
  if(race?.mode==="sailing"||(!race&&state.mode==="sailing"))drawSailTrack(race,time);
+ else if(race?.custom||(!race&&isCustom()))drawFreeCourse(race,time);
  else drawPowerTrack(race,time);
  if(race)for(const r of [...race.racers].sort((a,b)=>a.y-b.y))renderBoat(r,cam,race.mode==="sailing");
  if(race){const secs=race.timer,m=Math.floor(secs/60),s=(secs%60).toFixed(1).padStart(4,"0");$("clock").textContent=String(m).padStart(2,"0")+":"+s;}
@@ -574,7 +674,7 @@ function loop(now){
   state.stepAccumulator+=delta*Number($("raceSpeed").value);
   let cycles=0;
   while(state.stepAccumulator>=1/60 && cycles<8){step(1/60);state.stepAccumulator-=1/60;cycles++;if(!state.race?.running)break;}
-  const leader=Math.max(...race.racers.map(r=>r.x));race.camera=clamp(lerp(race.camera,leader-255,.065),0,END_X-780);
+  if(race.custom){const leader=race.racers.reduce((a,b)=>!a||b.s>a.s?b:a,null);race.cameraX=lerp(race.cameraX,leader.x,.065);race.cameraY=lerp(race.cameraY,leader.y,.065);}else{const leader=Math.max(...race.racers.map(r=>r.x));race.camera=clamp(lerp(race.camera,leader-255,.065),0,END_X-780);}
  }
  render(now/1000);
  requestAnimationFrame(loop);
