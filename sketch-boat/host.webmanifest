@@ -1,0 +1,18 @@
+{
+  "name": "Sketch Boat Host Phone",
+  "short_name": "Boat Host",
+  "start_url": "./host.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0c1422",
+  "theme_color": "#0c1422",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}
