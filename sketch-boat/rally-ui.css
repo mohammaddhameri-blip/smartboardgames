@@ -65,3 +65,20 @@ body{background:#0c1422}
 @media(max-width:980px){.workspace{grid-template-columns:310px 1fr}.app{padding:12px}.rally-pane{min-height:400px;max-height:65vh}}
 @media(max-width:760px){.workspace{grid-template-columns:1fr}.sidebar{grid-row:1}.stage{grid-row:2;min-height:0}.rally-pane{max-height:none;min-height:0}.rally-pane .modes{grid-template-columns:repeat(4,1fr)}.rally-pane .mode{font-size:10px;gap:3px}.rally-pane .mode span{font-size:15px}.race-frame canvas{min-height:250px}.pair-actions{grid-template-columns:1fr 1fr}.pair-main{grid-template-columns:1fr}.camera-qr{justify-self:center}}
 @media(max-width:420px){.rally-pane .modes{grid-template-columns:repeat(2,1fr)}.camera-code{font-size:24px}.pair-window{padding:13px}.host-entry{flex-wrap:wrap}.pair-actions{grid-template-columns:1fr 1fr}}
+
+
+.menu-button{background:#223448;color:#c1d7e7;border:1px solid #425972;font-size:11px;padding:7px 11px}
+.main-menu{position:fixed;inset:0;z-index:95;background:radial-gradient(ellipse at 50% 25%,#22394b 0%,#0c1422 64%);display:flex;justify-content:center;align-items:center;padding:20px;overflow-y:auto}
+.menu-inner{width:min(630px,100%);background:#17263a;border:1px solid #40556d;border-radius:22px;padding:28px 34px;text-align:center;box-shadow:0 25px 100px #0008}
+.menu-eyebrow{font-size:37px;font-weight:950;letter-spacing:-.065em;line-height:1}
+.menu-eyebrow span{font-size:14px;letter-spacing:0;color:var(--lime);vertical-align:middle}
+.menu-byline{font-size:12px;letter-spacing:.05em;color:#b8cad9;margin:7px 0}
+.menu-art{display:block;width:100%;height:auto;max-height:210px;margin:12px auto}
+.menu-inner h2{font-size:24px;letter-spacing:-.04em;margin:8px 0 4px}
+.menu-inner p{font-size:13px;color:#b1c6d7;margin:auto;max-width:490px;line-height:1.5}
+.menu-modes{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:18px}
+.menu-modes button{font-size:14px;background:#253d53;padding:13px;border:1px solid #496881}
+.menu-modes button:hover{border-color:var(--lime);color:var(--lime)}
+.menu-enter{width:100%;font-size:16px;margin-top:13px;padding:14px}
+.menu-host{width:100%;margin-top:9px;background:transparent;border:1px solid #56738a}
+@media(max-width:500px){.menu-inner{padding:19px 15px}.menu-eyebrow{font-size:30px}.menu-inner h2{font-size:20px}.menu-modes button{font-size:12px;padding:11px 4px}}
