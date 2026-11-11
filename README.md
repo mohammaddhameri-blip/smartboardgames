@@ -46,7 +46,7 @@ In **Settings → Pages**, set **Build and deployment → Source: Deploy from a 
 ## Important maintenance notes
 
 - The original repositories remain unchanged. The versions here are **copies**, not automatically synchronized with their originals. When updating one copy, update the other separately if you want them both current.
-- Android APKs and build workflows remain managed in the games' **original** repositories, not this browser library.
+- Most Android APKs and build workflows remain managed in each game's **original** repository. Sketch Boat is an exception: its Android wrapper and automated build workflow are kept under this repository.
 - STEM Battleship's page uses its original repository's public `ocean-loop.gif` and PNG icon files through raw GitHub URLs. Those images require network access; the rest of the imported browser game files are hosted in this library.
 - Sketch Rally's phone-pairing function uses its existing Supabase service, which may need its own configuration.
 - This repository provides a static site. Database, cloud synchronization, and multiplayer features depend on their respective backends.
