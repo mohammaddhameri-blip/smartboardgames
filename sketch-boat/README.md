@@ -1,4 +1,4 @@
-# Sketch Boat v1.1 — by MrDhameri
+# Sketch Boat v1.2 — by MrDhameri
 
 **Smartboard game:** https://mohammaddhameri-blip.github.io/smartboardgames/sketch-boat/
 
@@ -26,10 +26,18 @@ On Android Chrome, open the host URL and choose **Install app** or **Add to Home
 
 The Android projects load the published GitHub Pages web apps, so web game updates are shared with the APK wrappers. Native changes still require rebuilding APKs. Builds have not been independently verified yet. Debug APK signing differs between CI runner instances; use persistent signing for releases.
 
-## Design Track
-The **TRACK** tab applies to **Quick Race and Test**. It has four initial patterns (Open Water, Winding River, Island Pass, Sharp S-Curves). In the smartboard stage, choose Draw Route and drag to shape the watercourse. Choose Add Rocks and tap to add obstacles, or Erase Rocks to remove. Change waterway width and race distance (1, 2, 3 or 5 km equivalents). Track presets, user-drawn geometry, obstacle positions and width are saved locally and affect the actual navigation, collision and speed calculations.
+## Design Track (v1.2 freehand update)
+The **TRACK** tab applies to **Quick Race and Test**. Design Track now behaves like Sketch Rally's continuous freehand track drawing:
 
-Challenge Mode has ten predefined courses for fair leaderboards. The ten Sailing courses are also predefined in this first version.
+1. Select **Draw route**, then press and drag once to create a complete path from START to FINISH. Draw in any direction. Moving backward, making 90° bends, tight U-turns, hairpins, spirals, and self-crossing courses is supported.
+2. The editor draws **only a narrow route line**. No water-filled ribbon, water boundaries, turn smoothing, or minimum bend-radius restriction limits the drawing. Draw another line to replace the current route; use **Undo** to revert.
+3. Use **Add rocks** / **Erase rocks** by tapping the course preview. The track also offers four optional presets.
+4. **Width (racing only)** adjusts the navigable watercourse for racing. It does not change the drawing brush or display edges in the editor.
+5. Choose a 1, 2, 3 or 5 km race distance. The full route shape, rocks, width and length persist in smartboard local storage.
+
+During the race, a physical water lane is rendered around the drawn centreline. Powerboats follow the sequential path through a two-dimensional arc-length navigator rather than assuming the track always runs left-to-right. Collisions, steering and turning speed still affect whether a vessel can navigate extremely tight corners. The drawing editor imposes **no arbitrary corner constraints**, but an extremely sharp course may be physically difficult or impossible for some designs.
+
+Challenge Mode's ten predefined courses and Sailing Mode's ten predefined courses remain separate and unchanged. Custom editor tracks do not affect their official leaderboards.
 
 ## Racing rules
 - The engine and automatic controller are shared across all powerboat designs. No manual steering.
@@ -47,7 +55,7 @@ This is simplified educational 2D water physics, not CFD or a full hydrodynamic 
 - index.html — Sketch Rally-inspired smartboard layout.
 - style.css and rally-ui.css — game and main menu styles.
 - app.js — drawing, boat analysis, automatic simulation and race data.
-- pairing-and-track.js — Supabase pairing, phone roster actions, track editor, custom course saving.
+- track-geometry.js — unrestricted 2D polyline geometry, arc-length and nearest-segment projections.\n- pairing-and-track.js — Supabase pairing, phone roster actions, single-line freehand track editor, custom course saving.
 - host.html and host.js — phone camera, crop, rotation, registration and race remote.
 - host.webmanifest / manifest.webmanifest / sw.js — installable phone and smartboard PWAs.
 - android/ — main Sketch Boat WebView APK.
