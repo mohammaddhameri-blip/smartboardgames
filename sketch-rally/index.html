@@ -138,6 +138,17 @@ body.challenge-mode #pane-track [data-preset],body.challenge-mode #pane-track [d
 .best-row .detail{flex:1;min-width:0}.best-row strong{font-size:13px;display:block;overflow-wrap:anywhere}
 .best-row small{font-size:11px;color:#b1c4d6}.best-row .time{white-space:nowrap;color:#d9faac;font-weight:900;font-size:13px}
 @media(max-width:500px){.menu-modes{gap:5px}.menu-mode{min-height:65px;padding:5px 2px}.menu-mode strong{font-size:10px}.menu-mode span{font-size:10px}.best-row img{width:61px;height:42px}}
+
+/* v1.5 · downhill freehand course and max-six car league */
+.downhill-width{margin:12px 0;display:grid;gap:6px}.downhill-width label{display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:#c4f26b}.downhill-width input{width:100%;accent-color:#c4f26b}
+.league-panel{margin:13px 0 10px;padding:12px;background:#102539;border:1px solid #597369;border-radius:12px}
+.league-panel h3{font-size:14px;margin:0 0 7px;color:#d2fb9a}.league-panel p{font-size:12px;color:#c7dae2;margin:4px 0}
+.league-heat{padding:8px 0;border-top:1px solid #344656;font-size:12px}.league-heat strong{color:#d9f6ff}.league-heat small{display:block;color:#b1c4ce;margin-top:2px;line-height:1.4}
+.league-actions{display:grid;gap:7px;margin:10px 0}
+.league-stage-next{position:absolute;z-index:40;left:50%;bottom:14%;transform:translateX(-50%);padding:13px 22px;font-size:20px;font-weight:900;border:2px solid #d7fa87;background:#152e3e;color:#d7fa87;border-radius:12px;box-shadow:0 8px 26px #0009;cursor:pointer}
+.league-stage-next.hidden{display:none!important}
+body.race-immersive .league-stage-next{bottom:8%}
+
 </style>
 </head>
 <body class="menu-open">
@@ -191,7 +202,7 @@ body.challenge-mode #pane-track [data-preset],body.challenge-mode #pane-track [d
           <span class="section-label">Race mode</span>
           <div class="two-col"><button class="btn selected" type="button" id="modeHills">⛰ Hill Climb</button><button class="btn" type="button" id="modeDownhill">↪ Downhill</button><button class="btn" type="button" id="modeChallenge">🏆 Challenge</button></div>
           <p class="help">Both races are fully automatic. Each mode has its own editable course.</p>
-          <label class="section-label" for="trackDistance">Race distance</label>
+          <section class="downhill-width hidden" id="downhillWidthRow"><label for="downhillWidth">Downhill road width <span id="downhillWidthValue">105</span></label><input id="downhillWidth" type="range" min="45" max="180" step="5" value="105"><p class="help">Draw only the centreline. Width affects racing, not your brush.</p></section><label class="section-label" for="trackDistance">Race distance</label>
           <select id="trackDistance" class="field"><option value="1">1 km · Sprint</option><option value="2">2 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="20">20 km · Endurance</option></select>
           <span class="section-label">Quick courses</span>
           <div class="two-col">
@@ -232,7 +243,7 @@ body.challenge-mode #pane-track [data-preset],body.challenge-mode #pane-track [d
           <button type="button" class="btn full hidden" id="rematchRace">↻ Rematch · 3 min to improve each car</button>
           <label class="checkbox"><input type="checkbox" id="speedMode"/> Speed up simulation ×2</label>
           <span class="section-label">Live standings</span>
-          <div id="standings" class="standings"></div>
+          <div id="standings" class="standings"></div><section class="league-panel hidden" id="leaguePanel"><h3 id="leagueTitle">DOWNHILL LEAGUE</h3><p id="leagueSummary">Up to six cars per heat</p><div id="leagueHeats"></div><div class="league-actions"><button class="btn primary full hidden" type="button" id="leagueNext">Next heat →</button><button class="btn full" type="button" id="leagueRestart">↺ Restart league</button></div></section>
           <div class="note" id="raceNote">Wheel radius, wheelbase, body proportions, ground clearance and balance influence the results. Motor power and baseline materials are standardized.</div>
           <button type="button" class="btn full" id="backToCars">← Modify car designs</button>
           <button type="button" class="btn full" id="backToTrack">← Modify track</button>
@@ -247,7 +258,7 @@ body.challenge-mode #pane-track [data-preset],body.challenge-mode #pane-track [d
       <div class="canvas-wrap" id="sceneWrap">
         <canvas id="scene" aria-label="Track editor and live car race"></canvas>
         <div class="canvas-tooltip" id="canvasTooltip">✎ Draw from left to right to design the road</div>
-        <button type="button" class="begin-race hidden" id="startRace" aria-label="🏁 BEGIN RACE! 🏁">
+        <button type="button" class="league-stage-next hidden" id="leagueNextStage">🏁 NEXT HEAT</button><button type="button" class="begin-race hidden" id="startRace" aria-label="🏁 BEGIN RACE! 🏁">
           <span class="waving-flag" aria-hidden="true">🏁</span><span class="begin-letter-group" aria-hidden="true"></span><span class="waving-flag other" aria-hidden="true">🏁</span>
         </button>
       </div>
@@ -1524,6 +1535,373 @@ $('modeChallenge').addEventListener('click',()=>changeGameMode('challenge'));
 scene.addEventListener('pointerdown',e=>{
  if(gameMode==='challenge'&&page==='track'){e.preventDefault();e.stopImmediatePropagation()}
 },true);
+
+
+// v1.5 · Real 2-D downhill track: route distance never relies on increasing x.
+// All league cars retain their original garage record, sketch and identity.
+const ROUTE_W=1200,ROUTE_H=680;
+let downhillRoute=[],downhillGeometry=null,downhillRoadWidth=105,league=null;
+function routePreset(kind){
+ const presets={
+  flat:[[.09,.52],[.91,.52]],
+  hills:[[.08,.35],[.33,.35],[.35,.72],[.12,.73],[.12,.89],[.71,.88],[.70,.49],[.91,.49]],
+  rough:[[.08,.20],[.45,.20],[.50,.44],[.25,.44],[.25,.67],[.74,.68],[.76,.32],[.91,.32]],
+  gauntlet:[[.10,.17],[.86,.18],[.86,.38],[.15,.38],[.15,.57],[.82,.57],[.82,.80],[.09,.81]]
+ };
+ return (presets[kind]||presets.hills).map(q=>({x:q[0],y:q[1]}));
+}
+function buildDownhillGeometry(){
+ const pts=downhillRoute.map(p=>({x:p.x*ROUTE_W,y:p.y*ROUTE_H}));
+ const segments=[];let length=0;
+ for(let i=1;i<pts.length;i++){
+  const a=pts[i-1],b=pts[i],d=Math.hypot(b.x-a.x,b.y-a.y);
+  if(d<.6)continue;
+  segments.push({ax:a.x,ay:a.y,tx:(b.x-a.x)/d,ty:(b.y-a.y)/d,start:length,length:d});
+  length+=d;
+ }
+ if(!segments.length){downhillRoute=routePreset('flat');return buildDownhillGeometry()}
+ downhillGeometry={segments,length};
+ return downhillGeometry;
+}
+function onRoute(s){
+ const geo=downhillGeometry||buildDownhillGeometry(),segs=geo.segments;
+ if(s<=0){const q=segs[0];return {x:q.ax+q.tx*s,y:q.ay+q.ty*s,a:Math.atan2(q.ty,q.tx),tx:q.tx,ty:q.ty}}
+ if(s>=geo.length){const q=segs[segs.length-1],d=s-q.start;return {x:q.ax+q.tx*d,y:q.ay+q.ty*d,a:Math.atan2(q.ty,q.tx),tx:q.tx,ty:q.ty}}
+ let lo=0,hi=segs.length-1;
+ while(lo<hi){const mid=(lo+hi+1)>>1;if(segs[mid].start<=s)lo=mid;else hi=mid-1}
+ const q=segs[lo],d=s-q.start;
+ return {x:q.ax+q.tx*d,y:q.ay+q.ty*d,a:Math.atan2(q.ty,q.tx),tx:q.tx,ty:q.ty};
+}
+function wrapAngle(a){return Math.atan2(Math.sin(a),Math.cos(a))}
+function bendAt(s){const a=onRoute(s-21),b=onRoute(s+21);return Math.abs(wrapAngle(b.a-a.a))/42}
+function saveDownhillRoute(){
+ try{localStorage.setItem('sketchRallyDownhillV15',JSON.stringify({points:downhillRoute,width:downhillRoadWidth,preset:downhillPreset}))}catch{}
+}
+const oldDownhillPresetV15=setDownhillPreset;
+let firstRoutePresetV15=true;
+setDownhillPreset=function(kind){
+ oldDownhillPresetV15(kind);
+ if(firstRoutePresetV15){
+  firstRoutePresetV15=false;
+  try{
+   const saved=JSON.parse(localStorage.getItem('sketchRallyDownhillV15')||'null');
+   if(saved&&Array.isArray(saved.points)&&saved.points.length>=2&&saved.points.length<=1600&&saved.points.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.x>=0&&p.x<=1&&p.y>=0&&p.y<=1)){
+    downhillRoute=saved.points;downhillRoadWidth=clamp(Number(saved.width)||105,45,180);downhillPreset=saved.preset||'custom';
+   }else downhillRoute=routePreset(kind);
+  }catch{downhillRoute=routePreset(kind)}
+ }else downhillRoute=routePreset(kind);
+ buildDownhillGeometry();saveDownhillRoute();syncCourseUI();drawAll();
+};
+$('downhillWidth').addEventListener('input',e=>{
+ downhillRoadWidth=clamp(Number(e.target.value),45,180);$('downhillWidthValue').textContent=String(downhillRoadWidth);
+ saveDownhillRoute();drawAll();
+});
+// Capture downhill gestures before the older height-map editor.
+// One gesture replaces the full centreline, including hairpins and crossing routes.
+let routePointer=null,routePrevious=null;
+function routeCoord(e){
+ const pt=scenePoint(e);
+ return {x:clamp(pt.x/Math.max(1,sceneSize.w),.005,.995),y:clamp(pt.y/Math.max(1,sceneSize.h),.005,.995)};
+}
+scene.addEventListener('pointerdown',e=>{
+ if(gameMode!=='downhill'||page!=='track')return;
+ e.preventDefault();e.stopImmediatePropagation();
+ if(routePointer!==null)return;
+ routePointer=e.pointerId;routePrevious=downhillRoute.map(p=>({...p}));
+ downhillRoute=[routeCoord(e)];roadStroke=downhillRoute;scene.setPointerCapture(e.pointerId);drawAll();
+},true);
+scene.addEventListener('pointermove',e=>{
+ if(gameMode!=='downhill'||page!=='track')return;
+ e.preventDefault();e.stopImmediatePropagation();
+ if(routePointer!==e.pointerId)return;
+ const p=routeCoord(e),prev=downhillRoute[downhillRoute.length-1];
+ if(downhillRoute.length<1600&&Math.hypot((p.x-prev.x)*sceneSize.w,(p.y-prev.y)*sceneSize.h)>1.35)downhillRoute.push(p);
+ drawAll();
+},true);
+function endRouteGesture(e){
+ if(gameMode!=='downhill'||routePointer!==e.pointerId)return;
+ e.preventDefault();e.stopImmediatePropagation();
+ routePointer=null;roadStroke=null;
+ let length=0;for(let i=1;i<downhillRoute.length;i++)length+=Math.hypot((downhillRoute[i].x-downhillRoute[i-1].x)*sceneSize.w,(downhillRoute[i].y-downhillRoute[i-1].y)*sceneSize.h);
+ if(downhillRoute.length<2||length<35){downhillRoute=routePrevious||routePreset('hills');$('trackHelp').textContent='Draw one route at least 35 pixels long.'}
+ else{downhillPreset='custom';$('trackHelp').textContent='Route saved · U-turns and crossings preserved.';saveDownhillRoute()}
+ routePrevious=null;buildDownhillGeometry();
+ try{scene.releasePointerCapture(e.pointerId)}catch{}
+ syncCourseUI();drawAll();
+}
+scene.addEventListener('pointerup',endRouteGesture,true);
+scene.addEventListener('pointercancel',endRouteGesture,true);
+function drawRouteLine(c,scaleX=1,scaleY=1){
+ c.beginPath();
+ downhillRoute.forEach((p,i)=>{const x=p.x*scaleX,y=p.y*scaleY;if(!i)c.moveTo(x,y);else c.lineTo(x,y)});
+}
+function drawRouteGate(c,s,label,width){
+ const q=onRoute(s);c.save();c.translate(q.x,q.y);c.rotate(q.a);
+ c.strokeStyle='#eaffff';c.lineWidth=5;c.beginPath();c.moveTo(0,-width*.42);c.lineTo(0,width*.42);c.stroke();
+ c.fillStyle='#fff';c.font='bold 18px system-ui';c.textAlign='left';c.fillText(label,10,-width*.52);c.restore();
+}
+drawDownhillEditor=function(c,w,h){
+ c.save();const bg=c.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#376b4c');bg.addColorStop(1,'#234c4e');
+ c.fillStyle=bg;c.fillRect(0,0,w,h);
+ c.strokeStyle='#ffffff19';c.lineWidth=1;c.setLineDash([4,9]);
+ for(let i=1;i<10;i++){c.beginPath();c.moveTo(i*w/10,0);c.lineTo(i*w/10,h);c.stroke()}
+ c.setLineDash([]);
+ drawRouteLine(c,w,h);c.lineJoin='round';c.lineCap='round';c.strokeStyle='#153145';c.lineWidth=9;c.stroke();
+ drawRouteLine(c,w,h);c.strokeStyle='#c6f07c';c.lineWidth=4;c.stroke();
+ if(downhillRoute.length>1){
+  const p=downhillRoute[0],q=downhillRoute[downhillRoute.length-1];
+  for(const [pt,label] of [[p,'START'],[q,'FINISH']]){
+   const x=pt.x*w,y=pt.y*h;c.beginPath();c.fillStyle=label==='START'?'#8cf0b6':'#fce6ad';c.arc(x,y,7,0,Math.PI*2);c.fill();
+   c.font='bold 12px system-ui';c.textAlign=x>w*.78?'right':'left';c.fillText(label,x+(x>w*.78?-12:12),y-13);
+  }
+ }
+ c.fillStyle='rgba(9,28,40,.8)';c.fillRect(8,8,182,27);c.fillStyle='#e4f7c6';c.font='bold 12px system-ui';c.fillText('FREEHAND · FULL U-TURNS',16,26);
+ c.restore();
+};
+function activeLeagueCars(){
+ if(!league)return players.slice(0,6);
+ const heat=league.heats[league.index];return heat?heat.entrants:[];
+}
+function racerGeometry(p){const ph=physical(p);return {length:clamp(ph.bodyW*.68,65,110),width:clamp(ph.bodyH*.53,29,60)}}
+function locateRacer(s){
+ const pt=onRoute(s.s),nx=-pt.ty,ny=pt.tx;s.x=pt.x+nx*s.lane;s.y=pt.y+ny*s.lane;
+}
+drawDownhillWorld=function(c,w,h,preview=false){
+ const racers=preview?players.slice(0,6):activeLeagueCars();
+ const entries=racers.map((p,i)=>({p,st:preview?{
+  s:(previewTime*(72+i*2)+i*100)%Math.max(10,downhillGeometry.length),lane:(i%2?1:-1)*downhillRoadWidth*.2,angle:0,status:'preview'
+ }:p.state}));
+ if(preview)for(const e of entries){locateRacer(e.st);e.st.angle=onRoute(e.st.s).a}
+ const leader=entries.reduce((best,e)=>e.st&&e.st.s>best.s?e.st:best,entries[0]?.st||{s:0});
+ const scale=clamp(Math.min(w/820,h/480),.5,1.3),viewW=w/scale,viewH=h/scale;
+ let targetX=clamp((leader?.x||onRoute(0).x)-viewW*.50,-230,ROUTE_W-viewW+220);
+ let targetY=clamp((leader?.y||onRoute(0).y)-viewH*.50,-240,ROUTE_H-viewH+220);
+ if(simulation==='idle'&&!preview){camX=targetX;camY=targetY}else{camX=lerp(camX,targetX,.10);camY=lerp(camY,targetY,.10)}
+ c.save();c.fillStyle='#285d4c';c.fillRect(0,0,w,h);
+ c.scale(scale,scale);c.translate(-camX,-camY);
+ c.fillStyle='#407451';c.fillRect(-400,-400,ROUTE_W+800,ROUTE_H+800);
+ // Road width belongs to the race renderer, not the drawing brush.
+ const paintPath=()=>drawRouteLine(c,ROUTE_W,ROUTE_H);
+ paintPath();c.lineCap='round';c.lineJoin='round';c.strokeStyle='#9fbe88';c.lineWidth=downhillRoadWidth+20;c.stroke();
+ paintPath();c.strokeStyle='#183747';c.lineWidth=downhillRoadWidth+7;c.stroke();
+ paintPath();c.strokeStyle='#4e5a67';c.lineWidth=downhillRoadWidth;c.stroke();
+ paintPath();c.strokeStyle='#f3d788';c.lineWidth=2.7;c.setLineDash([15,21]);c.stroke();c.setLineDash([]);
+ drawRouteGate(c,0,'START',downhillRoadWidth);drawRouteGate(c,downhillGeometry.length,'FINISH',downhillRoadWidth);
+ for(const {p,st} of entries.sort((a,b)=>(a.st?.s||0)-(b.st?.s||0))){
+  if(!st)continue;c.save();c.translate(st.x,st.y);const dims=racerGeometry(p);c.scale(dims.length/100,dims.width/50);paintTopCar(c,p,st.angle);c.restore();
+  c.font='bold 13px system-ui';c.textAlign='center';const name=p.name.slice(0,14),tw=Math.max(65,c.measureText(name).width+16);
+  c.fillStyle='#132c3fe6';rounded(c,st.x-tw/2,st.y-67,tw,22,6);c.fill();c.fillStyle=p.color;c.fillText(name,st.x,st.y-52);
+ }
+ c.restore();
+ if(simulation==='complete'&&!preview){
+  const heat=league?.heats[league.index],winner=heat?.ranked?.[0];
+  c.save();c.fillStyle='#0917259c';rounded(c,w/2-178,h/2-64,356,128,17);c.fill();
+  c.textAlign='center';c.fillStyle='#d6fc89';c.font='900 22px system-ui';c.fillText(league?.winner?'LEAGUE CHAMPION':'HEAT '+(league?.index+1||1)+' COMPLETE',w/2,h/2-20);
+  c.fillStyle='#fff';c.font='bold 18px system-ui';c.fillText(winner?winner.name:'No finishers',w/2,h/2+13);
+  c.font='12px system-ui';c.fillText(league?.winner?'Championship decided':league?.index<league?.heats.length-1?'Next heat ready':'Final result',w/2,h/2+38);c.restore();
+ }
+};
+const oldCourseV15=syncCourseUI;
+syncCourseUI=function(){
+ oldCourseV15();
+ const down=gameMode==='downhill';$('downhillWidthRow').classList.toggle('hidden',!down);
+ $('downhillWidth').value=downhillRoadWidth;$('downhillWidthValue').textContent=String(downhillRoadWidth);
+ if(down){
+  $('trackHelp').textContent='Draw ONE freehand line, in any direction. Full U-turns, hairpins and route crossings work.';
+  $('trackNote').textContent='Only the thin centreline is drawn here. Road width and car collision physics apply during racing.';
+  $('raceDescription').textContent='Automatic downhill league · up to 6 racers per heat · '+trackDistanceKm+' km';
+  $('raceNote').textContent='Designs influence automatic cornering, braking, grip and collision recovery. Every heat uses the same course.';
+ }
+ $('leaguePanel').classList.toggle('hidden',!down);
+ renderLeague();
+};
+function balancedGroups(list,max){
+ const num=Math.ceil(list.length/max),groups=Array.from({length:num},()=>[]);
+ for(let i=0;i<list.length;i++)groups[i%num].push(list[i]);
+ return groups;
+}
+function createLeague(){
+ if(!players.length){league=null;renderLeague();return}
+ const initial=players.length<=6?[players.slice()]:balancedGroups(players,6);
+ league={signature:players.map(p=>p.id).join('|'),heats:initial.map(g=>({stage:players.length<=6?'GRAND FINAL':'QUALIFYING',entrants:g,ranked:null})),index:0,winner:null,history:[]};
+ players.forEach(p=>p.state=null);renderLeague();
+}
+function advanceLeague(){
+ if(!league)return;
+ const current=league.heats[league.index],same=league.heats.filter(h=>h.stage===current.stage);
+ if(same.some(h=>!h.ranked))return;
+ let next=[];
+ if(current.stage==='QUALIFYING'){
+  next=same.map(h=>({stage:'SEMIFINAL',entrants:h.ranked.slice(0,3),ranked:null}));
+ }else if(current.stage==='SEMIFINAL'){
+  const qualified=same.flatMap(h=>h.ranked.slice(0,2));
+  next=qualified.length<=6?[{stage:'GRAND FINAL',entrants:qualified,ranked:null}]:balancedGroups(qualified,6).map(g=>({stage:'PLAYOFF',entrants:g,ranked:null}));
+ }else if(current.stage==='PLAYOFF'){
+  next=[{stage:'GRAND FINAL',entrants:same.flatMap(h=>h.ranked.slice(0,3)).slice(0,6),ranked:null}];
+ }else if(current.stage==='GRAND FINAL'){
+  league.winner=current.ranked[0]||null;
+ }
+ league.heats.push(...next);renderLeague();
+}
+function heatRank(a,b){
+ const x=a.state||{},y=b.state||{};
+ if(x.status==='finished'&&y.status==='finished')return x.finishTime-y.finishTime;
+ if(x.status==='finished')return -1;if(y.status==='finished')return 1;
+ return (y.s||-999)-(x.s||-999)||String(a.id).localeCompare(String(b.id));
+}
+function completeLeagueHeat(){
+ if(!league)return;
+ const heat=league.heats[league.index];if(heat.ranked)return;
+ heat.ranked=heat.entrants.slice().sort(heatRank);
+ league.history.push({stage:heat.stage,ranked:heat.ranked.map(p=>({name:p.name,time:p.state?.finishTime||null}))});
+ advanceLeague();
+ $('canvasTooltip').textContent=league.winner?'🏆 '+league.winner.name+' wins the league!':'✓ Heat '+(league.index+1)+' complete';
+ renderLeague();drawAll();
+}
+function renderLeague(){
+ if(!$('leaguePanel')||gameMode!=='downhill')return;
+ if(!league){$('leagueTitle').textContent='DOWNHILL LEAGUE';$('leagueSummary').textContent=players.length+' registered · maximum 6 per heat';$('leagueHeats').replaceChildren();$('leagueNext').classList.add('hidden');$('leagueNextStage').classList.add('hidden');return;}
+ const heat=league.heats[league.index],ahead=league.index<league.heats.length-1;
+ $('leagueTitle').textContent=league.winner?'🏆 LEAGUE COMPLETE':'DOWNHILL LEAGUE';
+ $('leagueSummary').textContent=league.winner?'Champion: '+league.winner.name:'Race '+(league.index+1)+' of '+league.heats.length+' · '+heat.stage+' · '+heat.entrants.length+' racers';
+ const list=$('leagueHeats');list.replaceChildren();
+ league.heats.forEach((h,i)=>{
+  const row=document.createElement('div');row.className='league-heat';
+  const title=document.createElement('strong');title.textContent=(i===league.index?'▶ ':'')+'Race '+(i+1)+' · '+h.stage+' ('+h.entrants.length+'/6)';
+  const detail=document.createElement('small');detail.textContent=h.entrants.map(p=>p.name).join(', ')+(h.ranked?' · Winner: '+h.ranked[0]?.name:'');
+  row.append(title,detail);list.append(row);
+ });
+ const showNext=ahead&&simulation==='complete';
+ $('leagueNext').classList.toggle('hidden',!showNext);
+ $('leagueNextStage').classList.toggle('hidden',!showNext);
+ $('leagueNext').textContent='Next: Race '+(league.index+2)+' →';
+ $('leagueNextStage').textContent='🏁 NEXT HEAT · RACE '+(league.index+2);
+ $('leagueNextStage').setAttribute('aria-label','Prepare race '+(league.index+2));
+}
+function resetDownhillLeague(){
+ league=null;simulation='idle';elapsed=0;stepCarry=0;camX=0;camY=0;
+ players.forEach(p=>p.state=null);createLeague();syncBeginRaceButton();refreshStandings();drawAll();
+}
+function nextLeagueHeat(){
+ if(!league||simulation!=='complete'||league.index>=league.heats.length-1)return;
+ league.index++;simulation='idle';elapsed=0;stepCarry=0;camX=0;camY=0;players.forEach(p=>p.state=null);
+ $('canvasTooltip').textContent='Race '+(league.index+1)+' ready · press BEGIN RACE';
+ syncBeginRaceButton();refreshStandings();renderLeague();drawAll();sendHostRoster();
+}
+$('leagueNext').addEventListener('click',nextLeagueHeat);
+$('leagueNextStage').addEventListener('click',nextLeagueHeat);
+$('leagueRestart').addEventListener('click',()=>{if(confirm('Restart the downhill league from Race 1?'))resetDownhillLeague()});
+$('resetRace').addEventListener('click',e=>{
+ if(gameMode!=='downhill')return;
+ e.preventDefault();e.stopImmediatePropagation();
+ if(confirm('Restart the entire downhill league from Race 1?'))resetDownhillLeague();
+},true);
+const oldInitRacersV15=initRacers;
+initRacers=function(){
+ if(gameMode!=='downhill')return oldInitRacersV15();
+ if(!league||league.signature!==players.map(p=>p.id).join('|'))createLeague();
+ if(league?.winner)return;
+ const entrants=activeLeagueCars();if(!entrants.length)return;
+ players.forEach(p=>p.state=null);
+ entrants.forEach((p,i)=>{
+  const pos=onRoute(-35-Math.floor(i/2)*105),s={
+   s:-35-Math.floor(i/2)*105,lane:(i%2?1:-1)*downhillRoadWidth*.24,
+   speed:37,angle:pos.a,spin:0,offroad:0,status:'racing',finishTime:0,topSpeed:0,vx:37,vy:0,x:pos.x,y:pos.y
+  };
+  locateRacer(s);p.state=s;
+ });
+ simulation='running';elapsed=0;stepCarry=0;camX=0;camY=0;syncBeginRaceButton();refreshStandings();renderLeague();
+};
+simulateDownhill=function(dt){
+ elapsed+=dt;
+ const racers=activeLeagueCars(),length=downhillGeometry.length;
+ for(const p of racers){
+  const s=p.state;if(!s||s.status!=='racing')continue;
+  const ph=physical(p),wb=Math.max(20,ph.wheels[1].ax-ph.wheels[0].ax);
+  const handling=clamp(1.15-(wb-70)/480-(ph.bodyW-115)/480,.7,1.26);
+  const curvature=Math.max(bendAt(s.s+18),bendAt(s.s+56));
+  const safe=clamp(180*handling/(1+curvature*190),43,185);
+  const brake=s.speed>safe?185:0;
+  s.speed=clamp(s.speed+(68-s.speed*.20-brake)*dt,25,185*handling);
+  const aim=onRoute(s.s+Math.min(85,30+s.speed*.24)),current=onRoute(s.s);
+  const delta=wrapAngle(aim.a-s.angle);
+  const steer=clamp(delta,-(1.8*handling+0.8)*dt,(1.8*handling+0.8)*dt);
+  s.angle=wrapAngle(s.angle+steer+s.spin*dt);
+  s.spin*=Math.exp(-2.4*dt);
+  // Curvature produces slip. Better-designed cars need less steering correction.
+  const turnError=wrapAngle(s.angle-current.a);
+  s.lane+=Math.sin(turnError)*s.speed*dt*.54+Math.sign(turnError||1)*curvature*s.speed*s.speed*dt*.0026/handling;
+  s.lane*=Math.exp(-.44*dt);
+  const limit=downhillRoadWidth*.48-racerGeometry(p).width*.30;
+  if(Math.abs(s.lane)>limit){s.offroad+=dt;s.speed=Math.max(20,s.speed-105*dt);s.lane=clamp(s.lane,-downhillRoadWidth*.8,downhillRoadWidth*.8)}
+  else s.offroad=Math.max(0,s.offroad-dt);
+  s.s+=s.speed*dt/trackDistanceKm;s.vx=s.speed;s.vy=0;s.topSpeed=Math.max(s.topSpeed,s.speed);
+  locateRacer(s);
+  if(s.s>=length){s.s=length;locateRacer(s);s.status='finished';s.finishTime=elapsed;}
+  if(elapsed>maxRaceSeconds()&&s.status==='racing')s.status='timed out';
+ }
+ // Pairwise vehicle contact, including on nearby folds of the route or self crossings.
+ for(let i=0;i<racers.length;i++)for(let j=i+1;j<racers.length;j++){
+  const a=racers[i].state,b=racers[j].state;
+  if(!a||!b||a.status!=='racing'||b.status!=='racing')continue;
+  const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.0001;
+  const wa=racerGeometry(racers[i]),wb=racerGeometry(racers[j]);
+  const radius=clamp((wa.width+wb.width)*.52,30,64);
+  if(d>=radius)continue;
+  const nx=dx/d,ny=dy/d,impulse=clamp((radius-d)*.42,0,17);
+  const ta=onRoute(a.s),tb=onRoute(b.s);
+  a.lane-=impulse*(nx*(-ta.ty)+ny*ta.tx);b.lane+=impulse*(nx*(-tb.ty)+ny*tb.tx);
+  const samePath=Math.abs(a.s-b.s)<radius*2;
+  if(samePath){if(a.s>b.s)b.s-=impulse*.7;else a.s-=impulse*.7}
+  a.speed*=.994;b.speed*=.994;
+  a.speed=Math.max(22,a.speed-impulse*.45);b.speed=Math.max(22,b.speed-impulse*.45);
+  a.spin-=impulse*.013;b.spin+=impulse*.013;
+  locateRacer(a);locateRacer(b);
+ }
+ if(racers.every(p=>p.state?.status!=='racing')){
+  simulation='complete';syncBeginRaceButton();completeLeagueHeat();
+ }
+};
+const oldStandingsV15=refreshStandings;
+refreshStandings=function(){
+ if(gameMode!=='downhill')return oldStandingsV15();
+ if(page!=='race')return;
+ const racers=activeLeagueCars().slice().sort(heatRank),list=$('standings');list.replaceChildren();
+ for(let i=0;i<racers.length;i++){
+  const p=racers[i],s=p.state,percent=s?Math.round(clamp(s.s/downhillGeometry.length*100,0,100)):0;
+  const row=document.createElement('div');row.className='result';
+  const rank=document.createElement('span');rank.className='rank';rank.textContent=String(i+1);
+  const chip=document.createElement('span');chip.className='player-icon';chip.style.cssText='width:22px;height:22px;background:'+p.color;
+  const title=document.createElement('span');title.className='result-name';const name=document.createElement('b');name.textContent=p.name;
+  const small=document.createElement('small');small.textContent=!s?'Ready':s.status==='finished'?'Finished · '+s.finishTime.toFixed(2)+' s':s.status==='racing'?percent+'% · '+(s.s/Math.max(1,downhillGeometry.length)*trackDistanceKm).toFixed(2)+' / '+trackDistanceKm+' km':'Timed out';
+  title.append(name,small);const progress=document.createElement('span');progress.className='progress';
+  const fill=document.createElement('span');fill.className='fill';fill.style.cssText='display:block;width:'+percent+'%';progress.append(fill);row.append(rank,chip,title,progress);list.append(row);
+ }
+ $('stageCounter').textContent=(league?'RACE '+(league.index+1)+' · ':'')+elapsed.toFixed(1)+' s';
+ $('phasePill').textContent=simulation==='complete'?'FINISHED':simulation==='running'?'RACING':simulation==='paused'?'PAUSED':'READY';
+};
+const oldEnterV15=enterRaceView;
+enterRaceView=function(gesture=false){
+ oldEnterV15(gesture);
+ if(gameMode==='downhill'&&league)$('hudRaceLabel').textContent='LEAGUE · RACE '+(league.index+1)+' · '+activeLeagueCars().length+'/6';
+};
+const oldSetPageV15=setPage;
+setPage=function(name){
+ if(gameMode==='downhill'&&league&&league.heats.some(h=>h.ranked)&&page==='race'&&name!=='race'){
+  $('canvasTooltip').textContent='League underway · finish all heats before editing cars or track';
+  return;
+ }
+ oldSetPageV15(name);
+ if(gameMode==='downhill'&&name==='race'){
+  if(!league||league.signature!==players.map(p=>p.id).join('|'))createLeague();
+  renderLeague();refreshStandings();
+ }
+};
+const oldChangeModeV15=changeGameMode;
+changeGameMode=function(next){
+ if(next!==gameMode)league=null;
+ oldChangeModeV15(next);syncCourseUI();
+};
 
 presetTrack('hills');setDownhillPreset('hills');populate();initBeginRaceButton();setPage('cars');requestAnimationFrame(loop);
 })();
