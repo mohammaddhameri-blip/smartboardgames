@@ -14,10 +14,33 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
+<div id="mainMenu" class="main-menu" role="region" aria-label="Sketch Boat main menu">
+ <div class="menu-inner">
+  <div class="menu-eyebrow">SKETCH BOAT <span>v1.1</span></div>
+  <div class="menu-byline">by MrDhameri</div>
+  <svg class="menu-art" viewBox="0 0 680 180" aria-hidden="true">
+   <defs><linearGradient id="boatWater" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1d7898"/><stop offset="1" stop-color="#194768"/></linearGradient></defs>
+   <path d="M0 105 C140 45 220 170 360 105 S550 65 680 105" stroke="url(#boatWater)" stroke-width="120" fill="none"/>
+   <path d="M0 105 C140 45 220 170 360 105 S550 65 680 105" stroke="#d7fdde" stroke-opacity=".5" stroke-width="2" stroke-dasharray="15 14" fill="none"/>
+   <g transform="translate(210 105) rotate(-5)"><path d="M-72 -20 L28 -20 Q58 -18 84 0 Q58 18 28 20 L-72 20 Q-86 0 -72 -20Z" fill="#c4f26b" stroke="#132333" stroke-width="5"/><rect x="-27" y="-13" width="50" height="26" rx="9" fill="#93dfee"/><path d="M-57 -12 L-57 12" stroke="#f8a76b" stroke-width="10"/></g>
+   <g transform="translate(473 93) rotate(13)"><path d="M-60 -17 L20 -17 Q48 -15 67 0 Q48 15 20 17 L-60 17 Q-68 0 -60 -17Z" fill="#87d4f2" stroke="#132333" stroke-width="5"/><rect x="-20" y="-11" width="43" height="22" rx="7" fill="#f5dbab"/></g>
+  </svg>
+  <h2>Draw. Float. Race.</h2>
+  <p>Draw your own boat, scan it using a phone, design the course and race automatically.</p>
+  <div class="menu-modes">
+    <button type="button" data-enter-mode="quick">🚤 Quick Race</button>
+    <button type="button" data-enter-mode="challenge">🏆 Challenge</button>
+    <button type="button" data-enter-mode="sailing">⛵ Sailing</button>
+    <button type="button" data-enter-mode="test">🧪 Test</button>
+  </div>
+  <button type="button" class="primary menu-enter" id="menuEnter">✎ Design your boat first</button>
+  <button type="button" class="menu-host" id="menuHost">📱 Pair phone host</button>
+ </div>
+</div>
 <div class="app">
 <header class="topbar">
  <div class="identity"><span class="logo">⛵</span><div><h1>SKETCH BOAT <small>v1.1</small></h1><p>by MrDhameri · Draw. Float. Race.</p></div></div>
- <div class="topright"><span id="storageState" class="chip">● Saved on this device</span><a class="library" href="../">← Game library</a></div>
+ <div class="topright"><button type="button" id="openMainMenu" class="menu-button">☰ Menu</button><span id="storageState" class="chip">● Saved on this device</span><a class="library" href="../">← Game library</a></div>
 </header>
 <div class="workspace">
  <aside class="sidebar">
