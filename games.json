@@ -1,5 +1,13 @@
 [
   {
+    "name": "Sketch Boat (Prototype)",
+    "description": "Draw a boat and race automatically in an early top-down water-physics prototype.",
+    "category": "Creative STEM",
+    "icon": "🚤",
+    "path": "sketch-boat-demo/",
+    "published": true
+  },
+  {
     "name": "Sketch Moto",
     "description": "Draw your own dirt bike, then race 10 automatic motocross challenges or score freestyle stunts.",
     "category": "Creative STEM",
