@@ -1,0 +1,42 @@
+name: Sketch Boat Android APK
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "sketch-boat/**"
+      - ".github/workflows/sketch-boat-android.yml"
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+      - name: Build Android WebView APK
+        working-directory: sketch-boat/android
+        run: gradle --no-daemon :app:assembleDebug
+      - name: Prepare downloadable APK
+        run: cp sketch-boat/android/app/build/outputs/apk/debug/app-debug.apk sketch-boat.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sketch-boat-android-apk
+          path: sketch-boat.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: sketch-boat-apk-latest
+          name: Sketch Boat Android APK
+          body: |
+            Sketch Boat Android wrapper. Requires internet on first launch.
+            It loads the latest Sketch Boat browser game automatically.
+            This debug-signed APK is for testing; uninstall an older debug APK if its signing key differs.
+          files: sketch-boat.apk
+          make_latest: false
+          overwrite_files: true
