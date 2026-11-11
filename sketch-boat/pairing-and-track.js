@@ -144,10 +144,10 @@ async function syncHost(){
  const st=state();const msg=JSON.stringify({mode:st.mode,kind:st.kind,running:st.running,boats:st.boats,level:st.level,results:st.results});
  if(msg===lastState)return;
  lastState=msg;
- await transmit("roster-state",{mode:st.mode,kind:st.kind,racing:st.running,racers:st.boats,level:st.level,results:st.results,max:20});
+ await transmit("roster-state",{mode:st.mode,kind:st.kind,racing:st.running,racers:st.boats,level:st.level,results:st.results,max:30});
  const ribbon=$("hostRosterRibbon"),names=$("hostRosterNames");
  ribbon.classList.toggle("hidden",!st.boats.length);
- $("hostRosterCount").textContent=st.boats.length+" / 20 RACERS";
+ $("hostRosterCount").textContent=st.boats.length+" / 30 RACERS";
  names.replaceChildren();for(const boat of st.boats){const tag=document.createElement("em");tag.textContent=boat.name;names.append(tag);}
  $("raceStartSide").disabled=st.running;
 }
