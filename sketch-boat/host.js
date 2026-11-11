@@ -263,6 +263,16 @@ async function join(){
 }
 $("connect").addEventListener("click",join);
 $("room").addEventListener("keydown",e=>{if(e.key==="Enter")join();});
+// Low-bandwidth live preview on the smartboard, like Sketch Rally.
+// Registration sends a separate, higher-resolution still only after review.
+setInterval(()=>{
+ if(!paired||!channel||!stream||request||document.hidden)return;
+ const video=$("video");if(video.videoWidth<40)return;
+ const c=document.createElement("canvas");c.width=240;c.height=160;
+ const ctx=c.getContext("2d");ctx.drawImage(video,0,0,240,160);
+ const image=c.toDataURL("image/jpeg",.35);
+ if(image.length<45000)channel.send({type:"broadcast",event:"preview",payload:{image}}).catch(()=>{});
+},1700);
 window.addEventListener("pagehide",()=>{stopStream();if(channel&&client)client.removeChannel(channel);});
 if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
 controls();
