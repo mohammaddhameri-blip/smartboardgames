@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <meta name="theme-color" content="#101827" />
-<title>Sketch Rally v1.5 — Draw. Scan. Race.</title>
+<title>Sketch Rally v1.6 — Draw. Scan. Race.</title>
 <style>
 :root{--bg:#0c1422;--panel:#152237;--panel2:#1c2b43;--border:#30425c;--text:#f2f7ff;--muted:#a1b0c8;--lime:#c4f26b;--blue:#6fc8fa;--orange:#ffb478;--danger:#ff8191;--radius:15px}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.42}.app{max-width:1530px;margin:auto;min-height:100vh;padding:22px 26px 30px}.header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:13px}.logo{width:44px;height:44px;display:grid;place-items:center;background:var(--lime);color:var(--bg);border-radius:13px;box-shadow:0 0 0 4px rgba(196,242,107,.08);font-size:24px}.brand h1{margin:0;font-size:21px;letter-spacing:-.8px;line-height:1.1}.brand small{color:var(--muted);font-size:12px;font-weight:500}.chip{border:1px solid #4a6647;background:#223c30;border-radius:100px;color:var(--lime);font-size:11px;font-weight:800;letter-spacing:.09em;padding:9px 12px;text-transform:uppercase}.layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:19px;align-items:stretch}.sidebar,.stage{border:1px solid var(--border);border-radius:20px;background:var(--panel);overflow:hidden}.sidebar{display:flex;flex-direction:column}.tabs{display:grid;grid-template-columns:repeat(3,1fr);padding:12px;gap:6px;border-bottom:1px solid var(--border)}.tab{border:0;border-radius:10px;background:transparent;color:var(--muted);padding:12px 6px;font-size:12px;font-weight:800;letter-spacing:.02em}.tab.on{color:var(--bg);background:var(--lime)}.content{padding:20px;overflow-y:auto;max-height:calc(100vh - 160px);min-height:565px}.pane{display:none}.pane.active{display:block}h2{font-size:21px;margin:0 0 6px;letter-spacing:-.5px}h3{font-size:13px;font-weight:800;margin:18px 0 9px}.sub{color:var(--muted);font-size:13px;line-height:1.55;margin:0 0 19px}.section-label{display:block;color:#afc0d7;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin:16px 0 8px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px}.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.btn{border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:10px;min-height:39px;padding:10px 12px;font-size:12px;font-weight:700;transition:background .1s,border-color .1s}.btn:hover{border-color:#7189a8}.btn.selected{border-color:var(--lime);color:var(--lime);background:#273c30}.btn.primary{color:#0b1920;background:var(--lime);border-color:var(--lime)}.btn.primary:hover{background:#ddffa8}.btn.secondary{background:#294861;color:#dff5ff}.btn.warn{color:var(--danger)}.btn.full{width:100%;margin-top:12px}.btn.large{min-height:47px;font-size:14px}.help{font-size:12px;line-height:1.55;color:var(--muted);margin:11px 0 0}.note{font-size:12px;line-height:1.45;border:1px solid #405676;border-radius:12px;padding:11px 12px;color:#cbd9eb;background:rgba(108,166,238,.06);margin-top:15px}.rule{height:1px;background:var(--border);margin:18px 0}.player-list{display:grid;gap:7px}.player-row{width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:1px solid var(--border);background:var(--panel2);border-radius:10px;padding:8px 9px;color:var(--text)}.player-row.active{border-color:var(--lime);background:#293c34}.player-icon{width:31px;height:28px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;color:#0e1b26;font-weight:900;font-size:13px}.player-info{min-width:0;flex:1}.player-info b{display:block;font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.player-info small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.player-row .tick{color:var(--lime);font-weight:900}.field{width:100%;padding:11px 12px;background:#0f1a2b;border:1px solid #49607a;color:white;border-radius:10px;outline:0;font-size:13px}.field:focus{border-color:var(--lime)}.upload{border:1px dashed #7890a8;border-radius:12px;min-height:70px;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;color:#e2efff;font-weight:700;font-size:12px;text-align:center;padding:12px;background:#1a2e45}.upload input{display:none}.upload:hover{border-color:var(--lime)}.correction{position:relative;border:1px solid #426077;background:linear-gradient(45deg,#ebedf1 25%,#ffffff 25% 50%,#ebedf1 50% 75%,#ffffff 75%);background-size:18px 18px;border-radius:12px;overflow:hidden;margin-top:9px}.correction canvas{display:block;width:100%;height:184px;touch-action:none;cursor:grab}.correction canvas:active{cursor:grabbing}.minirow{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:10px 0 0}.minirow span{font-size:11px;color:var(--muted)}.minirow b{font-size:11px;color:var(--lime)}.range{width:100%;accent-color:var(--lime)}.standings{display:grid;gap:8px;margin-top:15px}.result{display:flex;gap:8px;align-items:center;background:#1d2e46;border:1px solid var(--border);padding:10px;border-radius:10px}.result .rank{font-size:11px;width:18px;color:var(--muted);font-weight:900}.result-name{min-width:0;flex:1}.result-name b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.result-name small{color:var(--muted);font-size:10px}.result .progress{width:70px;background:#0d1a2b;border-radius:10px;height:5px;overflow:hidden}.result .fill{height:100%;background:var(--lime);width:0}.stage{min-height:630px;display:flex;flex-direction:column;background:#101e32}.stage-top{min-height:79px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:17px 20px;border-bottom:1px solid var(--border)}.stage-title{font-weight:900;font-size:17px;letter-spacing:-.3px}.stage-description{font-size:12px;color:var(--muted);margin-top:4px}.stage-counter{font-weight:900;font-size:15px;color:var(--lime);font-variant-numeric:tabular-nums;white-space:nowrap}.canvas-wrap{height:min(65vh,608px);min-height:455px;position:relative;overflow:hidden;background:#a6d8eb}.canvas-wrap canvas{width:100%;height:100%;display:block;touch-action:none}.canvas-tooltip{position:absolute;top:17px;left:17px;border-radius:10px;background:rgba(13,29,46,.78);color:#f7fcff;font-size:12px;font-weight:700;padding:10px 12px;pointer-events:none;max-width:70%;backdrop-filter:blur(5px)}.canvas-tooltip:empty{display:none}.footer{min-height:66px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 19px;background:#152237;border-top:1px solid var(--border)}.footer .message{color:var(--muted);font-size:12px;line-height:1.45}.footer .message strong{color:var(--text)}.footer-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.small-pill{font-size:11px;font-weight:800;display:inline-block;border-radius:20px;padding:5px 9px;background:#31435b;color:#e3eefd}.hidden{display:none!important}.muted{color:var(--muted)}.status{font-size:11px;margin-top:9px;color:var(--lime);min-height:16px}.checkbox{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);margin:12px 0}.checkbox input{accent-color:var(--lime)}@media(max-width:1000px){.layout{grid-template-columns:300px minmax(0,1fr)}.app{padding:15px}.content{padding:15px}.canvas-wrap{min-height:400px}}@media(max-width:770px){.app{padding:12px 12px 25px}.header{margin-bottom:12px}.layout{grid-template-columns:1fr;gap:11px}.sidebar{order:2}.stage{order:1;min-height:0}.content{max-height:none;min-height:0}.stage-top{min-height:61px;padding:12px 13px}.canvas-wrap{height:53vh;min-height:300px;max-height:530px}.canvas-tooltip{font-size:10px;top:10px;left:10px}.footer{padding:12px;min-height:60px;flex-wrap:wrap}.brand h1{font-size:17px}.logo{width:36px;height:36px;font-size:20px}.chip{font-size:9px;padding:7px 9px}.sidebar{border-radius:16px}.tabs{padding:8px}.content{padding:16px}.stage-title{font-size:15px}}@media(max-width:380px){.canvas-wrap{min-height:275px;height:43vh}.btn{padding:9px 8px}.header .chip{display:none}}
 /* In-game car drawing studio, transparent scan and phone-camera pairing */
@@ -163,7 +163,7 @@ body.race-immersive .league-stage-next{bottom:8%}
 </div>
 <div class="menu-cover" id="mainMenu" role="region" aria-label="Sketch Rally main menu">
   <div class="menu-inner">
-    <div class="menu-eyebrow"><span class="menu-bullet"></span> SKETCH RALLY <span class="menu-inline-version">v1.5</span></div><div class="menu-byline">by MrDhameri</div>
+    <div class="menu-eyebrow"><span class="menu-bullet"></span> SKETCH RALLY <span class="menu-inline-version">v1.6</span></div><div class="menu-byline">by MrDhameri</div>
     <div class="menu-art" aria-hidden="true">
       <svg viewBox="0 0 680 195" preserveAspectRatio="xMidYMid meet">
         <defs><linearGradient id="menuRoad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#587a6a"/><stop offset="1" stop-color="#284f58"/></linearGradient></defs>
@@ -270,7 +270,7 @@ body.race-immersive .league-stage-next{bottom:8%}
           <div class="two-col tune-flip"><button type="button" class="btn" id="flipSide">⇋ Flip side</button><button type="button" class="btn" id="flipTop">⇋ Flip top</button></div>
           <div class="two-col tune-actions"><button type="button" class="btn" id="retryScan">↻ Re-detect wheels</button><button type="button" class="btn warn" id="removePlayer">Remove racer</button></div>
           <div class="scan-controls"><label for="backgroundCleanup">Background removal · <b id="cleanupValue">Balanced</b></label><input id="backgroundCleanup" type="range" min="0" max="100" step="5" value="55" aria-label="Adjust automatic background removal strength"/><p class="help" style="margin:3px 0 0">White paper and shadows become transparent. Move right to remove more background; review light pencil lines carefully.</p></div>
-          <div class="minirow"><span>Side-view wheels</span><b id="scanStatus">Demo car</b></div>
+          <div class="minirow"><span>Front & rear tyre anchors</span><b id="scanStatus">Physics only</b></div>
           <div class="correction"><canvas id="wheelCanvas" aria-label="Drag wheel markers to correct their positions"></canvas></div>
           <div class="minirow"><span>Choose a wheel to resize</span><b id="wheelLabel">FRONT WHEEL</b></div>
           <div class="two-col" style="margin-top:8px"><button class="btn" id="rearWheelBtn">Rear wheel</button><button class="btn selected" id="frontWheelBtn">Front wheel</button></div>
@@ -278,7 +278,7 @@ body.race-immersive .league-stage-next{bottom:8%}
           <label class="nudge-step">Step <select class="field" id="wheelStep"><option value="1">1 px · Fine</option><option value="3" selected>3 px</option><option value="6">6 px</option></select></label></div>
           <div class="minirow"><span>Selected wheel size</span><b id="wheelSizeValue">24</b></div>
           <input type="range" class="range" id="wheelSize" min="12" max="42" step="1" value="24" />
-          <p class="help">Drag wheel markers if needed.</p></div>
+          <p class="help">Tyre markers appear only here. Their tuned positions influence handling and grip; no extra tyres are drawn on the race track.</p></div>
     </section>
     </div>
   </main>
@@ -465,6 +465,8 @@ function drawRock(c,x,y,r){c.save();c.beginPath();c.moveTo(x-r*.9,y);c.lineTo(x-
 function drawCarGallery(c,w,h){let count=Math.min(players.length,4),sliceStart=players.length<=4?0:Math.floor(selected/4)*4;count=Math.min(4,players.length-sliceStart);const gap=15,margin=28,itemW=Math.max(75,Math.min(270,(w-margin*2-gap*(count-1))/Math.max(1,count))),posY=h*.56;const totalW=(itemW+gap)*count-gap;let startX=(w-totalW)/2;const scale=Math.max(.55,Math.min(1.35,itemW/180));c.fillStyle='rgba(14,34,53,.14)';c.fillRect(0,h*.75,w,h*.25);c.strokeStyle='#eef9eb';c.lineWidth=3;c.beginPath();c.moveTo(0,h*.75);c.lineTo(w,h*.75);c.stroke();for(let i=0;i<count;i++){const p=players[sliceStart+i],cx=startX+itemW*i+itemW/2;c.save();c.fillStyle=sliceStart+i===selected?'rgba(255,255,255,.25)':'rgba(255,255,255,.1)';rounded(c,cx-itemW*.48,h*.2,itemW*.96,h*.59,16);c.fill();c.translate(cx,posY);c.scale(scale,scale);paintCar(c,p,0,false);c.restore();c.textAlign='center';c.fillStyle='#15334b';c.font='800 12px system-ui';c.fillText(p.name,cx,h*.3);c.font='11px system-ui';c.fillText(p.source==='photo'?'SCANNED CAR':p.source==='drawn'?'HAND-DRAWN CAR':'SAMPLE CAR',cx,h*.3+17)}c.fillStyle='#1e4055';c.font='bold 12px system-ui';c.textAlign='center';c.fillText('SELECT A RACER ON THE LEFT TO SCAN OR CORRECT',w/2,h*.93)}
 function physical(p){const cv=p.canvas,ratio=cv.width/Math.max(cv.height,1);let bodyW=clamp(104+(ratio-2)*17,85,158),bodyH=clamp(bodyW/ratio,34,104);const wheels=p.wheels.map(wh=>({ax:(wh.x-.5)*bodyW,ay:(wh.y-.50)*bodyH,r:clamp(wh.r*bodyW,12,42)}));return {bodyW,bodyH,wheels,mass:105+bodyH*.17+bodyW*.05, inertia:(105+bodyH*.17+bodyW*.05)*bodyW*bodyW/8,drag:65+bodyH*.6,friction:1.35}}
 function paintCar(c,p,theta=0,shadow=true,spinX=null){const ph=physical(p);c.save();if(theta)c.rotate(theta);const {bodyW,bodyH,wheels}=ph;if(shadow){c.fillStyle='rgba(9,31,34,.18)';c.beginPath();c.ellipse(3,bodyH*.8,bodyW*.52,7,0,0,7);c.fill()}if(p.canvas)c.drawImage(p.canvas,-bodyW/2,-bodyH/2,bodyW,bodyH);
+// Once drawn/scanned, never paint extra synthetic wheels over the actual car art.
+if(['photo','drawn'].includes(p.source)){c.restore();return;}
 for(let i=0;i<wheels.length;i++){const wh=wheels[i];c.beginPath();c.arc(wh.ax,wh.ay,wh.r,0,Math.PI*2);c.fillStyle='#142637';c.fill();c.strokeStyle='#d2e4f2';c.lineWidth=2.2;c.stroke();c.beginPath();c.arc(wh.ax,wh.ay,wh.r*.53,0,Math.PI*2);c.fillStyle='#d4e4eb';c.fill();c.strokeStyle='#445c74';c.lineWidth=1.5;c.stroke();c.beginPath();c.arc(wh.ax,wh.ay,wh.r*.17,0,7);c.fillStyle='#53697e';c.fill();if(spinX!==null||(page==='race'&&p.state)){c.save();c.translate(wh.ax,wh.ay);c.rotate(((spinX===null?p.state.x:spinX)-START)/Math.max(wh.r,8));c.strokeStyle='#526b7c';c.lineWidth=2.2;for(let j=0;j<4;j++){let a=j*Math.PI/2;c.beginPath();c.moveTo(Math.cos(a)*wh.r*.22,Math.sin(a)*wh.r*.22);c.lineTo(Math.cos(a)*wh.r*.49,Math.sin(a)*wh.r*.49);c.stroke()}c.restore()}}c.restore()}
 function drawRaceWorld(c,w,h,preview=false){const scale=clamp(w/840,.48,1.05);const viewW=w/scale,viewH=h/scale;
 const entries=players.map((p,i)=>({p,st:preview?previewState(p,i):p.state}));
@@ -483,8 +485,19 @@ const visibleLabels=new Set(drawOrder.slice(-Math.min(players.length,players.len
 drawOrder.forEach(({p,st})=>{if(!st)return;const x=st.x,y=st.y;c.save();c.translate(x,y);if(players.length>12)c.scale(.8,.8);paintCar(c,p,st.angle,true,st.x);c.restore();if(!visibleLabels.has(p))return;c.textAlign='center';c.font='800 13px system-ui';const name=p.name.length>12?p.name.slice(0,12)+'…':p.name;const tw=Math.max(64,c.measureText(name).width+20),labelOffset=players.length>10?(players.indexOf(p)%3)*25:players.indexOf(p)*28;c.fillStyle='rgba(12,30,48,.86)';rounded(c,x-tw/2,y-physical(p).bodyH*.8-62-labelOffset,tw,25,8);c.fill();c.fillStyle=p.color;c.fillText(name,x,y-physical(p).bodyH*.8-45-labelOffset)});
 c.restore();if(preview&&page!=='cars'){c.save();rounded(c,w/2-86,13,172,27,9);c.fillStyle='rgba(14,34,53,.8)';c.fill();c.textAlign='center';c.font='800 11px system-ui';c.fillStyle='#e9fdc5';c.fillText('DEMO LOOP · SETUP',w/2,31);c.restore()}if(simulation==='complete'&&!preview){c.save();c.fillStyle='rgba(10,21,34,.66)';c.fillRect(0,0,w,h);rounded(c,w/2-160,h/2-58,320,118,19);c.fillStyle='#101e30';c.fill();c.textAlign='center';c.fillStyle='#c4f26b';c.font='900 24px system-ui';c.fillText('RACE COMPLETE',w/2,h/2-17);c.fillStyle='#fff';c.font='14px system-ui';const champ=[...players].filter(p=>p.state?.status==='finished').sort((a,b)=>a.state.finishTime-b.state.finishTime)[0];c.fillText(champ?`🏆 ${champ.name} wins!`:'No finishers this round',w/2,h/2+15);c.restore()}}
 function drawRaceGate(c,x,label){const y=sampleRoad(x);c.save();c.strokeStyle='#284057';c.lineWidth=4;c.beginPath();c.moveTo(x,y);c.lineTo(x,y-125);c.stroke();c.fillStyle=label==='FINISH'?'#f9fcff':'#c4f26b';c.fillRect(x,y-125,76,30);c.fillStyle='#1b3045';c.font='900 14px system-ui';c.textAlign='center';c.fillText(label,x+38,y-106);c.restore()}
-function drawCorrection(){resizeCanvas(wheelCanvas,wheelSizeCanvas);const {w,h,dpr}=wheelSizeCanvas;if(!w||!h)return;wc.setTransform(dpr,0,0,dpr,0,0);wc.clearRect(0,0,w,h);if(!activePlayer())return;let p=activePlayer(),img=p.canvas;let rect=previewRect();wc.save();wc.drawImage(img,rect.x,rect.y,rect.w,rect.h);p.wheels.forEach((wh,i)=>{let x=rect.x+wh.x*rect.w,y=rect.y+wh.y*rect.h,r=wh.r*rect.w;wc.beginPath();wc.arc(x,y,r,0,7);wc.fillStyle=i===chosenWheel?'rgba(87,198,87,.28)':'rgba(77,170,255,.19)';wc.fill();wc.lineWidth=i===chosenWheel?3:2;wc.strokeStyle=i===chosenWheel?'#2dcb63':'#2489e5';wc.stroke();wc.beginPath();wc.arc(x,y,6,0,7);wc.fillStyle=i===chosenWheel?'#2dcb63':'#2489e5';wc.fill();wc.lineWidth=2;wc.strokeStyle='#fff';wc.stroke();});wc.restore()}
-function previewRect(){const {w,h}=wheelSizeCanvas,p=activePlayer(),pad=19;let naturalW=p.canvas.width,naturalH=p.canvas.height,s=Math.min((w-2*pad)/naturalW,(h-2*pad)/naturalH);return {x:(w-naturalW*s)/2,y:(h-naturalH*s)/2,w:naturalW*s,h:naturalH*s}}
+function fineTuneArt(p){
+ const side=['photo','drawn'].includes(p?.source)&&p.canvas;
+ const top=!!p?.topCanvas&&['photo','drawn'].includes(p.topSource);
+ const image=side?p.canvas:(top?p.topCanvas:p.canvas);
+ return {image,rotate:!side&&top&&image.height>image.width*1.05};
+}
+function drawCorrection(){resizeCanvas(wheelCanvas,wheelSizeCanvas);const {w,h,dpr}=wheelSizeCanvas;if(!w||!h)return;wc.setTransform(dpr,0,0,dpr,0,0);wc.clearRect(0,0,w,h);if(!activePlayer())return;let p=activePlayer(),art=fineTuneArt(p),img=art.image;let rect=previewRect();wc.save();
+ if(art.rotate){
+  wc.save();wc.translate(rect.x+rect.w/2,rect.y+rect.h/2);wc.rotate(Math.PI/2);
+  wc.drawImage(img,-rect.h/2,-rect.w/2,rect.h,rect.w);wc.restore();
+ }else wc.drawImage(img,rect.x,rect.y,rect.w,rect.h);
+ p.wheels.forEach((wh,i)=>{let x=rect.x+wh.x*rect.w,y=rect.y+wh.y*rect.h,r=wh.r*rect.w;wc.beginPath();wc.arc(x,y,r,0,7);wc.fillStyle=i===chosenWheel?'rgba(87,198,87,.28)':'rgba(77,170,255,.19)';wc.fill();wc.lineWidth=i===chosenWheel?3:2;wc.strokeStyle=i===chosenWheel?'#2dcb63':'#2489e5';wc.stroke();wc.beginPath();wc.arc(x,y,6,0,7);wc.fillStyle=i===chosenWheel?'#2dcb63':'#2489e5';wc.fill();wc.lineWidth=2;wc.strokeStyle='#fff';wc.stroke();});wc.restore()}
+function previewRect(){const {w,h}=wheelSizeCanvas,p=activePlayer(),pad=19,art=fineTuneArt(p);let naturalW=art.rotate?art.image.height:art.image.width,naturalH=art.rotate?art.image.width:art.image.height,s=Math.min((w-2*pad)/naturalW,(h-2*pad)/naturalH);return {x:(w-naturalW*s)/2,y:(h-naturalH*s)/2,w:naturalW*s,h:naturalH*s}}
 function showWheelSlider(){const p=activePlayer();if(!p)return;const wh=p.wheels[chosenWheel];$('wheelSize').value=clamp(Math.round(wh.r*physical(p).bodyW),12,42);$('wheelSizeValue').textContent=$('wheelSize').value+' px';$('wheelLabel').textContent=chosenWheel===0?'REAR WHEEL':'FRONT WHEEL';$('rearWheelBtn').classList.toggle('selected',chosenWheel===0);$('frontWheelBtn').classList.toggle('selected',chosenWheel===1)}
 function chooseWheel(n){chosenWheel=n;showWheelSlider();drawCorrection()}
 function scenePoint(e){const r=scene.getBoundingClientRect();return{x:clamp(e.clientX-r.left,0,r.width),y:clamp(e.clientY-r.top,0,r.height)}}
@@ -638,7 +651,7 @@ function applyViewArt(p,view,original,kind){
  const cleaned=transparentPhoto(original,Number($('backgroundCleanup').value)),cropped=cropInk(cleaned);
  if(!cropped)return false;
  let image=thickenInk(cropped,kind==='photo'?2:1);image=p[view==='top'?'flippedTop':'flippedSide']?flipCanvas(image):image;
- if(view==='top'){p.topCanvas=image;p.topSource=kind;p.topSketch=null;}
+ if(view==='top'){p.topCanvas=image;p.topSource=kind;p.topSketch=null;if(!['photo','drawn'].includes(p.source))p.wheels.forEach(wh=>wh.y=.5);}
  else{p.canvas=image;p.sideSource=kind;p.source=kind;p.wheels=detectWheels(image);p.confidence=.5;p.sketch=null;}
  return true;
 }
@@ -766,7 +779,7 @@ function useDrawing(force=false){
   const raw=draftViews[view];if(!raw||!hasInk(raw))continue;
   let cleaned=cropAndThickenStudio(raw,p.color);if(!cleaned)continue;cleaned=p[view==='side'?'flippedSide':'flippedTop']?flipCanvas(cleaned):cleaned;
   if(view==='side'){p.sketch=copyCanvas(raw);p.canvas=cleaned;p.wheels=detectWheels(cleaned);p.source='drawn';p.sideSource='drawn';p.rawScan=null;}
-  else{p.topSketch=copyCanvas(raw);p.topCanvas=cleaned;p.topSource='drawn';}
+  else{p.topSketch=copyCanvas(raw);p.topCanvas=cleaned;p.topSource='drawn';if(!['photo','drawn'].includes(p.source))p.wheels.forEach(wh=>wh.y=.5);}
   saved++;
  }
  if(!saved){$('drawingStatus').textContent='Draw at least one view before saving';return}
@@ -1045,20 +1058,28 @@ function downhillRoadPath(c,x0,x1){
   for(let x=Math.max(0,x0);x<=Math.min(page==='race'?raceFinish()+75:WORLD_W,x1);x+=7){if(!started){c.moveTo(x,sampleDownhill(x));started=true}else c.lineTo(x,sampleDownhill(x))}
   c.lineTo(Math.min(page==='race'?raceFinish()+75:WORLD_W,x1),sampleDownhill(Math.min(page==='race'?raceFinish()+75:WORLD_W,x1)));
 }
+// Race sprites are the pupil's complete submitted artwork, not a decal on a stock silhouette.
+function submittedCarArt(p){
+ if(p?.topCanvas&&['photo','drawn'].includes(p.topSource))return p.topCanvas;
+ if(p?.canvas&&['photo','drawn'].includes(p.source))return p.canvas;
+ return null;
+}
+function racerGeometry(p){
+ const image=submittedCarArt(p);
+ if(!image)return {image:null,length:92,width:46,rotation:0};
+ // Uniform scaling retains even unusually shaped drawings and their original transparency.
+ const portrait=image.height>image.width*1.05;
+ const longAxis=portrait?image.height:image.width,shortAxis=portrait?image.width:image.height;
+ const scale=Math.min(110/Math.max(1,longAxis),64/Math.max(1,shortAxis));
+ return {image,length:longAxis*scale,width:shortAxis*scale,rotation:portrait?Math.PI/2:0};
+}
 function paintTopCar(c,p,heading=0){
-  const ph=physical(p),length=clamp(ph.bodyW*.77,73,121),width=clamp(ph.bodyH*.62,36,66);
-  if(p.topCanvas){c.save();c.rotate(heading);const img=p.topCanvas;c.fillStyle='rgba(13,31,43,.22)';rounded(c,-length*.53+3,-width*.54+5,length*1.06,width*1.08,13);c.fill();
-    if(img.height>img.width*1.2){c.rotate(Math.PI/2);c.drawImage(img,-width*.52,-length*.53,width*1.04,length*1.06)}
-    else c.drawImage(img,-length*.53,-width*.52,length*1.06,width*1.04);
-    c.restore();return;}
-  c.save();c.rotate(heading);c.fillStyle='#12283e';
-  for(let ax of [-length*.30,length*.30])for(let side of [-1,1]){rounded(c,ax-10,side*(width*.55)-6,20,12,3);c.fill()}
-  c.fillStyle=p.color;c.strokeStyle='#20374a';c.lineWidth=4;rounded(c,-length/2,-width/2,length,width,14);c.fill();c.stroke();
-  c.fillStyle='#a9dcee';rounded(c,-length*.14,-width*.40,length*.37,width*.80,7);c.fill();
-  // The original side-view artwork is kept as a decorative decal on the roof.
-  if(p.canvas){c.save();rounded(c,-length*.30,-width*.24,length*.25,width*.48,3);c.clip();c.globalAlpha=.86;c.drawImage(p.canvas,-length*.30,-width*.24,length*.25,width*.48);c.restore()}
-  c.fillStyle='rgba(255,249,176,.9)';c.fillRect(length*.41,-width*.28,5,9);c.fillRect(length*.41,width*.14,5,9);
-  c.fillStyle='#f5fffd';c.textAlign='center';c.font='bold 11px system-ui';c.fillText(String(players.indexOf(p)+1),length*.18,4);c.restore();
+ const art=racerGeometry(p);
+ if(!art.image)return;
+ c.save();c.rotate(heading+art.rotation);
+ const w=art.rotation?art.width:art.length,h=art.rotation?art.length:art.width;
+ c.drawImage(art.image,-w/2,-h/2,w,h);
+ c.restore();
 }
 function drawDownhillEditor(c,w,h){
   c.save();const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,'#426d4b');g.addColorStop(.52,'#6e9158');g.addColorStop(1,'#294e49');c.fillStyle=g;c.fillRect(0,0,w,h);
@@ -1662,7 +1683,6 @@ function activeLeagueCars(){
  if(!league)return players.slice(0,6);
  const heat=league.heats[league.index];return heat?heat.entrants:[];
 }
-function racerGeometry(p){const ph=physical(p);return {length:clamp(ph.bodyW*.68,65,110),width:clamp(ph.bodyH*.53,29,60)}}
 function locateRacer(s){
  const pt=onRoute(s.s),nx=-pt.ty,ny=pt.tx;s.x=pt.x+nx*s.lane;s.y=pt.y+ny*s.lane;
 }
@@ -1688,7 +1708,7 @@ drawDownhillWorld=function(c,w,h,preview=false){
  paintPath();c.strokeStyle='#f3d788';c.lineWidth=2.7;c.setLineDash([15,21]);c.stroke();c.setLineDash([]);
  drawRouteGate(c,0,'START',downhillRoadWidth);drawRouteGate(c,downhillGeometry.length,'FINISH',downhillRoadWidth);
  for(const {p,st} of entries.sort((a,b)=>(a.st?.s||0)-(b.st?.s||0))){
-  if(!st)continue;c.save();c.translate(st.x,st.y);const dims=racerGeometry(p);c.scale(dims.length/100,dims.width/50);paintTopCar(c,p,st.angle);c.restore();
+  if(!st)continue;c.save();c.translate(st.x,st.y);paintTopCar(c,p,st.angle);c.restore();
   c.font='bold 13px system-ui';c.textAlign='center';const name=p.name.slice(0,14),tw=Math.max(65,c.measureText(name).width+16);
   c.fillStyle='#132c3fe6';rounded(c,st.x-tw/2,st.y-67,tw,22,6);c.fill();c.fillStyle=p.color;c.fillText(name,st.x,st.y-52);
  }
@@ -1806,6 +1826,13 @@ initRacers=function(){
  if(!league||league.signature!==players.map(p=>p.id).join('|'))createLeague();
  if(league?.winner)return;
  const entrants=activeLeagueCars();if(!entrants.length)return;
+ const missing=entrants.find(p=>!submittedCarArt(p));
+ if(missing){
+  $('canvasTooltip').textContent='Draw or scan a car for '+missing.name+' before this heat';
+  $('carsStatus').textContent=missing.name+' needs a submitted drawing, not a placeholder.';
+  if(!league.heats.some(h=>h.ranked))setPage('cars');
+  return;
+ }
  players.forEach(p=>p.state=null);
  entrants.forEach((p,i)=>{
   const pos=onRoute(-35-Math.floor(i/2)*105),s={
@@ -1821,8 +1848,12 @@ simulateDownhill=function(dt){
  const racers=activeLeagueCars(),length=downhillGeometry.length;
  for(const p of racers){
   const s=p.state;if(!s||s.status!=='racing')continue;
-  const ph=physical(p),wb=Math.max(20,ph.wheels[1].ax-ph.wheels[0].ax);
-  const handling=clamp(1.15-(wb-70)/480-(ph.bodyW-115)/480,.7,1.26);
+  const art=racerGeometry(p),rear=p.wheels[0],front=p.wheels[1];
+  // Physics-only tyre anchors, placed with the Front and Rear controls in Fine-tune.
+  const wb=Math.max(14,(front.x-rear.x)*art.length);
+  const axleMisalignment=Math.abs(front.y-rear.y),axleBalance=Math.abs((front.x+rear.x)*.5-.5);
+  const tyreGrip=clamp(.97+Math.min(front.r,rear.r)*.25-Math.abs(front.r-rear.r)*.3,.83,1.09);
+  const handling=clamp((1.11-(wb-66)/490-(art.length-93)/620-axleMisalignment*.36-axleBalance*.26)*tyreGrip,.65,1.27);
   const curvature=Math.max(bendAt(s.s+18),bendAt(s.s+56));
   const safe=clamp(180*handling/(1+curvature*190),43,185);
   const brake=s.speed>safe?185:0;
