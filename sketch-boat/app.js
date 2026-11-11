@@ -33,7 +33,7 @@ function save(){
  catch(e){$("storageState").textContent="⚠ Device storage full"; notice("Storage is unavailable; results may not persist.");}
 }
 function load(){
- try {const obj=JSON.parse(localStorage.getItem(STORAGE)||"{}");state.boats=Array.isArray(obj.boats)?obj.boats.slice(0,20):[];if(obj.history)state.history=obj.history;if(obj.customTrack)state.customTrack=validTrack(obj.customTrack);END_X=state.customTrack.distance;}
+ try {const obj=JSON.parse(localStorage.getItem(STORAGE)||"{}");state.boats=Array.isArray(obj.boats)?obj.boats.slice(0,30):[];if(obj.history)state.history=obj.history;if(obj.customTrack)state.customTrack=validTrack(obj.customTrack);END_X=state.customTrack.distance;}
  catch(e){state.boats=[];}
 }
 function kind(){return modes[state.mode].kind;}
@@ -183,7 +183,7 @@ function register(){
  const name=$("racerName").value.trim().replace(/\s+/g," ");
  if(!name){notice("Enter a racer's name after capturing the drawing.");$("racerName").focus();return;}
  const existing=listBoats().find(b=>b.name.toLowerCase()===name.toLowerCase());
- if(state.boats.length>=20&&!existing){notice("20 boats maximum. Remove a boat first.");return;}
+ if(state.boats.length>=30&&!existing){notice("30 boats maximum. Remove a boat first.");return;}
  if(existing&&(state.mode==="challenge"||state.mode==="sailing")){const r=state.history[kind()][existing.id];if(r?.levels?.length>0&&!r.failed&&r.levels.length<10){notice("Boat is locked during this challenge run. Finish or fail the run first.");return;}}
  const stats=analyze();if(stats.error){notice(stats.error);return;}
  const id="b"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -199,7 +199,7 @@ function register(){
 }
 $("addBoat").addEventListener("click",register);
 function renderRoster(){
- const items=listBoats();$("boatCount").textContent=items.length+" / 20";
+ const items=listBoats();$("boatCount").textContent=items.length+" / 30";
  const root=$("boatList");root.replaceChildren();
  if(!items.length){const p=document.createElement("p");p.className="hint";p.textContent="No boats registered yet.";root.append(p);return;}
  if(!items.some(b=>b.id===state.chosen))state.chosen=items[0].id;
