@@ -172,8 +172,8 @@ function register(){
  if(state.race?.running){notice("Finish the race before editing the roster.");return;}
  const name=$("racerName").value.trim().replace(/\s+/g," ");
  if(!name){notice("Enter a racer's name after capturing the drawing.");$("racerName").focus();return;}
- if(state.boats.length>=20){notice("20 boats maximum. Remove a boat first.");return;}
  const existing=listBoats().find(b=>b.name.toLowerCase()===name.toLowerCase());
+ if(state.boats.length>=20&&!existing){notice("20 boats maximum. Remove a boat first.");return;}
  const stats=analyze();if(stats.error){notice(stats.error);return;}
  const id="b"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
  if(existing){
@@ -276,6 +276,7 @@ function start(){
  if(state.mode==="challenge"||state.mode==="sailing"){
   const data=state.history[kind()][selected.id];
   if(data?.failed){notice("This boat failed its challenge. Draw and register a NEW design under the same racer name to restart Level 1.");return;}
+  if(data?.levels?.length===10){data.levels=[];save();}
   state.level=(data?.levels?.length<10&&data.levels.length>=0)?data.levels.length+1:1;
   $("raceLevel").value=state.level;updateCourseHint();
  }
