@@ -1,5 +1,13 @@
 [
   {
+    "name": "Sketch Moto",
+    "description": "Draw your own dirt bike, then race 10 automatic motocross challenges or score freestyle stunts.",
+    "category": "Creative STEM",
+    "icon": "🏍️",
+    "path": "sketch-moto/",
+    "published": true
+  },
+  {
     "name": "Pipe Masters",
     "description": "Team up with coloured paper strips to complete a pipeline using a webcam.",
     "category": "Teamwork",
