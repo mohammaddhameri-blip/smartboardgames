@@ -9,7 +9,7 @@
   },
   {
     "name": "Sketch Boat",
-    "description": "Draw your own boats and race automatically with water physics, collisions and sailing challenges.",
+    "description": "Draw or scan boats with a paired phone host, create custom waterways and race automatically. Powerboat and sailing challenges included.",
     "category": "Creative STEM",
     "icon": "⛵",
     "path": "sketch-boat/",
