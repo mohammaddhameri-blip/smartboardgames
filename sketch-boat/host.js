@@ -216,6 +216,7 @@ $("registerBoat").addEventListener("click",async()=>{
   photoStatus("✓ "+name+" registered on the smartboard. Scan the next drawing.",true);
  }catch(e){$("assignStatus").textContent=String(e.message||e);photoStatus("Registration failed. The photo is still available; retry.");}
 });
+$("newRacer").addEventListener("click",()=>{rescanId=null;rescanName="";photoStatus("New racer selected. Take a fresh photo.");window.scrollTo({top:0,behavior:"smooth"});});
 $("startRace").addEventListener("click",async()=>{
  if(boardRacing||!roster.length)return;$("raceStatus").textContent="Starting race on smartboard…";
  try{await sendRequest("remote-start",{},"race-result");$("raceStatus").textContent="🏁 Race started on smartboard";boardRacing=true;controls();}
