@@ -7,7 +7,7 @@
 <meta name="description" content="Sketch Boat: draw a boat, test its physics and race automatically.">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
-<title>Sketch Boat v1.1 — Draw • Float • Race</title>
+<title>Sketch Boat v1.2 — Draw • Float • Race</title>
 <link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="./rally-ui.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
@@ -16,7 +16,7 @@
 <body>
 <div id="mainMenu" class="main-menu" role="region" aria-label="Sketch Boat main menu">
  <div class="menu-inner">
-  <div class="menu-eyebrow">SKETCH BOAT <span>v1.1</span></div>
+  <div class="menu-eyebrow">SKETCH BOAT <span>v1.2</span></div>
   <div class="menu-byline">by MrDhameri</div>
   <svg class="menu-art" viewBox="0 0 680 180" aria-hidden="true">
    <defs><linearGradient id="boatWater" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1d7898"/><stop offset="1" stop-color="#194768"/></linearGradient></defs>
@@ -39,7 +39,7 @@
 </div>
 <div class="app">
 <header class="topbar">
- <div class="identity"><span class="logo">⛵</span><div><h1>SKETCH BOAT <small>v1.1</small></h1><p>by MrDhameri · Draw. Float. Race.</p></div></div>
+ <div class="identity"><span class="logo">⛵</span><div><h1>SKETCH BOAT <small>v1.2</small></h1><p>by MrDhameri · Draw. Float. Race.</p></div></div>
  <div class="topright"><button type="button" id="openMainMenu" class="menu-button">☰ Menu</button><span id="storageState" class="chip">● Saved on this device</span><a class="library" href="../">← Game library</a></div>
 </header>
 <div class="workspace">
@@ -103,7 +103,7 @@
    <p class="hint">Draw a single freehand route, just like Sketch Rally. Crazy hairpins and U-turns are allowed. Waterway edges appear only when racing.</p>
    <div class="settings-row"><label for="trackPreset">Course design</label><select id="trackPreset"><option value="calm">Open Water</option><option value="winding">Winding River</option><option value="islands">Island Pass</option><option value="slalom">Sharp S-Curves</option></select></div>
    <div class="settings-row"><label for="trackLength">Race distance</label><select id="trackLength"><option value="2600">1 km · Sprint</option><option value="5200">2 km</option><option value="7800">3 km</option><option value="13000">5 km · Endurance</option></select></div>
-   <div class="settings-row"><label for="trackWidth">Waterway width</label><input id="trackWidth" type="range" min="125" max="280" value="200"><output id="trackWidthValue">200</output></div>
+   <div class="settings-row"><label for="trackWidth">Width (racing only)</label><input id="trackWidth" type="range" min="125" max="280" value="200"><output id="trackWidthValue">200</output></div>
    <label class="section-label">Track drawing tool</label>
    <div class="track-tools"><button type="button" data-track-tool="draw" class="active">✎ Draw route</button><button type="button" data-track-tool="rock">◆ Add rocks</button><button type="button" data-track-tool="erase">⌫ Erase rocks</button></div>
    <p class="hint">Drag to draw a NEW continuous track line anywhere, even backwards or around sharp corners. No water edges while drawing. Tap to place or remove rocks.</p>
@@ -154,7 +154,7 @@
    <div id="hostPhotoBox" class="host-photo-box hidden"><img id="hostPhotoPreview" alt="Most recent sketch received from host"><span id="hostPhotoStatus">Receiving photo…</span></div>
   </section>
 </div>
-<footer><span>Designed for school smartboards & Android browsers · Offline-friendly after the first visit</span><span>Locally saved racer designs · v1.1</span></footer>
+<footer><span>Designed for school smartboards & Android browsers · Offline-friendly after the first visit</span><span>Locally saved racer designs · v1.2</span></footer>
 </div>
 <script src="./track-geometry.js" defer></script>
 <script src="./app.js" defer></script>
