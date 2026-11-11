@@ -26,11 +26,42 @@ public class MainActivity extends Activity {
     private static final String OFFLINE_URL = "file:///android_asset/offline.html";
     private static final int PICK_IMAGE = 2026;
     private static final int CAMERA_REQUEST = 2027;
+    private static final int FILE_CAMERA_REQUEST = 2028;
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
     private Uri cameraImageUri;
     private PermissionRequest webCameraRequest;
     private boolean offline = false;
+
+    private void launchImageChooser() {
+        if (fileCallback == null) return;
+        Intent choose = new Intent(Intent.ACTION_GET_CONTENT);
+        choose.addCategory(Intent.CATEGORY_OPENABLE);
+        choose.setType("image/*");
+        Intent[] initial = new Intent[0];
+        if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            try {
+                ContentValues cv = new ContentValues();
+                cv.put(MediaStore.Images.Media.DISPLAY_NAME, "SketchMoto_" + System.currentTimeMillis() + ".jpg");
+                cv.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+                cameraImageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
+                if (cameraImageUri != null) {
+                    camera.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri);
+                    camera.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    if (camera.resolveActivity(getPackageManager()) != null) initial = new Intent[]{camera};
+                }
+            } catch (Exception ignored) { cameraImageUri = null; }
+        }
+        try {
+            Intent chooser = Intent.createChooser(choose, "Photograph or choose a dirt bike");
+            chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, initial);
+            startActivityForResult(chooser, PICK_IMAGE);
+        } catch (Exception e) {
+            fileCallback.onReceiveValue(null);
+            fileCallback = null;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,32 +106,12 @@ public class MainActivity extends Activity {
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> newCallback, FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = newCallback;
-                Intent choose = new Intent(Intent.ACTION_GET_CONTENT);
-                choose.addCategory(Intent.CATEGORY_OPENABLE);
-                choose.setType("image/*");
-                Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                Intent[] initial = new Intent[0];
-                try {
-                    ContentValues cv = new ContentValues();
-                    cv.put(MediaStore.Images.Media.DISPLAY_NAME, "SketchMoto_" + System.currentTimeMillis() + ".jpg");
-                    cv.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
-                    cameraImageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
-                    if (cameraImageUri != null) {
-                        camera.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri);
-                        camera.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        if (camera.resolveActivity(getPackageManager()) != null) initial = new Intent[]{camera};
-                    }
-                } catch (Exception ignored) { cameraImageUri = null; }
-                try {
-                    Intent chooser = Intent.createChooser(choose, "Choose or photograph a bike drawing");
-                    chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, initial);
-                    startActivityForResult(chooser, PICK_IMAGE);
-                    return true;
-                } catch (Exception e) {
-                    fileCallback.onReceiveValue(null);
-                    fileCallback = null;
-                    return false;
+                if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.CAMERA}, FILE_CAMERA_REQUEST);
+                } else {
+                    launchImageChooser();
                 }
+                return true;
             }
             @Override
             public void onPermissionRequest(PermissionRequest request) {
@@ -124,6 +135,7 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode == FILE_CAMERA_REQUEST) { launchImageChooser(); return; }
         if (requestCode == CAMERA_REQUEST && webCameraRequest != null) {
             PermissionRequest pending = webCameraRequest;
             webCameraRequest = null;
