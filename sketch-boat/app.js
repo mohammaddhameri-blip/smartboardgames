@@ -173,11 +173,17 @@ function register(){
  const name=$("racerName").value.trim().replace(/\s+/g," ");
  if(!name){notice("Enter a racer's name after capturing the drawing.");$("racerName").focus();return;}
  if(state.boats.length>=20){notice("20 boats maximum. Remove a boat first.");return;}
- if(listBoats().some(b=>b.name.toLowerCase()===name.toLowerCase())){notice("This name is already registered in this category.");return;}
+ const existing=listBoats().find(b=>b.name.toLowerCase()===name.toLowerCase());
  const stats=analyze();if(stats.error){notice(stats.error);return;}
  const id="b"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
- state.boats.push({id,name,kind:kind(),stats,image:imageSrc(),color:palette[(state.boats.length)%palette.length]});
- state.chosen=id;save();renderRoster();$("racerName").value="";clearDrawing();notice(name+" registered. Draw the next boat or begin racing.");
+ if(existing){
+  const prior=state.history[kind()][existing.id];
+  state.boats=state.boats.filter(b=>b.id!==existing.id);boatImgs.delete(existing.id);
+  delete state.history[kind()][existing.id];
+  if(prior?.best!=null)state.history[kind()][id]={levels:[],best:prior.best,failed:false};
+ }
+ state.boats.push({id,name,kind:kind(),stats,image:imageSrc(),color:existing?existing.color:palette[(state.boats.length)%palette.length]});
+ state.chosen=id;save();renderRoster();$("racerName").value="";clearDrawing();notice(name+(existing?" received a new boat design. Previous challenge run reset.":" registered. Draw the next boat or begin racing."));
  updateStage();
 }
 $("addBoat").addEventListener("click",register);
@@ -269,6 +275,7 @@ function start(){
  if(!boats.length){notice("Register a boat in this category before starting.");return;}
  if(state.mode==="challenge"||state.mode==="sailing"){
   const data=state.history[kind()][selected.id];
+  if(data?.failed){notice("This boat failed its challenge. Draw and register a NEW design under the same racer name to restart Level 1.");return;}
   state.level=(data?.levels?.length<10&&data.levels.length>=0)?data.levels.length+1:1;
   $("raceLevel").value=state.level;updateCourseHint();
  }
@@ -394,8 +401,8 @@ function finish(){
     $("raceBanner").textContent="🏆 ALL 10 COURSES COMPLETED!";
    } else {$("nextLevel").classList.remove("hidden");}
   }else{
-   record.levels=[];
-   $("raceInfo").textContent="Challenge failed. Same boat's run reset to Level 1. A new drawing is recommended.";
+   record.levels=[];record.failed=true;
+   $("raceInfo").textContent="Challenge failed. A new boat drawing is required to restart at Level 1.";
   }
   state.history[category][r.id]=record;save();
  }
