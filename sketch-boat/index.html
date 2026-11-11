@@ -3,21 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#071827">
+<meta name="theme-color" content="#0c1422">
 <meta name="description" content="Sketch Boat: draw a boat, test its physics and race automatically.">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
-<title>Sketch Boat v1.0 — Draw • Float • Race</title>
+<title>Sketch Boat v1.1 — Draw • Float • Race</title>
 <link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="./rally-ui.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div class="app">
 <header class="topbar">
- <div class="identity"><span class="logo">⛵</span><div><h1>SKETCH BOAT <small>v1.0</small></h1><p>by MrDhameri · Draw. Float. Race.</p></div></div>
+ <div class="identity"><span class="logo">⛵</span><div><h1>SKETCH BOAT <small>v1.1</small></h1><p>by MrDhameri · Draw. Float. Race.</p></div></div>
  <div class="topright"><span id="storageState" class="chip">● Saved on this device</span><a class="library" href="../">← Game library</a></div>
 </header>
 <div class="workspace">
  <aside class="sidebar">
+  <nav class="rally-tabs" aria-label="Sketch Boat panels">
+    <button class="rally-tab on" type="button" data-panel="garage">GARAGE</button>
+    <button class="rally-tab" type="button" data-panel="track">TRACK</button>
+    <button class="rally-tab" type="button" data-panel="race">RACE</button>
+  </nav>
+  <div id="pane-garage" class="rally-pane">
+    <div class="host-entry">
+      <span><strong>📱 Host phone</strong><small id="phoneConnection">Not paired</small></span>
+      <button type="button" class="primary" id="openPhonePair">Pair phone →</button>
+    </div>
   <nav class="modes" aria-label="Game modes">
    <button type="button" data-mode="quick" class="mode active"><span>🚤</span> Quick Race</button>
    <button type="button" data-mode="challenge" class="mode"><span>🏆</span> Challenge</button>
@@ -60,22 +73,45 @@
    <div class="panel-heading"><h2>Registered boats</h2><span id="boatCount" class="badge">0 / 20</span></div>
    <div id="boatList" class="boat-list"><p class="hint">No boats registered yet.</p></div>
   </section>
-  <section class="panel compact">
-   <h2>Race settings</h2>
+  </div>
+  <div id="pane-track" class="rally-pane hidden">
+  <section class="panel track-panel">
+   <h2>Design Track</h2>
+   <p class="hint">Create your own watercourse on the large screen. For Quick Race and Test modes.</p>
+   <div class="settings-row"><label for="trackPreset">Course design</label><select id="trackPreset"><option value="calm">Open Water</option><option value="winding">Winding River</option><option value="islands">Island Pass</option><option value="slalom">Sharp S-Curves</option></select></div>
+   <div class="settings-row"><label for="trackLength">Race distance</label><select id="trackLength"><option value="2600">1 km · Sprint</option><option value="5200">2 km</option><option value="7800">3 km</option><option value="13000">5 km · Endurance</option></select></div>
+   <div class="settings-row"><label for="trackWidth">Waterway width</label><input id="trackWidth" type="range" min="125" max="280" value="200"><output id="trackWidthValue">200</output></div>
+   <label class="section-label">Track drawing tool</label>
+   <div class="track-tools"><button type="button" data-track-tool="draw" class="active">✎ Draw route</button><button type="button" data-track-tool="rock">◆ Add rocks</button><button type="button" data-track-tool="erase">⌫ Erase rocks</button></div>
+   <p class="hint">Drag to reshape the watercourse. Tap to place or remove rocks. The race follows your drawn bends automatically.</p>
+   <div class="tool-actions"><button id="undoTrack" type="button">↶ Undo</button><button id="resetTrack" type="button">↺ Reset course</button></div>
+   <p id="trackNotice" class="notice" role="status"></p>
+   <button id="trackReady" type="button" class="primary full">✓ Track ready · Go to Race</button>
+  </section>
+  </div>
+  <div id="pane-race" class="rally-pane hidden">
+  <section class="panel"><h2>Ready to race</h2><p class="hint">All boats are controlled automatically. The drawings and the track determine the result.</p>
    <div class="settings-row"><label for="raceLevel">Course</label><select id="raceLevel" aria-label="Course"></select></div>
    <div class="settings-row"><label for="raceSpeed">Simulation</label><select id="raceSpeed"><option value="1">1× Real time</option><option value="1.5">1.5× Faster</option><option value="2">2× Faster</option></select></div>
    <p class="hint" id="courseHint"></p>
+   <button class="primary full" id="raceStartSide" type="button">🏁 Begin Race</button>
+   <button class="full" id="editTrackSide" type="button">✎ Design Track</button>
+   <button class="full" id="pairPhoneSide" type="button">📱 Host Phone</button>
   </section>
+  </div>
  </aside>
  <main class="stage">
   <div class="stage-top"><div><div class="subtitle" id="stageSubtitle">AUTOMATIC POWERBOAT RACING</div><h2 id="stageTitle">Quick Race</h2></div>
    <div class="stage-tools"><span class="stat" id="clock">00:00.0</span><span class="stat" id="levelLabel">COURSE 01</span><button id="fullscreen" type="button" title="Fullscreen" aria-label="Fullscreen">⛶</button></div>
   </div>
   <div class="race-frame">
+   <canvas id="trackCanvas" class="track-design-canvas hidden" width="1200" height="680" aria-label="Design a boat racing watercourse"></canvas>
+   <div id="trackEditorHint" class="track-editor-hint hidden">✎ Draw the route · ◆ Place rocks · ⌫ Erase rocks</div>
    <canvas id="raceCanvas" width="1200" height="680" aria-label="Automatic boat racing track"></canvas>
    <div id="emptyState" class="empty-state"><div class="empty-icon">🚤</div><strong>Your designs become real racers.</strong><span>Draw or photograph a boat, register a racer, then start the race.</span></div>
    <div id="raceBanner" class="race-banner hidden" role="status"></div>
   </div>
+  <div id="hostRosterRibbon" class="host-roster-ribbon hidden"><strong id="hostRosterCount">0 RACERS</strong><span id="hostRosterNames"></span></div>
   <div class="stage-bottom">
    <div class="race-info" id="raceInfo">No race running</div>
    <div class="race-actions"><button id="resetRace" type="button">↺ Reset</button><button id="startRace" class="primary big" type="button">🏁 BEGIN RACE</button><button id="nextLevel" type="button" class="hidden">Next level →</button></div>
@@ -86,8 +122,18 @@
   </div>
  </main>
 </div>
-<footer><span>Designed for school smartboards & Android browsers · Offline-friendly after the first visit</span><span>Locally saved racer designs · v1.0</span></footer>
+<div id="pairDialog" class="pair-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="pairTitle">
+  <section class="pair-window"><div class="pair-head"><h2 id="pairTitle">📱 Pair host phone</h2><button id="closePair" type="button">✕ Close</button></div>
+   <div class="pair-status" id="pairStatus">Choose Pair phone to generate a pairing code.</div>
+   <div class="pair-main"><div><span class="section-label">PAIRING CODE</span><div id="cameraCode" class="camera-code">— — — —</div><p class="hint">Open the host app on your phone, then enter this code or scan the QR.</p></div><div id="cameraQr" class="camera-qr"></div></div>
+   <div id="cameraLink" class="pair-link"></div>
+   <div class="pair-actions"><button type="button" id="copyPhoneLink">Copy host link</button><button type="button" id="changePhoneCode">↻ New code</button><button type="button" id="openHostPage">Open host page ↗</button></div>
+   <div id="hostPhotoBox" class="host-photo-box hidden"><img id="hostPhotoPreview" alt="Most recent sketch received from host"><span id="hostPhotoStatus">Receiving photo…</span></div>
+  </section>
+</div>
+<footer><span>Designed for school smartboards & Android browsers · Offline-friendly after the first visit</span><span>Locally saved racer designs · v1.1</span></footer>
 </div>
 <script src="./app.js" defer></script>
+<script src="./pairing-and-track.js" defer></script>
 </body>
 </html>
