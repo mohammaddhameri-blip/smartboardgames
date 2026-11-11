@@ -218,5 +218,17 @@ $("copyPhoneLink").addEventListener("click",async()=>{try{await navigator.clipbo
 $("openHostPage").addEventListener("click",()=>window.open(linkForRoom(),"_blank","noopener,noreferrer"));
 window.addEventListener("pagehide",()=>{if(channel&&client)client.removeChannel(channel);});
 setInterval(()=>{if(channel&&paired)syncHost();},1800);
+
+const mainMenu=$("mainMenu");
+function closeMenu(){mainMenu.classList.add("hidden");}
+function openMenu(){if(!state().running)mainMenu.classList.remove("hidden");}
+$("openMainMenu").addEventListener("click",openMenu);
+$("menuEnter").addEventListener("click",()=>{closeMenu();setPanel("garage");});
+$("menuHost").addEventListener("click",()=>{closeMenu();setPanel("garage");openPair();});
+document.querySelectorAll("[data-enter-mode]").forEach(btn=>btn.addEventListener("click",()=>{
+ const result=api.changeMode(btn.dataset.enterMode);
+ if(!result.ok){$("pairStatus").textContent=result.message;return;}
+ closeMenu();setPanel("garage");lastState="";syncHost();
+}));
 loadTrackInputs();setPanel("garage");
 })();
