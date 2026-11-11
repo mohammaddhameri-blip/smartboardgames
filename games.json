@@ -8,6 +8,14 @@
     "published": true
   },
   {
+    "name": "Sketch Boat",
+    "description": "Draw your own boats and race automatically with water physics, collisions and sailing challenges.",
+    "category": "Creative STEM",
+    "icon": "⛵",
+    "path": "sketch-boat/",
+    "published": true
+  },
+  {
     "name": "Sketch Moto",
     "description": "Draw your own dirt bike, then race 10 automatic motocross challenges or score freestyle stunts.",
     "category": "Creative STEM",
