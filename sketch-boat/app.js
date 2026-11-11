@@ -580,5 +580,67 @@ function boot(){
  requestAnimationFrame(loop);
  if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
 }
+
+function publicRoster(){
+ return listBoats().map(b=>({id:b.id,remoteId:b.remoteId||b.id,name:b.name,kind:b.kind,validSail:b.stats.validSail!==false,registered:true}));
+}
+function replaceTrack(next){
+ if(state.race?.running||!next)return {ok:false,message:"End the race before editing its course."};
+ state.customTrack=validTrack(next);END_X=isCustom()?state.customTrack.distance:2600;
+ save();updateCourseHint();drawIdle();return {ok:true};
+}
+async function registerHostPhoto(payload){
+ if(state.race?.running)return {ok:false,message:"Race is underway. Register after it ends."};
+ if(!payload||typeof payload.name!=="string"||!payload.name.trim())return {ok:false,message:"Enter the racer name."};
+ const name=payload.name.replace(/[<>\u0000-\u001f]/g,"").trim().slice(0,28);
+ if(!name)return {ok:false,message:"Invalid racer name."};
+ if(payload.kind!==kind())return {ok:false,message:"Switch the smartboard to "+(payload.kind==="sail"?"Sailing":"Powerboat")+" mode before scanning."};
+ const source=payload.image;
+ if(typeof source!=="string"||!/^data:image\/(jpeg|png);base64,/.test(source)||source.length>235000)return {ok:false,message:"Image too large or invalid; retake it."};
+ const image=new Image();
+ try{
+  await new Promise((ok,no)=>{image.onload=ok;image.onerror=no;image.src=source;});
+  if(state.race?.running||payload.kind!==kind())return {ok:false,message:"Mode changed or racing started. Try again."};
+  dc.clearRect(0,0,360,210);
+  const sc=Math.min(345/image.naturalWidth,193/image.naturalHeight);
+  const w=image.naturalWidth*sc,h=image.naturalHeight*sc;
+  dc.drawImage(image,(360-w)/2,(210-h)/2,w,h);
+  const pixels=dc.getImageData(0,0,360,210),data=pixels.data;
+  for(let i=0;i<data.length;i+=4){
+   if(data[i+3]<25)continue;
+   const r=data[i],g=data[i+1],b=data[i+2],lum=.299*r+.587*g+.114*b;
+   if(lum>208 || (b>r*1.18&&b>g*1.1&&lum>135)){data[i+3]=0;continue;}
+   data[i+3]=Math.round(data[i+3]*clamp((220-lum)/80,.3,1));
+  }
+  dc.putImageData(pixels,0,0);
+  const before=new Set(state.boats.map(b=>b.id));
+  $("racerName").value=name;
+  register();
+  let boat=state.boats.find(b=>!before.has(b.id)&&b.name===name&&b.kind===kind());
+  if(!boat)return {ok:false,message:$("editorNotice").textContent||"Boat not detected. Retake photograph."};
+  if(typeof payload.racerId==="string"&&/^[\w-]{8,64}$/.test(payload.racerId)){boat.remoteId=payload.racerId;save();}
+  return {ok:true,message:"Registered",racer:{id:boat.id,name:boat.name},racers:publicRoster()};
+ }catch(error){console.warn("Host sketch failed",error);return {ok:false,message:"Unable to process photo. Try again."};}
+}
+function removeHostBoat(id){
+ if(state.race?.running)return {ok:false,message:"Race in progress."};
+ const b=state.boats.find(x=>x.id===id||x.remoteId===id);
+ if(!b)return {ok:false,message:"Racer no longer in the roster."};
+ state.boats=state.boats.filter(x=>x.id!==b.id);
+ delete state.history[b.kind][b.id];boatImgs.delete(b.id);save();renderRoster();updateStage();
+ return {ok:true,message:b.name+" removed.",racers:publicRoster()};
+}
+window.SketchBoatBridge=Object.freeze({
+ getState:()=>({mode:state.mode,kind:kind(),running:!!state.race?.running,level:state.level,boats:publicRoster(),results:state.lastResults.map(r=>({name:r.name,finished:r.finished,time:r.time}))}),
+ getTrack:()=>JSON.parse(JSON.stringify(state.customTrack)),
+ setTrack:replaceTrack,
+ presetTrack:(name)=>replaceTrack(makeTrack(name)),
+ registerPhoto:registerHostPhoto,
+ removeBoat:removeHostBoat,
+ changeMode:(mode)=>{if(state.race?.running)return {ok:false,message:"Race in progress."};if(!categories.includes(mode))return {ok:false,message:"Unknown mode."};selectMode(mode);return {ok:true};},
+ start:()=>{if(state.race?.running)return {ok:false,message:"Already racing."};start();return state.race?.running?{ok:true,message:"Race started"}:{ok:false,message:$("editorNotice").textContent||"Cannot start race"};},
+ reset:()=>{reset();return {ok:true};}
+});
+
 boot();
 })();
