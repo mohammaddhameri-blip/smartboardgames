@@ -7,6 +7,10 @@ on:
       - ".github/workflows/sketch-moto-apk.yml"
   workflow_dispatch:
 
+concurrency:
+  group: sketch-moto-apk
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
@@ -38,6 +42,7 @@ jobs:
         run: |
           mkdir -p sketch-moto/android/app/src/main/assets
           cp sketch-moto/index.html sketch-moto/android/app/src/main/assets/offline.html
+          cp sketch-moto/phone.html sketch-moto/android/app/src/main/assets/phone.html
           cp sketch-moto/icon.svg sketch-moto/android/app/src/main/assets/icon.svg
           cp sketch-moto/manifest.webmanifest sketch-moto/android/app/src/main/assets/manifest.webmanifest
 
