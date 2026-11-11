@@ -14,6 +14,7 @@ const notify=(text)=>{$("trackNotice").textContent=text;};
 function state(){return api.getState();}
 function setPanel(next){
  if(!["garage","track","race"].includes(next))return;
+ if(next==="track"&&state().running){$("raceInfo").textContent="Finish or reset the race before editing the track.";return;}
  if(next==="track"&&!["quick","test"].includes(state().mode)){
   const result=api.changeMode("quick");if(!result.ok){notify(result.message);return;}
  }
