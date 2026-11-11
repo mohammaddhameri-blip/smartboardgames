@@ -1,7 +1,8 @@
 "use strict";
 (() => {
 const $ = (id) => document.getElementById(id);
-const TAU = Math.PI * 2, WIDTH = 1200, HEIGHT = 680, END_X = 2600, STORAGE = "sketch-boat-v1";
+const TAU = Math.PI * 2, WIDTH = 1200, HEIGHT = 680, STORAGE = "sketch-boat-v1";
+let END_X = 2600;
 const clamp = (v,lo,hi) => Math.max(lo,Math.min(hi,v));
 const lerp = (a,b,t) => a+(b-a)*t;
 const wrap = (a) => Math.atan2(Math.sin(a),Math.cos(a));
@@ -13,17 +14,26 @@ const modes = {
   sailing:{name:"Sailing Challenge",title:"Design your sailboat",subtitle:"WIND-POWERED SAILING CHALLENGE",help:"Side view: draw the hull below and the mast and sail above. Without a usable sail, the boat cannot power itself.",kind:"sail"},
   test:{name:"Boat Testing",title:"Design your powerboat",subtitle:"PHYSICS TESTING LAB",help:"Observe speed, steering, collisions and recovery with the same physics used in races.",kind:"power"}
 };
-const state={mode:"quick",boats:[],chosen:null,level:1,race:null,lastResults:[],history:{power:{},sail:{}},photo:null,photoAngle:0,photoThreshold:205,tool:"pen",drawing:false,stepAccumulator:0,lastFrame:0};
+function makeTrack(preset="calm"){
+ const values=Array.from({length:65},(_,i)=>{const x=i/64;if(preset==="winding")return .5+.24*Math.sin(x*13)+.08*Math.sin(x*27);if(preset==="islands")return .5+.18*Math.sin(x*19)+.05*Math.cos(x*31);if(preset==="slalom")return .5+.3*Math.sin(x*27)+.055*Math.sin(x*43);return .5+.045*Math.sin(x*9);});
+ const rocks=preset==="islands"?[{x:.28,offset:-35,r:22},{x:.57,offset:35,r:23},{x:.79,offset:-30,r:21}]:preset==="slalom"?[{x:.22,offset:30,r:19},{x:.46,offset:-30,r:19},{x:.7,offset:33,r:19}]:[];
+ return {values,width:200,distance:2600,rocks,preset};
+}
+function validTrack(raw){
+ if(!raw||!Array.isArray(raw.values)||raw.values.length!==65)return makeTrack();
+ return {values:raw.values.map(v=>clamp(Number(v)||.5,.08,.92)),width:clamp(Number(raw.width)||200,125,280),distance:[2600,5200,7800,13000].includes(Number(raw.distance))?Number(raw.distance):2600,rocks:(Array.isArray(raw.rocks)?raw.rocks:[]).slice(0,15).map(r=>({x:clamp(Number(r.x)||.5,.05,.95),offset:clamp(Number(r.offset)||0,-90,90),r:clamp(Number(r.r)||20,12,30)})),preset:String(raw.preset||"custom")};
+}
+const state={mode:"quick",boats:[],chosen:null,level:1,race:null,lastResults:[],history:{power:{},sail:{}},customTrack:makeTrack(),photo:null,photoAngle:0,photoThreshold:205,tool:"pen",drawing:false,stepAccumulator:0,lastFrame:0};
 const draw=$("drawCanvas"), dc=draw.getContext("2d",{willReadFrequently:true}), view=$("raceCanvas"), ctx=view.getContext("2d");
 const boatImgs=new Map();
 const palette=["#c1f38b","#f9bc73","#ff8ca0","#7ce0ec","#c3adff","#f2da83","#98bdfc","#ff9f63"];
 function notice(msg){$("editorNotice").textContent=msg;}
 function save(){
- try {localStorage.setItem(STORAGE,JSON.stringify({boats:state.boats,history:state.history}));$("storageState").textContent="● Saved on this device";}
+ try {localStorage.setItem(STORAGE,JSON.stringify({boats:state.boats,history:state.history,customTrack:state.customTrack}));$("storageState").textContent="● Saved on this device";}
  catch(e){$("storageState").textContent="⚠ Device storage full"; notice("Storage is unavailable; results may not persist.");}
 }
 function load(){
- try {const obj=JSON.parse(localStorage.getItem(STORAGE)||"{}");state.boats=Array.isArray(obj.boats)?obj.boats.slice(0,20):[];if(obj.history)state.history=obj.history;}
+ try {const obj=JSON.parse(localStorage.getItem(STORAGE)||"{}");state.boats=Array.isArray(obj.boats)?obj.boats.slice(0,20):[];if(obj.history)state.history=obj.history;if(obj.customTrack)state.customTrack=validTrack(obj.customTrack);END_X=state.customTrack.distance;}
  catch(e){state.boats=[];}
 }
 function kind(){return modes[state.mode].kind;}
@@ -209,7 +219,7 @@ function renderRoster(){
 function selectMode(mode){
  if(!categories.includes(mode))return;
  if(state.race?.running){notice("Finish or reset the race before switching modes.");return;}
- const oldKind=kind();state.mode=mode;const info=modes[mode];
+ const oldKind=kind();state.mode=mode;END_X=isCustom()?state.customTrack.distance:2600;const info=modes[mode];
  document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));
  $("editorTitle").textContent=info.title;$("modeHelp").textContent=info.help;
  $("stageTitle").textContent=info.name;$("stageSubtitle").textContent=info.subtitle;
@@ -244,13 +254,20 @@ function fillCourses(){
  updateCourseHint();
 }
 function updateCourseHint(){
- const t=tracks[state.level-1];$("courseHint").textContent=(state.mode==="sailing"?"Wind conditions change along the course. ":"")+t.name+" · "+t.limit+"s time limit.";
+ const t=getCourse(state.level);$("courseHint").textContent=(state.mode==="sailing"?"Wind conditions change along the course. ":"")+t.name+" · "+t.limit+"s time limit.";
  $("levelLabel").textContent="COURSE "+String(state.level).padStart(2,"0");
 }
 $("raceLevel").addEventListener("change",e=>{if(state.race?.running)return;state.level=Number(e.target.value);updateCourseHint();drawIdle();});
+function isCustom(){return state.mode==="quick"||state.mode==="test";}
+function getCourse(lvl=state.level){return isCustom()?{name:"Designed Watercourse",width:state.customTrack.width,limit:Math.round(38+state.customTrack.distance/75),obstacles:state.customTrack.rocks.length}:tracks[lvl-1];}
 function pathY(x,lvl=state.level){
- const t=tracks[lvl-1],p=x/t.freq;
- return 265+t.amp*(.68*Math.sin(p+.25)+.24*Math.sin(p*1.64-1.3));
+ if(isCustom()){
+  const arr=state.customTrack.values,n=arr.length-1,p=clamp(x/END_X,0,1)*n,i=Math.min(n-1,Math.floor(p)),u=p-i;
+  const a=arr[Math.max(0,i-1)],b=arr[i],c=arr[i+1],d=arr[Math.min(n,i+2)];
+  const smooth=.5*((2*b)+(-a+c)*u+(2*a-5*b+4*c-d)*u*u+(-a+3*b-3*c+d)*u*u*u);
+  return 265+(clamp(smooth,.06,.94)-.5)*250;
+ }
+ const t=tracks[lvl-1],p=x/t.freq;return 265+t.amp*(.68*Math.sin(p+.25)+.24*Math.sin(p*1.64-1.3));
 }
 function curvature(x,lvl){
  const h=28,ya=pathY(x-h,lvl),yb=pathY(x,lvl),yc=pathY(x+h,lvl);
@@ -258,6 +275,7 @@ function curvature(x,lvl){
  return Math.abs(second)/Math.pow(1+slope*slope,1.5);
 }
 function obstacles(level){
+ if(isCustom())return state.customTrack.rocks.map(r=>({x:r.x*END_X,y:pathY(r.x*END_X,level)+r.offset,r:r.r}));
  const t=tracks[level-1],arr=[];
  for(let i=0;i<t.obstacles;i++){
   const x=540+i*470+((i+level)%2)*60;
@@ -270,6 +288,7 @@ function spawn(b,i,count){
 }
 function start(){
  if(state.race?.running)return;
+ END_X=isCustom()?state.customTrack.distance:2600;
  const selected=currentBoat();
  const boats=(state.mode==="quick")?listBoats():(selected?[selected]:[]);
  if(!boats.length){notice("Register a boat in this category before starting.");return;}
@@ -300,7 +319,7 @@ function scoreFailure(r){
 }
 function step(dt){
  const race=state.race;if(!race||!race.running)return;
- race.timer+=dt;const level=race.level,t=tracks[level-1];
+ race.timer+=dt;const level=race.level,t=getCourse(level);
  for(const r of race.racers){
   if(r.finished||r.failed)continue;
   const s=r.boat.stats,spd=Math.hypot(r.vx,r.vy),sailing=r.boat.kind==="sail";
@@ -467,7 +486,7 @@ function waterBackground(time){
  }ctx.globalAlpha=1;
 }
 function drawPowerTrack(race,time){
- const lvl=race?.level||state.level,t=tracks[lvl-1],camera=race?.camera||0;
+ const lvl=race?.level||state.level,t=getCourse(lvl),camera=race?.camera||0;
  waterBackground(time);
  const upper=[],lower=[];
  for(let x=Math.max(0,camera-35);x<camera+1070;x+=9){
@@ -485,7 +504,7 @@ function drawPowerTrack(race,time){
   }ctx.strokeStyle="#a6e1e1";ctx.globalAlpha=.55;ctx.lineWidth=3;ctx.setLineDash([15,9]);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
  }
  ctx.setLineDash([8,18]);ctx.strokeStyle="#c1f9e5";ctx.lineWidth=2;ctx.globalAlpha=.3;lineCourse(camera,lvl,0).stroke();ctx.globalAlpha=1;ctx.setLineDash([]);
- for(const rock of race?.obstacles||[]){
+ for(const rock of race?.obstacles||obstacles(lvl)){
   const x=(rock.x-camera)*1.17,y=rock.y*1.17+43;if(x<-100||x>1300)continue;
   ctx.fillStyle="#566674";ctx.strokeStyle="#e8d1af";ctx.lineWidth=3;
   ctx.beginPath();ctx.ellipse(x,y,rock.r*1.17,rock.r*.84,Math.sin(rock.x)*.4,0,TAU);ctx.fill();ctx.stroke();
