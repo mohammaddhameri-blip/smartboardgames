@@ -1,0 +1,78 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#142536">
+<title>Sketch Moto — Phone Camera</title>
+<style>
+:root{--bg:#0c1623;--p:#182d40;--b:#3e5868;--accent:#ffbc6d;--muted:#a6bac8}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#f3f7fb;font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:510px;margin:auto;padding:18px 15px 45px}header{display:flex;gap:12px;align-items:center;margin:9px 0 22px}
+.logo{height:52px;width:52px;border-radius:13px;background:var(--accent);color:#1a2936;display:grid;place-items:center;font-size:29px}
+h1{margin:0;font-size:23px;letter-spacing:-1px}header p{color:var(--muted);margin:2px 0 0}
+.card{border:1px solid var(--b);border-radius:17px;padding:16px;margin:12px 0;background:var(--p)}
+h2{font-size:16px;margin:0 0 14px}button,.file{border:1px solid #688091;background:#2b4456;color:white;border-radius:11px;padding:11px 13px;min-height:44px;font-weight:800;cursor:pointer;font-size:13px}button:disabled{opacity:.4}
+button.hot{background:var(--accent);border-color:var(--accent);color:#142536}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1;min-width:0}
+input{background:#0c1e2d;color:#fff;border:1px solid #6a8693;border-radius:10px;padding:12px;width:100%;font:inherit}
+#room{text-transform:uppercase;letter-spacing:.12em;text-align:center;font-weight:900}.status{color:#b5d1df;margin-top:12px;font-size:12px}
+.video{position:relative;aspect-ratio:4/3;overflow:hidden;background:#10202d;border-radius:12px;display:grid;place-items:center;border:1px solid #456375;margin-bottom:11px}
+video{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.hint{color:#91afbd;text-align:center;padding:24px}.video.open .hint{display:none}video:not([src]){background:transparent}
+label{display:block;color:#b6ccd6;font-size:12px;margin:11px 0 5px;font-weight:750}
+.file{display:grid;place-items:center;text-align:center;border-style:dashed;margin-top:8px}.file input{display:none}
+img{width:100%;max-height:210px;object-fit:contain;background:#fff;border-radius:10px;margin-top:12px}.hidden{display:none}
+.note{font-size:11px;color:#8da8b9}.status.good{color:#a2f6cc}.status.bad{color:#ff9e9e}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script></head>
+<body><main><header><div class="logo">🏍</div><div><h1>Sketch Moto</h1><p>by MrDhameri · Host phone camera</p></div></header>
+<section class="card"><h2>1 · Connect to smartboard</h2><div class="row"><input id="room" maxlength="8" placeholder="PAIR CODE" aria-label="Pairing code"><button class="hot" id="connect">Connect</button></div><div id="status" class="status">Enter the eight-character code shown on the smartboard.</div></section>
+<section class="card"><h2>2 · Photograph a dirt bike</h2><div class="video" id="videoBox"><video id="video" playsinline autoplay muted></video><div class="hint">Your phone camera preview appears here</div></div>
+<div class="row"><button id="openCamera" disabled>📷 Open camera</button><button id="flipCamera" disabled>↻ Flip camera</button></div>
+<button class="hot" id="takePicture" disabled style="width:100%;margin-top:8px">📸 Take picture</button>
+<label class="file">↑ Use a saved photo instead <input id="photoFile" type="file" accept="image/*" disabled></label>
+<img class="hidden" id="result" alt="Photo about to send">
+<label for="racerName">Racer's name (optional)</label><input id="racerName" maxlength="38" placeholder="Name the rider">
+<button class="hot" id="send" disabled style="width:100%;margin-top:10px">Send photo to smartboard</button>
+<div class="status" id="photoStatus">Connect first, then capture a motorcycle drawing.</div></section>
+<p class="note">Both devices must have internet. The photo is broadcast through a temporary pairing room and is not stored in an online photo gallery. Keep your pairing code private.</p>
+</main>
+<script>
+(function(){
+"use strict";
+var $=function(x){return document.getElementById(x)};
+var SB_URL="https://qekcgsfeomjckctiubgm.supabase.co";
+var SB_KEY="sb_publishable_yJbCYOLDeMreuqM01g_oqA_eF5YEWwq";
+var client=null,channel=null,stream=null,facing="environment",data="";
+var room=new URLSearchParams(location.search).get("room")||"";
+$("room").value=room.slice(0,8).toUpperCase();
+function status(s,bad){$("status").textContent=s;$("status").className="status "+(bad?"bad":"good")}
+function photoStatus(s){$("photoStatus").textContent=s}
+function enable(on){$("openCamera").disabled=!on;$("flipCamera").disabled=!on;$("photoFile").disabled=!on;$("takePicture").disabled=!on}
+async function connect(){
+  var code=$("room").value.trim().toUpperCase().replace(/[^A-Z2-9]/g,"");
+  if(code.length!==8){status("Enter the eight-character code from the smartboard.",true);return}
+  if(!window.supabase||!window.supabase.createClient){status("Internet connection is required to load pairing.",true);return}
+  try{
+    if(channel&&client){await client.removeChannel(channel);channel=null}
+    client=client||window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+    channel=client.channel("sketch-moto:camera:"+code,{config:{private:false,broadcast:{ack:true}}});
+    channel.on("broadcast",{event:"host-received"},function(){photoStatus("✓ Photo received by the smartboard. Review and register there.")});
+    channel.subscribe(async function(s){if(s==="SUBSCRIBED"){status("Connected to room "+code+". Camera ready.");enable(true);await channel.send({type:"broadcast",event:"phone-hello",payload:{phone:true}})}else if(s==="CHANNEL_ERROR"||s==="TIMED_OUT"){status("Connection interrupted. Check internet and retry.",true);enable(false)}});
+    status("Connecting...");
+  }catch(e){status("Could not join pairing room.",true)}
+}
+$("connect").onclick=connect;
+async function openCamera(){
+ try{
+  if(stream){stream.getTracks().forEach(function(t){t.stop()});stream=null}
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720}},audio:false});
+  $("video").srcObject=stream;$("videoBox").classList.add("open");
+  photoStatus("Point at the complete bike drawing, then take a picture.");
+ }catch(e){photoStatus("Camera unavailable. Check browser permission or use a saved photo.")}
+}
+$("openCamera").onclick=openCamera;$("flipCamera").onclick=function(){facing=facing==="environment"?"user":"environment";openCamera()};
+function snapshot(src,w,h){var c=document.createElement("canvas"),max=640,sc=Math.min(max/w,max/h,1);c.width=Math.max(1,Math.round(w*sc));c.height=Math.max(1,Math.round(h*sc));var g=c.getContext("2d");g.fillStyle="white";g.fillRect(0,0,c.width,c.height);g.drawImage(src,0,0,c.width,c.height);var b=c.toDataURL("image/jpeg",.78);if(b.length>220000){c.width=Math.max(1,Math.round(c.width*.7));c.height=Math.max(1,Math.round(c.height*.7));g=c.getContext("2d");g.fillStyle="white";g.fillRect(0,0,c.width,c.height);g.drawImage(src,0,0,c.width,c.height);b=c.toDataURL("image/jpeg",.60)}data=b;$("result").src=data;$("result").classList.remove("hidden");$("send").disabled=false;photoStatus("Photo ready. Send it to the smartboard.")}
+$("takePicture").onclick=function(){var v=$("video");if(!v.videoWidth){photoStatus("Open the camera first, or upload an image.");return}snapshot(v,v.videoWidth,v.videoHeight)};
+$("photoFile").onchange=function(){var file=this.files&&this.files[0];if(!file)return;var im=new Image(),url=URL.createObjectURL(file);im.onload=function(){snapshot(im,im.width,im.height);URL.revokeObjectURL(url)};im.onerror=function(){photoStatus("Could not load this picture.");URL.revokeObjectURL(url)};im.src=url;this.value=""};
+$("send").onclick=async function(){if(!channel||!data){photoStatus("No photo to send.");return}this.disabled=true;try{var result=await channel.send({type:"broadcast",event:"snapshot",payload:{image:data,name:$("racerName").value.trim().slice(0,38)}});photoStatus(result==="ok"?"Photo sent. Waiting for smartboard confirmation.":"Send attempted: "+String(result)+". Check smartboard.");}catch(e){photoStatus("Photo could not be sent. Retry.")}this.disabled=false};
+window.addEventListener("pagehide",function(){if(stream)stream.getTracks().forEach(function(t){t.stop()});if(channel&&client)client.removeChannel(channel)});
+if($("room").value.length===8)connect();
+})();
+</script></body></html>
