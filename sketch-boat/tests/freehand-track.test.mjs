@@ -48,7 +48,7 @@ test("physics navigator completes straight, hairpin and zigzag without skipping"
    finished:false,failed:false,spinUntil:0};
   const state={race:{custom:true,geo,level:1,running:true,timer:0,obstacles:[],racers:[racer]}};
   let settled=false;
-  const run=vm.runInNewContext("("+body+";stepFreeCourse)",{Geo,state,getCourse:()=>({limit:180}),clamp:(x,a,b)=>Math.max(a,Math.min(b,x)),wrap:a=>Math.atan2(Math.sin(a),Math.cos(a)),collideBoats:()=>{},finish:()=>{settled=true;state.race.running=false;},scoreFailure:r=>{r.failed=true;}});
+  const run=vm.runInNewContext(body+"\nstepFreeCourse",{Geo,state,getCourse:()=>({limit:180}),clamp:(x,a,b)=>Math.max(a,Math.min(b,x)),wrap:a=>Math.atan2(Math.sin(a),Math.cos(a)),collideBoats:()=>{},finish:()=>{settled=true;state.race.running=false;},scoreFailure:r=>{r.failed=true;}});
   for(let i=0;i<60*180&&!settled;i++)run(1/60);
   assert.equal(racer.finished,true,label+" boat did not finish");
   assert.equal(racer.failed,false,label+" boat failed");
