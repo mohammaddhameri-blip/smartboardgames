@@ -1,0 +1,18 @@
+{
+  "name": "Sketch Boat — Draw. Float. Race.",
+  "short_name": "Sketch Boat",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#081622",
+  "theme_color": "#071827",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}
