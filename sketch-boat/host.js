@@ -32,7 +32,7 @@ function controls(){
  $("gameMode").value=boardMode;
 }
 function setRoster(info){
- if(info&&Array.isArray(info.racers))roster=info.racers.filter(r=>r&&typeof r.name==="string").slice(0,20);
+ if(info&&Array.isArray(info.racers))roster=info.racers.filter(r=>r&&typeof r.name==="string").slice(0,30);
  if(typeof info?.racing==="boolean")boardRacing=info.racing;
  if(["quick","challenge","sailing","test"].includes(info?.mode)){boardMode=info.mode;boardKind=boardMode==="sailing"?"sail":"power";}
  const el=$("rosterList");el.replaceChildren();
