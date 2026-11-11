@@ -184,13 +184,14 @@ function register(){
  if(!name){notice("Enter a racer's name after capturing the drawing.");$("racerName").focus();return;}
  const existing=listBoats().find(b=>b.name.toLowerCase()===name.toLowerCase());
  if(state.boats.length>=20&&!existing){notice("20 boats maximum. Remove a boat first.");return;}
+ if(existing&&(state.mode==="challenge"||state.mode==="sailing")){const r=state.history[kind()][existing.id];if(r?.levels?.length>0&&!r.failed&&r.levels.length<10){notice("Boat is locked during this challenge run. Finish or fail the run first.");return;}}
  const stats=analyze();if(stats.error){notice(stats.error);return;}
  const id="b"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
  if(existing){
   const prior=state.history[kind()][existing.id];
   state.boats=state.boats.filter(b=>b.id!==existing.id);boatImgs.delete(existing.id);
   delete state.history[kind()][existing.id];
-  if(prior?.best!=null)state.history[kind()][id]={levels:[],best:prior.best,failed:false};
+  if(prior?.best!=null||prior?.partial)state.history[kind()][id]={levels:[],best:prior?.best??null,partial:prior?.partial||null,failed:false};
  }
  state.boats.push({id,name,kind:kind(),stats,image:imageSrc(),color:existing?existing.color:palette[(state.boats.length)%palette.length]});
  state.chosen=id;save();renderRoster();$("racerName").value="";clearDrawing();notice(name+(existing?" received a new boat design. Previous challenge run reset.":" registered. Draw the next boat or begin racing."));
@@ -247,6 +248,7 @@ const tracks=[
 ];
 function fillCourses(){
  const sel=$("raceLevel");sel.replaceChildren();
+ if(isCustom()){const opt=document.createElement("option");opt.value="1";opt.textContent="Your Designed Watercourse";sel.append(opt);sel.value="1";sel.disabled=true;state.level=1;updateCourseHint();return;}
  tracks.forEach((t,i)=>{const op=document.createElement("option");op.value=String(i+1);op.textContent=(i+1)+". "+(state.mode==="sailing"?"Wind "+t.name:t.name);sel.append(op);});
  if(state.mode==="challenge"||state.mode==="sailing"){const b=currentBoat(),data=b?state.history[b.kind][b.id]:null;state.level=data&&data.levels&&data.levels.length<10?data.levels.length+1:1;sel.disabled=true;}
  else {sel.disabled=false;state.level=1;}
@@ -421,6 +423,8 @@ function finish(){
     $("raceBanner").textContent="🏆 ALL 10 COURSES COMPLETED!";
    } else {$("nextLevel").classList.remove("hidden");}
   }else{
+   const total=record.levels.reduce((a,b)=>a+b,0),completed=record.levels.length;
+   if(!record.partial||completed>record.partial.levels||(completed===record.partial.levels&&total<record.partial.total))record.partial={levels:completed,total};
    record.levels=[];record.failed=true;
    $("raceInfo").textContent="Challenge failed. A new boat drawing is required to restart at Level 1.";
   }
@@ -446,7 +450,9 @@ function renderResults(){
  if(state.mode==="challenge"||state.mode==="sailing"){
   const label=document.createElement("div");label.className="leaderboard-label";label.textContent="BEST OVERALL · "+(state.mode==="sailing"?"SAILING":"POWERBOAT");el.append(label);
   const scores=listBoats().map(b=>{
-   const rec=state.history[b.kind][b.id]||{levels:[]};return {name:b.name,levels:(rec.levels||[]).length,best:rec.best,total:(rec.levels||[]).reduce((a,x)=>a+x,0)};
+   const rec=state.history[b.kind][b.id]||{levels:[]},live=(rec.levels||[]).length,liveTotal=(rec.levels||[]).reduce((a,x)=>a+x,0),saved=rec.partial||{levels:0,total:Infinity};
+   const bestPartial=live>saved.levels||(live===saved.levels&&liveTotal<saved.total)?{levels:live,total:liveTotal}:saved;
+   return {name:b.name,levels:bestPartial.levels,best:rec.best,total:bestPartial.total};
   }).sort((a,b)=>Number(b.best!==null&&b.best!==undefined)-Number(a.best!==null&&a.best!==undefined)||(a.best??Infinity)-(b.best??Infinity)||b.levels-a.levels||a.total-b.total);
   for(let i=0;i<Math.min(scores.length,8);i++){
    const s=scores[i],line=document.createElement("div");line.className="result-line";
