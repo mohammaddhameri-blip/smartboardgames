@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071827">
+<meta name="description" content="Sketch Boat: draw a boat, test its physics and race automatically.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>Sketch Boat v1.0 — Draw • Float • Race</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="app">
+<header class="topbar">
+ <div class="identity"><span class="logo">⛵</span><div><h1>SKETCH BOAT <small>v1.0</small></h1><p>by MrDhameri · Draw. Float. Race.</p></div></div>
+ <div class="topright"><span id="storageState" class="chip">● Saved on this device</span><a class="library" href="../">← Game library</a></div>
+</header>
+<div class="workspace">
+ <aside class="sidebar">
+  <nav class="modes" aria-label="Game modes">
+   <button type="button" data-mode="quick" class="mode active"><span>🚤</span> Quick Race</button>
+   <button type="button" data-mode="challenge" class="mode"><span>🏆</span> Challenge</button>
+   <button type="button" data-mode="sailing" class="mode"><span>⛵</span> Sailing</button>
+   <button type="button" data-mode="test" class="mode"><span>🧪</span> Test</button>
+  </nav>
+  <section class="panel">
+   <div class="panel-heading"><h2 id="editorTitle">Design your powerboat</h2><span id="drawingBadge" class="badge">TOP VIEW</span></div>
+   <p id="modeHelp" class="hint">Draw a boat viewed from above, bow pointing right. Every boat gets the same engine.</p>
+   <div class="canvas-container">
+    <canvas id="drawCanvas" width="360" height="210" aria-label="Draw your boat. The bow should point right."></canvas>
+    <span class="direction" id="drawDirection">BOW →</span>
+   </div>
+   <div class="tools">
+    <button type="button" data-tool="pen" class="tool selected" title="Draw">✏ Draw</button>
+    <button type="button" data-tool="erase" class="tool" title="Erase">⌫ Erase</button>
+    <button type="button" data-tool="hull" class="tool sail-only hidden" title="Hull brush">▰ Hull</button>
+    <button type="button" data-tool="sail" class="tool sail-only hidden" title="Sail brush">◢ Sail</button>
+   </div>
+   <div class="settings-row"><label for="brush">Brush</label><input id="brush" type="range" min="2" max="24" value="6"><label for="lineClean">Clean lines</label><input type="checkbox" id="lineClean" checked></div>
+   <div class="tool-actions">
+    <button type="button" id="exampleBtn">◇ Example outline</button>
+    <button type="button" id="rotateLeft">↶ Rotate</button>
+    <button type="button" id="clearDraw" class="danger">× Clear</button>
+   </div>
+   <label class="upload">📷 Capture / upload a drawing<input type="file" id="photoInput" accept="image/*" capture="environment"></label>
+   <div id="photoEditor" class="photo-editor hidden">
+    <div class="settings-row"><label for="threshold">White cleanup</label><input id="threshold" type="range" min="120" max="250" value="205"><output id="thresholdValue">205</output></div>
+    <div class="settings-row"><label for="rotation">Photo angle</label><input id="rotation" type="range" min="-180" max="180" value="0"><output id="rotationValue">0°</output></div>
+    <div class="tool-actions"><button type="button" id="applyPhoto">✓ Apply photo</button><button type="button" id="cancelPhoto">Cancel</button></div>
+    <p class="hint">Photo cleanup is approximate. Erase remaining lines manually before registering.</p>
+   </div>
+   <div class="register">
+    <input id="racerName" maxlength="28" placeholder="Racer's name" aria-label="Racer's name">
+    <button id="addBoat" class="primary" type="button">＋ Register boat</button>
+   </div>
+   <p id="editorNotice" class="notice" role="status"></p>
+  </section>
+  <section class="panel">
+   <div class="panel-heading"><h2>Registered boats</h2><span id="boatCount" class="badge">0 / 20</span></div>
+   <div id="boatList" class="boat-list"><p class="hint">No boats registered yet.</p></div>
+  </section>
+  <section class="panel compact">
+   <h2>Race settings</h2>
+   <div class="settings-row"><label for="raceLevel">Course</label><select id="raceLevel" aria-label="Course"></select></div>
+   <div class="settings-row"><label for="raceSpeed">Simulation</label><select id="raceSpeed"><option value="1">1× Real time</option><option value="1.5">1.5× Faster</option><option value="2">2× Faster</option></select></div>
+   <p class="hint" id="courseHint"></p>
+  </section>
+ </aside>
+ <main class="stage">
+  <div class="stage-top"><div><div class="subtitle" id="stageSubtitle">AUTOMATIC POWERBOAT RACING</div><h2 id="stageTitle">Quick Race</h2></div>
+   <div class="stage-tools"><span class="stat" id="clock">00:00.0</span><span class="stat" id="levelLabel">COURSE 01</span><button id="fullscreen" type="button" title="Fullscreen" aria-label="Fullscreen">⛶</button></div>
+  </div>
+  <div class="race-frame">
+   <canvas id="raceCanvas" width="1200" height="680" aria-label="Automatic boat racing track"></canvas>
+   <div id="emptyState" class="empty-state"><div class="empty-icon">🚤</div><strong>Your designs become real racers.</strong><span>Draw or photograph a boat, register a racer, then start the race.</span></div>
+   <div id="raceBanner" class="race-banner hidden" role="status"></div>
+  </div>
+  <div class="stage-bottom">
+   <div class="race-info" id="raceInfo">No race running</div>
+   <div class="race-actions"><button id="resetRace" type="button">↺ Reset</button><button id="startRace" class="primary big" type="button">🏁 BEGIN RACE</button><button id="nextLevel" type="button" class="hidden">Next level →</button></div>
+  </div>
+  <div class="results">
+   <div class="results-head"><h2 id="resultsTitle">Race results</h2><button type="button" id="exportResults">↓ Export CSV</button></div>
+   <div id="resultsBody" class="result-body"><p class="hint">Race results appear here after the start.</p></div>
+  </div>
+ </main>
+</div>
+<footer><span>Designed for school smartboards & Android browsers · Offline-friendly after the first visit</span><span>Locally saved racer designs · v1.0</span></footer>
+</div>
+<script src="./app.js" defer></script>
+</body>
+</html>
