@@ -1936,13 +1936,29 @@ initRacers=function(){
   return;
  }
  players.forEach(p=>p.state=null);
- for(const [i,p] of entrants.entries()){
-  const s=-35-Math.floor(i/2)*108,lane=(i%2?1:-1)*downhillRoadWidth*.24,origin=onRoute(s);
-  p.state={s,lane,startLane:lane,lateralV:0,speed:24,angle:origin.a,yawRate:0,
-   offroad:0,driveMode:getDriveMode(p),vehicle:vehicleData(p),
-   status:'racing',finishTime:0,topSpeed:0,vx:24,vy:0,x:origin.x,y:origin.y};
-  locateRacer(p.state);
+ // Adaptive grid: two cars share a row only when their actual sketch widths fit.
+ // Bulky cars get a safe edge margin instead of starting partly off-road.
+ const rows=[];
+ for(const p of entrants){
+  const v=vehicleData(p);let row=rows[rows.length-1];
+  if(!row||row.length===2||(row[0].v.width+v.width+14>downhillRoadWidth)){
+   row=[];rows.push(row);
+  }
+  row.push({p,v});
  }
+ rows.forEach((row,r)=>{
+  const s=-35-r*108;
+  row.forEach(({p,v},i)=>{
+   const lane=row.length===1?0:i===0?
+    -downhillRoadWidth/2+v.width/2+7:
+    downhillRoadWidth/2-v.width/2-7;
+   const origin=onRoute(s);
+   p.state={s,lane,startLane:lane,lateralV:0,speed:24,angle:origin.a,yawRate:0,
+    offroad:0,driveMode:getDriveMode(p),vehicle:v,
+    status:'racing',finishTime:0,topSpeed:0,vx:24,vy:0,x:origin.x,y:origin.y};
+   locateRacer(p.state);
+  });
+ });
  simulation='running';elapsed=0;stepCarry=0;camX=0;camY=0;
  syncBeginRaceButton();updateDriveUI();refreshStandings();renderLeague();
 };
