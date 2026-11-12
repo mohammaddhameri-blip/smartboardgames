@@ -2007,13 +2007,13 @@ simulateDownhill=function(dt){
     goal=Math.min(goal,Math.max(16,line.front.speed+Math.max(-40,(line.gap-gap)*.8)));
   }
   // Standard engine force, constant gravity gradient, rolling/aerodynamic losses.
-  const accelerate=Math.max(5,25.5+3350/v.mass-7.8-(.0005*v.width/v.mass)*s.speed*s.speed);
+  const accelerate=Math.max(5,29+19*v.bulk+2000/v.mass-7.8-(.0005*v.width/v.mass)*s.speed*s.speed);
   if(s.speed>goal)s.speed=Math.max(goal,s.speed-v.brake*dt);
   else s.speed=Math.min(goal,s.speed+accelerate*dt);
   // Steering is a rate-limited bicycle controller with inertia, not boat tracking.
   const road=onRoute(s.s),look=onRoute(s.s+clamp(s.speed*.30,19,58));
   const desired=Math.abs(s.lane)>downhillRoadWidth*.46?0:line.lane;
-  const angle=Math.atan2(look.y+look.tx*desired-s.y,look.x-look.ty*desired-s.x);
+  const angle=wrapAngle(look.a+clamp((desired-s.lane)*.025-s.lateralV*.014,-.45,.45));
   const turn=clamp(wrapAngle(angle-s.angle)*3*v.steer,-v.yaw,v.yaw);
   s.yawRate+=(turn-s.yawRate)*clamp(dt/(.16+.11*v.bulk),0,1);
   s.angle=wrapAngle(s.angle+s.yawRate*dt);
