@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <meta name="theme-color" content="#101827" />
-<title>Sketch Rally v1.6 — Draw. Scan. Race.</title>
+<title>Sketch Rally v1.7 — Draw. Scan. Race.</title>
 <style>
 :root{--bg:#0c1422;--panel:#152237;--panel2:#1c2b43;--border:#30425c;--text:#f2f7ff;--muted:#a1b0c8;--lime:#c4f26b;--blue:#6fc8fa;--orange:#ffb478;--danger:#ff8191;--radius:15px}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.42}.app{max-width:1530px;margin:auto;min-height:100vh;padding:22px 26px 30px}.header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:13px}.logo{width:44px;height:44px;display:grid;place-items:center;background:var(--lime);color:var(--bg);border-radius:13px;box-shadow:0 0 0 4px rgba(196,242,107,.08);font-size:24px}.brand h1{margin:0;font-size:21px;letter-spacing:-.8px;line-height:1.1}.brand small{color:var(--muted);font-size:12px;font-weight:500}.chip{border:1px solid #4a6647;background:#223c30;border-radius:100px;color:var(--lime);font-size:11px;font-weight:800;letter-spacing:.09em;padding:9px 12px;text-transform:uppercase}.layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:19px;align-items:stretch}.sidebar,.stage{border:1px solid var(--border);border-radius:20px;background:var(--panel);overflow:hidden}.sidebar{display:flex;flex-direction:column}.tabs{display:grid;grid-template-columns:repeat(3,1fr);padding:12px;gap:6px;border-bottom:1px solid var(--border)}.tab{border:0;border-radius:10px;background:transparent;color:var(--muted);padding:12px 6px;font-size:12px;font-weight:800;letter-spacing:.02em}.tab.on{color:var(--bg);background:var(--lime)}.content{padding:20px;overflow-y:auto;max-height:calc(100vh - 160px);min-height:565px}.pane{display:none}.pane.active{display:block}h2{font-size:21px;margin:0 0 6px;letter-spacing:-.5px}h3{font-size:13px;font-weight:800;margin:18px 0 9px}.sub{color:var(--muted);font-size:13px;line-height:1.55;margin:0 0 19px}.section-label{display:block;color:#afc0d7;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin:16px 0 8px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px}.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.btn{border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:10px;min-height:39px;padding:10px 12px;font-size:12px;font-weight:700;transition:background .1s,border-color .1s}.btn:hover{border-color:#7189a8}.btn.selected{border-color:var(--lime);color:var(--lime);background:#273c30}.btn.primary{color:#0b1920;background:var(--lime);border-color:var(--lime)}.btn.primary:hover{background:#ddffa8}.btn.secondary{background:#294861;color:#dff5ff}.btn.warn{color:var(--danger)}.btn.full{width:100%;margin-top:12px}.btn.large{min-height:47px;font-size:14px}.help{font-size:12px;line-height:1.55;color:var(--muted);margin:11px 0 0}.note{font-size:12px;line-height:1.45;border:1px solid #405676;border-radius:12px;padding:11px 12px;color:#cbd9eb;background:rgba(108,166,238,.06);margin-top:15px}.rule{height:1px;background:var(--border);margin:18px 0}.player-list{display:grid;gap:7px}.player-row{width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:1px solid var(--border);background:var(--panel2);border-radius:10px;padding:8px 9px;color:var(--text)}.player-row.active{border-color:var(--lime);background:#293c34}.player-icon{width:31px;height:28px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;color:#0e1b26;font-weight:900;font-size:13px}.player-info{min-width:0;flex:1}.player-info b{display:block;font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.player-info small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.player-row .tick{color:var(--lime);font-weight:900}.field{width:100%;padding:11px 12px;background:#0f1a2b;border:1px solid #49607a;color:white;border-radius:10px;outline:0;font-size:13px}.field:focus{border-color:var(--lime)}.upload{border:1px dashed #7890a8;border-radius:12px;min-height:70px;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;color:#e2efff;font-weight:700;font-size:12px;text-align:center;padding:12px;background:#1a2e45}.upload input{display:none}.upload:hover{border-color:var(--lime)}.correction{position:relative;border:1px solid #426077;background:linear-gradient(45deg,#ebedf1 25%,#ffffff 25% 50%,#ebedf1 50% 75%,#ffffff 75%);background-size:18px 18px;border-radius:12px;overflow:hidden;margin-top:9px}.correction canvas{display:block;width:100%;height:184px;touch-action:none;cursor:grab}.correction canvas:active{cursor:grabbing}.minirow{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:10px 0 0}.minirow span{font-size:11px;color:var(--muted)}.minirow b{font-size:11px;color:var(--lime)}.range{width:100%;accent-color:var(--lime)}.standings{display:grid;gap:8px;margin-top:15px}.result{display:flex;gap:8px;align-items:center;background:#1d2e46;border:1px solid var(--border);padding:10px;border-radius:10px}.result .rank{font-size:11px;width:18px;color:var(--muted);font-weight:900}.result-name{min-width:0;flex:1}.result-name b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.result-name small{color:var(--muted);font-size:10px}.result .progress{width:70px;background:#0d1a2b;border-radius:10px;height:5px;overflow:hidden}.result .fill{height:100%;background:var(--lime);width:0}.stage{min-height:630px;display:flex;flex-direction:column;background:#101e32}.stage-top{min-height:79px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:17px 20px;border-bottom:1px solid var(--border)}.stage-title{font-weight:900;font-size:17px;letter-spacing:-.3px}.stage-description{font-size:12px;color:var(--muted);margin-top:4px}.stage-counter{font-weight:900;font-size:15px;color:var(--lime);font-variant-numeric:tabular-nums;white-space:nowrap}.canvas-wrap{height:min(65vh,608px);min-height:455px;position:relative;overflow:hidden;background:#a6d8eb}.canvas-wrap canvas{width:100%;height:100%;display:block;touch-action:none}.canvas-tooltip{position:absolute;top:17px;left:17px;border-radius:10px;background:rgba(13,29,46,.78);color:#f7fcff;font-size:12px;font-weight:700;padding:10px 12px;pointer-events:none;max-width:70%;backdrop-filter:blur(5px)}.canvas-tooltip:empty{display:none}.footer{min-height:66px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 19px;background:#152237;border-top:1px solid var(--border)}.footer .message{color:var(--muted);font-size:12px;line-height:1.45}.footer .message strong{color:var(--text)}.footer-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.small-pill{font-size:11px;font-weight:800;display:inline-block;border-radius:20px;padding:5px 9px;background:#31435b;color:#e3eefd}.hidden{display:none!important}.muted{color:var(--muted)}.status{font-size:11px;margin-top:9px;color:var(--lime);min-height:16px}.checkbox{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);margin:12px 0}.checkbox input{accent-color:var(--lime)}@media(max-width:1000px){.layout{grid-template-columns:300px minmax(0,1fr)}.app{padding:15px}.content{padding:15px}.canvas-wrap{min-height:400px}}@media(max-width:770px){.app{padding:12px 12px 25px}.header{margin-bottom:12px}.layout{grid-template-columns:1fr;gap:11px}.sidebar{order:2}.stage{order:1;min-height:0}.content{max-height:none;min-height:0}.stage-top{min-height:61px;padding:12px 13px}.canvas-wrap{height:53vh;min-height:300px;max-height:530px}.canvas-tooltip{font-size:10px;top:10px;left:10px}.footer{padding:12px;min-height:60px;flex-wrap:wrap}.brand h1{font-size:17px}.logo{width:36px;height:36px;font-size:20px}.chip{font-size:9px;padding:7px 9px}.sidebar{border-radius:16px}.tabs{padding:8px}.content{padding:16px}.stage-title{font-size:15px}}@media(max-width:380px){.canvas-wrap{min-height:275px;height:43vh}.btn{padding:9px 8px}.header .chip{display:none}}
 /* In-game car drawing studio, transparent scan and phone-camera pairing */
@@ -149,6 +149,13 @@ body.challenge-mode #pane-track [data-preset],body.challenge-mode #pane-track [d
 .league-stage-next.hidden{display:none!important}
 body.race-immersive .league-stage-next{bottom:8%}
 
+
+/* Downhill driving strategies */
+.drive-modes{padding:10px;margin:10px 0;border:1px solid #627d70;background:#10273a;border-radius:11px}
+.drive-modes .field{width:100%}.drive-mode-pair{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+.drive-mode-pair button{font-size:12px;padding:10px 6px}
+.racer-drive{background:#11293c;border:1px solid #516a69;border-radius:10px;padding:10px;margin-bottom:12px}
+.racer-drive label{display:block;color:#c5f391;font-weight:800;font-size:12px;margin-bottom:6px}
 </style>
 </head>
 <body class="menu-open">
@@ -163,7 +170,7 @@ body.race-immersive .league-stage-next{bottom:8%}
 </div>
 <div class="menu-cover" id="mainMenu" role="region" aria-label="Sketch Rally main menu">
   <div class="menu-inner">
-    <div class="menu-eyebrow"><span class="menu-bullet"></span> SKETCH RALLY <span class="menu-inline-version">v1.6</span></div><div class="menu-byline">by MrDhameri</div>
+    <div class="menu-eyebrow"><span class="menu-bullet"></span> SKETCH RALLY <span class="menu-inline-version">v1.7</span></div><div class="menu-byline">by MrDhameri</div>
     <div class="menu-art" aria-hidden="true">
       <svg viewBox="0 0 680 195" preserveAspectRatio="xMidYMid meet">
         <defs><linearGradient id="menuRoad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#587a6a"/><stop offset="1" stop-color="#284f58"/></linearGradient></defs>
@@ -186,7 +193,7 @@ body.race-immersive .league-stage-next{bottom:8%}
 </div>
 <div class="app">
   <header class="header">
-    <div class="brand"><button type="button" class="menu-home" id="menuHome" aria-label="Open main menu" title="Main menu">⌂</button><div class="logo">✎</div><div><h1>SKETCH RALLY <span class="header-version">v1.4</span></h1><small>Draw · Race</small></div></div>
+    <div class="brand"><button type="button" class="menu-home" id="menuHome" aria-label="Open main menu" title="Main menu">⌂</button><div class="logo">✎</div><div><h1>SKETCH RALLY <span class="header-version">v1.7</span></h1><small>Draw · Race</small></div></div>
     <div class="header-actions"><button type="button" class="btn gear-btn" id="settingsOpen" title="Settings" aria-label="Open game settings">⚙ Settings</button></div>
   </header>
   <main class="layout">
@@ -202,7 +209,12 @@ body.race-immersive .league-stage-next{bottom:8%}
           <span class="section-label">Race mode</span>
           <div class="two-col"><button class="btn selected" type="button" id="modeHills">⛰ Hill Climb</button><button class="btn" type="button" id="modeDownhill">↪ Downhill</button><button class="btn" type="button" id="modeChallenge">🏆 Challenge</button></div>
           <p class="help">Both races are fully automatic. Each mode has its own editable course.</p>
-          <section class="downhill-width hidden" id="downhillWidthRow"><label for="downhillWidth">Downhill road width <span id="downhillWidthValue">105</span></label><input id="downhillWidth" type="range" min="45" max="180" step="5" value="105"><p class="help">Draw only the centreline. Width affects racing, not your brush.</p></section><label class="section-label" for="trackDistance">Race distance</label>
+          <section class="downhill-width hidden" id="downhillWidthRow"><label for="downhillWidth">Downhill road width <span id="downhillWidthValue">105</span></label><input id="downhillWidth" type="range" min="45" max="180" step="5" value="105"><p class="help">Draw only the centreline. Width affects racing, not your brush.</p></section><section id="downhillModes" class="drive-modes hidden">
+<span class="section-label">Downhill Drive Modes</span><select class="field" id="drivePolicy" aria-label="Choose drive mode policy">
+<option value="shared">Teacher chooses for all cars</option><option value="individual">Each racer chooses</option></select>
+<div id="sharedModes" class="drive-mode-pair"><button type="button" class="btn selected" id="modeRealistic">Realistic Drive</button><button type="button" class="btn" id="modeAggressive">Aggressive Drive</button></div>
+<p id="driveExplanation" class="help">Realistic: safer braking and overtaking.</p></section>
+<label class="section-label" for="trackDistance">Race distance</label>
           <select id="trackDistance" class="field"><option value="1">1 km · Sprint</option><option value="2">2 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="20">20 km · Endurance</option></select>
           <span class="section-label">Quick courses</span>
           <div class="two-col">
@@ -266,7 +278,7 @@ body.race-immersive .league-stage-next{bottom:8%}
     </section>
     <section class="quick-tune" id="quickTune" aria-label="Fine tune registered racer">
       <div class="quick-tune-head"><div><strong>Fine-tune car</strong><small id="tuneNotice">Newest registered racer</small></div><select id="tuneRacerSelect" class="field" aria-label="Choose racer to fine tune"></select></div>
-      <div class="quick-tune-tools">
+      <div class="quick-tune-tools"><div class="racer-drive hidden" id="racerDriveSetting"><label for="racerDrive">Drive mode for this car</label><select class="field" id="racerDrive"><option value="realistic">Realistic Drive</option><option value="aggressive">Aggressive Drive</option></select></div>
           <div class="two-col tune-flip"><button type="button" class="btn" id="flipSide">⇋ Flip side</button><button type="button" class="btn" id="flipTop">⇋ Flip top</button></div>
           <div class="two-col tune-actions"><button type="button" class="btn" id="retryScan">↻ Re-detect wheels</button><button type="button" class="btn warn" id="removePlayer">Remove racer</button></div>
           <div class="scan-controls"><label for="backgroundCleanup">Background removal · <b id="cleanupValue">Balanced</b></label><input id="backgroundCleanup" type="range" min="0" max="100" step="5" value="55" aria-label="Adjust automatic background removal strength"/><p class="help" style="margin:3px 0 0">White paper and shadows become transparent. Move right to remove more background; review light pencil lines carefully.</p></div>
@@ -394,7 +406,7 @@ c.lineWidth=5;c.strokeStyle='#1a3952';c.beginPath();c.moveTo(30,110);c.lineTo(34
 const wheels=[v===2?89:83, v===1?279:292],radii=[v===2?32:24,v===3?18:26];wheels.forEach((x,i)=>{c.beginPath();c.arc(x,124,radii[i],0,Math.PI*2);c.fillStyle='#263344';c.fill();c.lineWidth=4;c.strokeStyle='#07151f';c.stroke();c.beginPath();c.arc(x,124,radii[i]*.55,0,Math.PI*2);c.fillStyle='#b6d5e3';c.fill();});
 c.fillStyle='rgba(255,255,255,.7)';c.font='bold 28px system-ui';c.fillText('0'+(seed+1),196,111);
 return {canvas:cv,wheels:[{x:wheels[0]/380,y:124/178,r:radii[0]/380},{x:wheels[1]/380,y:124/178,r:radii[1]/380}]};}
-function makePlayer(idx){const canvas=document.createElement('canvas');canvas.width=380;canvas.height=178;return {turnState:'waiting',turnDeadline:0,id:Math.random().toString(36).slice(2),name:'Racer '+(idx+1),color:racerColor(idx),canvas,wheels:[{x:.22,y:.73,r:.14},{x:.78,y:.73,r:.14}],source:'blank',confidence:0,bodyW:120,bodyH:56,state:null,topCanvas:null,topSketch:null,topSource:'auto',sideSource:'blank',rawView:'side'}}
+function makePlayer(idx){const canvas=document.createElement('canvas');canvas.width=380;canvas.height=178;return {turnState:'waiting',turnDeadline:0,driveMode:'realistic',id:Math.random().toString(36).slice(2),name:'Racer '+(idx+1),color:racerColor(idx),canvas,wheels:[{x:.22,y:.73,r:.14},{x:.78,y:.73,r:.14}],source:'blank',confidence:0,bodyW:120,bodyH:56,state:null,topCanvas:null,topSketch:null,topSource:'auto',sideSource:'blank',rawView:'side'}}
 function populate(){players=[];selected=0;refreshPlayers()}
 function activePlayer(){return players[selected]}
 function syncFineTuneRacer(){
@@ -1820,81 +1832,193 @@ $('resetRace').addEventListener('click',e=>{
  e.preventDefault();e.stopImmediatePropagation();
  if(confirm('Restart the entire downhill league from Race 1?'))resetDownhillLeague();
 },true);
-const oldInitRacersV15=initRacers;
+
+// v1.7 · Car dynamics (same physical laws for both drive strategies).
+let drivePolicy='shared',sharedDrive='realistic';
+try{const x=JSON.parse(localStorage.getItem('sketchRallyDriveV17')||'{}');if(['shared','individual'].includes(x.policy))drivePolicy=x.policy;if(['realistic','aggressive'].includes(x.mode))sharedDrive=x.mode}catch{}
+const areaCache=new WeakMap();
+function silhouetteDensity(img){
+ if(!img)return .5;if(areaCache.has(img))return areaCache.get(img);
+ let value=.55;
+ try{
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=48;
+  const c=canvas.getContext('2d',{willReadFrequently:true});c.drawImage(img,0,0,48,48);
+  const rgba=c.getImageData(0,0,48,48).data;let area=0,spans=0;
+  for(let y=0;y<48;y++){let min=48,max=-1;for(let x=0;x<48;x++)if(rgba[(y*48+x)*4+3]>45){min=Math.min(min,x);max=x;area++}if(max>=min)spans+=max-min+1}
+  value=clamp((spans*.75+area*.25)/2304,.2,1);
+ }catch{}
+ areaCache.set(img,value);return value;
+}
+function vehicleData(p){
+ const a=racerGeometry(p),density=silhouetteDensity(a.image);
+ const mass=clamp(66+a.length*a.width*(.026+.020*density),105,355);
+ const bulk=clamp((mass-135)/205,0,1);
+ const rear=p.wheels?.[0]||{x:.22,y:.5,r:.1},front=p.wheels?.[1]||{x:.78,y:.5,r:.1};
+ const wheelbase=clamp((front.x-rear.x)*a.length,18,116);
+ const grip=clamp(1.02+.32*Math.min(front.r,rear.r)-.45*Math.abs(front.r-rear.r)-.30*Math.abs(front.y-rear.y)-.22*Math.abs((front.x+rear.x)/2-.5),.66,1.13);
+ const steer=clamp(1.13-.0037*(wheelbase-60)-.28*bulk,.62,1.35);
+ return {length:a.length,width:a.width,mass,bulk,grip,steer,top:115+46*bulk,
+  brake:clamp(265*grip*(1-.34*bulk),128,285),
+  lateral:clamp(825*grip*(1-.36*bulk),380,935),
+  yaw:clamp(2.8*steer*(1-.16*bulk),1.55,3.35)};
+}
+const getDriveMode=p=>drivePolicy==='shared'?sharedDrive:p?.driveMode==='aggressive'?'aggressive':'realistic';
+const driveLocked=()=>simulation==='running'||simulation==='paused'||simulation==='between'||!!league?.heats.some(h=>h.ranked);
+function updateDriveUI(){
+ const down=gameMode==='downhill',individual=down&&drivePolicy==='individual',locked=driveLocked();
+ $('downhillModes').classList.toggle('hidden',!down);$('racerDriveSetting').classList.toggle('hidden',!individual);
+ $('drivePolicy').value=drivePolicy;$('drivePolicy').disabled=locked;
+ $('sharedModes').classList.toggle('hidden',individual);
+ for(const [id,m] of [['modeRealistic','realistic'],['modeAggressive','aggressive']]){
+  const b=$(id);b.classList.toggle('selected',sharedDrive===m);b.setAttribute('aria-pressed',String(sharedDrive===m));b.disabled=locked;
+ }
+ $('racerDrive').value=activePlayer()?.driveMode==='aggressive'?'aggressive':'realistic';
+ $('racerDrive').disabled=!activePlayer()||locked;
+ $('driveExplanation').textContent=individual?'Choose each pupil’s mode in Garage → Fine-tune.':
+  sharedDrive==='realistic'?'Realistic: earlier braking and safer overtaking.':'Aggressive: later braking, tighter passes and higher crash risk.';
+ if(down&&page==='race')$('raceDescription').textContent='Automatic downhill · '+(individual?'Individual Drive Modes':sharedDrive==='realistic'?'Realistic Drive':'Aggressive Drive');
+}
+function persistDrive(){try{localStorage.setItem('sketchRallyDriveV17',JSON.stringify({policy:drivePolicy,mode:sharedDrive}))}catch{}}
+$('drivePolicy').addEventListener('change',e=>{if(!driveLocked()){drivePolicy=e.target.value==='individual'?'individual':'shared';persistDrive()}updateDriveUI()});
+for(const [id,m] of [['modeRealistic','realistic'],['modeAggressive','aggressive']])$(id).addEventListener('click',()=>{if(!driveLocked()){sharedDrive=m;persistDrive()}updateDriveUI()});
+$('racerDrive').addEventListener('change',e=>{if(!driveLocked()&&activePlayer())activePlayer().driveMode=e.target.value==='aggressive'?'aggressive':'realistic';updateDriveUI()});
+const oldSyncCourseV17=syncCourseUI;
+syncCourseUI=function(){oldSyncCourseV17();updateDriveUI()};
+const oldRefreshPlayersV17=refreshPlayers;
+refreshPlayers=function(){oldRefreshPlayersV17();updateDriveUI()};
+const oldEnterViewV17=enterRaceView;
+enterRaceView=function(gesture=false){oldEnterViewV17(gesture);if(gameMode==='downhill'&&league)$('hudRaceLabel').textContent='LEAGUE · RACE '+(league.index+1)+' · '+(drivePolicy==='individual'?'MIXED':sharedDrive.toUpperCase())};
+// Curvature, tyre grip and wheelbase cap entry speed. No artificial boost for Aggressive.
+function entrySpeed(pos,v,mode){
+ const k=Math.max(.00025,bendAt(pos-7),bendAt(pos),bendAt(pos+9));
+ return clamp(Math.min(v.top,Math.sqrt(v.lateral/k),v.yaw/k)*(mode==='aggressive'?1.13:1),22,v.top);
+}
+function targetSpeed(pos,speed,v,mode){
+ const braking=v.brake*(mode==='aggressive'?.92:1),margin=mode==='aggressive'?5:18+v.bulk*14;
+ const range=clamp(speed*speed/(2*braking)+115,135,350);
+ let target=v.top;
+ for(let d=0;d<=range;d+=12){
+  const corner=entrySpeed(pos+d,v,mode);
+  target=Math.min(target,Math.sqrt(corner*corner+2*braking*Math.max(0,d-margin)));
+ }
+ return target;
+}
+// Passing requires enough lateral room; narrow cars can exploit smaller gaps.
+function bestLane(p,entrants,s,v){
+ let front=null,gap=Infinity,desired=s.s<145?s.startLane:0;
+ for(const other of entrants){
+  const t=other.state;if(other===p||t?.status!=='racing')continue;
+  const d=t.s-s.s;
+  if(d>0&&d<160&&d<gap&&Math.abs(t.lane-s.lane)<(v.width+(t.vehicle?.width||40))*.6+12){front=t;gap=d}
+ }
+ if(!front)return {lane:desired,front:null,passing:false};
+ const aggressive=s.driveMode==='aggressive',padding=aggressive?2:10;
+ const separation=(v.width+front.vehicle.width)/2+padding;
+ const limit=downhillRoadWidth/2-v.width/2-(aggressive?1:5);
+ const candidates=[front.lane-separation,front.lane+separation].filter(l=>Math.abs(l)<limit);
+ if(candidates.length&&s.speed>front.speed-(aggressive?24:4)){
+  candidates.sort((a,b)=>Math.abs(a-s.lane)-Math.abs(b-s.lane));
+  return {lane:candidates[0],front,gap,passing:true};
+ }
+ return {lane:desired,front,gap,passing:false};
+}
+const oldInitCarsV17=initRacers;
 initRacers=function(){
- if(gameMode!=='downhill')return oldInitRacersV15();
+ if(gameMode!=='downhill')return oldInitCarsV17();
  if(!league||league.signature!==players.map(p=>p.id).join('|'))createLeague();
  if(league?.winner)return;
  const entrants=activeLeagueCars();if(!entrants.length)return;
  const missing=entrants.find(p=>!submittedCarArt(p));
  if(missing){
-  $('canvasTooltip').textContent='Draw or scan a car for '+missing.name+' before this heat';
-  $('carsStatus').textContent=missing.name+' needs a submitted drawing, not a placeholder.';
+  $('canvasTooltip').textContent='Register a drawing for '+missing.name+' before racing.';
+  $('carsStatus').textContent=missing.name+' needs a drawn or scanned car.';
   if(!league.heats.some(h=>h.ranked))setPage('cars');
   return;
  }
  players.forEach(p=>p.state=null);
- entrants.forEach((p,i)=>{
-  const pos=onRoute(-35-Math.floor(i/2)*105),s={
-   s:-35-Math.floor(i/2)*105,lane:(i%2?1:-1)*downhillRoadWidth*.24,
-   speed:37,angle:pos.a,spin:0,offroad:0,status:'racing',finishTime:0,topSpeed:0,vx:37,vy:0,x:pos.x,y:pos.y
-  };
-  locateRacer(s);p.state=s;
- });
- simulation='running';elapsed=0;stepCarry=0;camX=0;camY=0;syncBeginRaceButton();refreshStandings();renderLeague();
-};
-simulateDownhill=function(dt){
- elapsed+=dt;
- const racers=activeLeagueCars(),length=downhillGeometry.length;
- for(const p of racers){
-  const s=p.state;if(!s||s.status!=='racing')continue;
-  const art=racerGeometry(p),rear=p.wheels[0],front=p.wheels[1];
-  // Physics-only tyre anchors, placed with the Front and Rear controls in Fine-tune.
-  const wb=Math.max(14,(front.x-rear.x)*art.length);
-  const axleMisalignment=Math.abs(front.y-rear.y),axleBalance=Math.abs((front.x+rear.x)*.5-.5);
-  const tyreGrip=clamp(.97+Math.min(front.r,rear.r)*.25-Math.abs(front.r-rear.r)*.3,.83,1.09);
-  const handling=clamp((1.11-(wb-66)/490-(art.length-93)/620-axleMisalignment*.36-axleBalance*.26)*tyreGrip,.65,1.27);
-  const curvature=Math.max(bendAt(s.s+18),bendAt(s.s+56));
-  const safe=clamp(180*handling/(1+curvature*190),43,185);
-  const brake=s.speed>safe?185:0;
-  s.speed=clamp(s.speed+(68-s.speed*.20-brake)*dt,25,185*handling);
-  const aim=onRoute(s.s+Math.min(85,30+s.speed*.24)),current=onRoute(s.s);
-  const delta=wrapAngle(aim.a-s.angle);
-  const steer=clamp(delta,-(1.8*handling+0.8)*dt,(1.8*handling+0.8)*dt);
-  s.angle=wrapAngle(s.angle+steer+s.spin*dt);
-  s.spin*=Math.exp(-2.4*dt);
-  // Curvature produces slip. Better-designed cars need less steering correction.
-  const turnError=wrapAngle(s.angle-current.a);
-  s.lane+=Math.sin(turnError)*s.speed*dt*.54+Math.sign(turnError||1)*curvature*s.speed*s.speed*dt*.0026/handling;
-  s.lane*=Math.exp(-.44*dt);
-  const limit=downhillRoadWidth*.48-racerGeometry(p).width*.30;
-  if(Math.abs(s.lane)>limit){s.offroad+=dt;s.speed=Math.max(20,s.speed-105*dt);s.lane=clamp(s.lane,-downhillRoadWidth*.8,downhillRoadWidth*.8)}
-  else s.offroad=Math.max(0,s.offroad-dt);
-  s.s+=s.speed*dt/trackDistanceKm;s.vx=s.speed;s.vy=0;s.topSpeed=Math.max(s.topSpeed,s.speed);
-  locateRacer(s);
-  if(s.s>=length){s.s=length;locateRacer(s);s.status='finished';s.finishTime=elapsed;}
-  if(elapsed>maxRaceSeconds()&&s.status==='racing')s.status='timed out';
+ for(const [i,p] of entrants.entries()){
+  const s=-35-Math.floor(i/2)*108,lane=(i%2?1:-1)*downhillRoadWidth*.24,origin=onRoute(s);
+  p.state={s,lane,startLane:lane,lateralV:0,speed:24,angle:origin.a,yawRate:0,
+   offroad:0,driveMode:getDriveMode(p),vehicle:vehicleData(p),
+   status:'racing',finishTime:0,topSpeed:0,vx:24,vy:0,x:origin.x,y:origin.y};
+  locateRacer(p.state);
  }
- // Pairwise vehicle contact, including on nearby folds of the route or self crossings.
- for(let i=0;i<racers.length;i++)for(let j=i+1;j<racers.length;j++){
-  const a=racers[i].state,b=racers[j].state;
+ simulation='running';elapsed=0;stepCarry=0;camX=0;camY=0;
+ syncBeginRaceButton();updateDriveUI();refreshStandings();renderLeague();
+};
+// Momentum-conserving impulse with mass-weighted displacement and glancing spins.
+// Aggressive behaviour increases risk of contact rather than changing collision laws.
+function carContacts(entrants){
+ for(let i=0;i<entrants.length;i++)for(let j=i+1;j<entrants.length;j++){
+  const a=entrants[i].state,b=entrants[j].state;
   if(!a||!b||a.status!=='racing'||b.status!=='racing')continue;
-  const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.0001;
-  const wa=racerGeometry(racers[i]),wb=racerGeometry(racers[j]);
-  const radius=clamp((wa.width+wb.width)*.52,30,64);
-  if(d>=radius)continue;
-  const nx=dx/d,ny=dy/d,impulse=clamp((radius-d)*.42,0,17);
-  const ta=onRoute(a.s),tb=onRoute(b.s);
-  a.lane-=impulse*(nx*(-ta.ty)+ny*ta.tx);b.lane+=impulse*(nx*(-tb.ty)+ny*tb.tx);
-  const samePath=Math.abs(a.s-b.s)<radius*2;
-  if(samePath){if(a.s>b.s)b.s-=impulse*.7;else a.s-=impulse*.7}
-  a.speed*=.994;b.speed*=.994;
-  a.speed=Math.max(22,a.speed-impulse*.45);b.speed=Math.max(22,b.speed-impulse*.45);
-  a.spin-=impulse*.013;b.spin+=impulse*.013;
+  const dx=b.x-a.x,dy=b.y-a.y,d=Math.max(.001,Math.hypot(dx,dy));
+  if(d>175)continue;
+  const nx=dx/d,ny=dy/d,va=a.vehicle,vb=b.vehicle;
+  function extent(v,ang){
+   const forward=nx*Math.cos(ang)+ny*Math.sin(ang),side=-nx*Math.sin(ang)+ny*Math.cos(ang);
+   return Math.hypot(v.length*.49*forward,v.width*.49*side);
+  }
+  const penetration=extent(va,a.angle)+extent(vb,b.angle)-d;if(penetration<=0)continue;
+  const ia=1/va.mass,ib=1/vb.mass,sum=ia+ib;
+  const ta=onRoute(a.s),tb=onRoute(b.s),ma=penetration*ia/sum,mb=penetration*ib/sum;
+  a.lane-=ma*(-nx*ta.ty+ny*ta.tx);b.lane+=mb*(-nx*tb.ty+ny*tb.tx);
+  a.s-=ma*(nx*ta.tx+ny*ta.ty);b.s+=mb*(nx*tb.tx+ny*tb.ty);
+  const ax=Math.cos(a.angle)*a.speed,ay=Math.sin(a.angle)*a.speed;
+  const bx=Math.cos(b.angle)*b.speed,by=Math.sin(b.angle)*b.speed;
+  const closing=(bx-ax)*nx+(by-ay)*ny;
+  if(closing<0){
+   const impulse=-1.17*closing/sum;
+   a.speed=clamp((ax-impulse*ia*nx)*Math.cos(a.angle)+(ay-impulse*ia*ny)*Math.sin(a.angle),8,va.top*1.16);
+   b.speed=clamp((bx+impulse*ib*nx)*Math.cos(b.angle)+(by+impulse*ib*ny)*Math.sin(b.angle),8,vb.top*1.16);
+   const sa=-nx*Math.sin(a.angle)+ny*Math.cos(a.angle),sb=-nx*Math.sin(b.angle)+ny*Math.cos(b.angle);
+   a.yawRate=clamp(a.yawRate-impulse*ia*.027*sa,-3.3,3.3);
+   b.yawRate=clamp(b.yawRate+impulse*ib*.027*sb,-3.3,3.3);
+   a.lateralV-=impulse*ia*.16*sa;b.lateralV+=impulse*ib*.16*sb;
+  }
   locateRacer(a);locateRacer(b);
  }
- if(racers.every(p=>p.state?.status!=='racing')){
-  simulation='complete';syncBeginRaceButton();completeLeagueHeat();
+}
+simulateDownhill=function(dt){
+ elapsed+=dt;const entrants=activeLeagueCars(),finish=downhillGeometry.length,travel=1/trackDistanceKm;
+ for(const p of entrants){
+  const s=p.state;if(!s||s.status!=='racing')continue;
+  const v=s.vehicle,mode=s.driveMode,line=bestLane(p,entrants,s,v);
+  let goal=targetSpeed(s.s,s.speed,v,mode);
+  if(line.front){
+   const gap=mode==='aggressive'?10+s.speed*.11:23+s.speed*.32;
+   if(!line.passing||Math.abs(s.lane-line.front.lane)<(v.width+line.front.vehicle.width)*.46)
+    goal=Math.min(goal,Math.max(16,line.front.speed+Math.max(-40,(line.gap-gap)*.8)));
+  }
+  // Standard engine force, constant gravity gradient, rolling/aerodynamic losses.
+  const accelerate=Math.max(5,25.5+3350/v.mass-7.8-(.0005*v.width/v.mass)*s.speed*s.speed);
+  if(s.speed>goal)s.speed=Math.max(goal,s.speed-v.brake*dt);
+  else s.speed=Math.min(goal,s.speed+accelerate*dt);
+  // Steering is a rate-limited bicycle controller with inertia, not boat tracking.
+  const road=onRoute(s.s),look=onRoute(s.s+clamp(s.speed*.30,19,58));
+  const desired=Math.abs(s.lane)>downhillRoadWidth*.46?0:line.lane;
+  const angle=Math.atan2(look.y+look.tx*desired-s.y,look.x-look.ty*desired-s.x);
+  const turn=clamp(wrapAngle(angle-s.angle)*3*v.steer,-v.yaw,v.yaw);
+  s.yawRate+=(turn-s.yawRate)*clamp(dt/(.16+.11*v.bulk),0,1);
+  s.angle=wrapAngle(s.angle+s.yawRate*dt);
+  const error=wrapAngle(s.angle-road.a);
+  s.lateralV+=(Math.sin(error)*s.speed-s.lateralV)*clamp(dt*v.grip*4,0,1);
+  s.lane+=s.lateralV*dt*travel;
+  s.s+=Math.max(0,s.speed*Math.cos(error))*dt*travel;
+  if(Math.abs(s.lane)>downhillRoadWidth*.5-v.width*.45){
+   s.offroad+=dt;s.speed=Math.max(12,s.speed-112*dt);
+   if(s.offroad>.6)s.speed=Math.min(s.speed,58);
+  }else s.offroad=Math.max(0,s.offroad-dt*1.4);
+  s.lane=clamp(s.lane,-downhillRoadWidth*1.7,downhillRoadWidth*1.7);
+  s.topSpeed=Math.max(s.topSpeed,s.speed);
+  s.vx=Math.cos(s.angle)*s.speed;s.vy=Math.sin(s.angle)*s.speed;
+  if(s.s>=finish){s.s=finish;s.status='finished';s.finishTime=elapsed}
+  else if(elapsed>maxRaceSeconds())s.status='timed out';
+  locateRacer(s);
+ }
+ carContacts(entrants);
+ if(entrants.every(p=>p.state?.status!=='racing')){
+  simulation='complete';syncBeginRaceButton();completeLeagueHeat();updateDriveUI();
  }
 };
 const oldStandingsV15=refreshStandings;
@@ -1909,7 +2033,7 @@ refreshStandings=function(){
   const chip=document.createElement('span');chip.className='player-icon';chip.style.cssText='width:22px;height:22px;background:'+p.color;
   const title=document.createElement('span');title.className='result-name';const name=document.createElement('b');name.textContent=p.name;
   const small=document.createElement('small');small.textContent=!s?'Ready':s.status==='finished'?'Finished · '+s.finishTime.toFixed(2)+' s':s.status==='racing'?percent+'% · '+(s.s/Math.max(1,downhillGeometry.length)*trackDistanceKm).toFixed(2)+' / '+trackDistanceKm+' km':'Timed out';
-  title.append(name,small);const progress=document.createElement('span');progress.className='progress';
+  small.textContent+=' · '+(s?.driveMode==='aggressive'?'Aggressive':'Realistic');title.append(name,small);const progress=document.createElement('span');progress.className='progress';
   const fill=document.createElement('span');fill.className='fill';fill.style.cssText='display:block;width:'+percent+'%';progress.append(fill);row.append(rank,chip,title,progress);list.append(row);
  }
  $('stageCounter').textContent=(league?'RACE '+(league.index+1)+' · ':'')+elapsed.toFixed(1)+' s';
