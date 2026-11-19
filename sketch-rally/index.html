@@ -150,6 +150,15 @@ body.challenge-mode #pane-track [data-preset],body.challenge-mode #pane-track [d
 body.race-immersive .league-stage-next{bottom:8%}
 
 
+/* Sketch Battle-inspired downhill tracks and impact motion */
+.downhill-track-choices{display:grid;gap:8px;margin:11px 0}
+.downhill-track-choices .two-col{gap:8px}
+.downhill-track-choices .btn{min-height:55px;text-align:left;font-size:12px;line-height:1.45}
+.downhill-track-choices .btn strong{display:block;font-size:13px}
+.downhill-track-choices .btn small{display:block;color:#b7ced2}
+.downhill-track-choices .btn.selected small{color:#213d45}
+body:not(.challenge-mode) #downhillTrackChoices.hidden{display:none!important}
+
 /* Downhill driving strategies */
 .drive-modes{padding:10px;margin:10px 0;border:1px solid #627d70;background:#10273a;border-radius:11px}
 .drive-modes .field{width:100%}.drive-mode-pair{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
@@ -216,8 +225,16 @@ body.race-immersive .league-stage-next{bottom:8%}
 <p id="driveExplanation" class="help">Realistic: safer braking and overtaking.</p></section>
 <label class="section-label" for="trackDistance">Race distance</label>
           <select id="trackDistance" class="field"><option value="1">1 km · Sprint</option><option value="2">2 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="20">20 km · Endurance</option></select>
-          <span class="section-label">Quick courses</span>
-          <div class="two-col">
+          <section id="downhillTrackChoices" class="downhill-track-choices hidden" aria-label="Downhill race tracks">
+            <span class="section-label">Downhill tracks · 2 available</span>
+            <div class="two-col">
+              <button type="button" class="btn" id="trackCircuit"><strong>① Circuit Bowl</strong><small>Clockwise loop · fast impacts</small></button>
+              <button type="button" class="btn" id="trackWinding"><strong>② Winding Descent</strong><small>Sharp bends · hairpins</small></button>
+            </div>
+            <p class="help">Choose a track or draw your own route below. Cars use turbo momentum and physical collisions.</p>
+          </section>
+          <span class="section-label" id="quickCourseHeading">Quick courses</span>
+          <div class="two-col" id="quickCourseButtons">
             <button class="btn" data-preset="flat">↔ &nbsp; Drag race</button><button class="btn selected" data-preset="hills">⌁ &nbsp; Hill climb</button>
             <button class="btn" data-preset="rough">◠ &nbsp; Rough road</button><button class="btn" data-preset="gauntlet">⚑ &nbsp; Obstacle course</button>
           </div>
@@ -2078,7 +2095,218 @@ changeGameMode=function(next){
  oldChangeModeV15(next);syncCourseUI();
 };
 
-presetTrack('hills');setDownhillPreset('hills');populate();initBeginRaceButton();setPage('cars');requestAnimationFrame(loop);
+
+// v1.8 · Two sketch-based downhill tracks; Sketch Battle turbo speed and impact model.
+// The car outlines, automatic drive modes, freehand road editor and league are preserved.
+const previousRoutePresetTurbo=routePreset;
+routePreset=function(kind){
+ if(kind==='circuit'){
+  // Rounded clockwise bowl from the upper sketch; a broad ring with a centre island.
+  const route=[];
+  for(let i=0;i<=112;i++){
+   const t=-Math.PI/2+i/112*Math.PI*2;
+   const cx=Math.cos(t),sy=Math.sin(t);
+   route.push({x:.5+.36*Math.sign(cx)*Math.pow(Math.abs(cx),.58),
+    y:.5+.32*Math.sign(sy)*Math.pow(Math.abs(sy),.66)});
+  }
+  return route;
+ }
+ if(kind==='winding'){
+  // Sweeping bends and sharp switchbacks adapted from the lower sketch.
+  const knots=[[.095,.76],[.12,.55],[.25,.33],[.38,.22],[.60,.23],
+   [.78,.33],[.88,.44],[.83,.56],[.73,.62],[.75,.78],
+   [.63,.84],[.51,.77],[.49,.63],[.36,.56],[.22,.70],[.145,.71]];
+  const route=[];
+  for(let i=0;i<knots.length-1;i++){
+   const a=knots[Math.max(0,i-1)],b=knots[i],c=knots[i+1],d=knots[Math.min(knots.length-1,i+2)];
+   for(let j=0;j<10;j++){
+    const t=j/10,t2=t*t,t3=t2*t;
+    const interp=k=>.5*((2*b[k])+(-a[k]+c[k])*t+
+     (2*a[k]-5*b[k]+4*c[k]-d[k])*t2+(-a[k]+3*b[k]-3*c[k]+d[k])*t3);
+    route.push({x:clamp(interp(0),.03,.97),y:clamp(interp(1),.07,.93)});
+   }
+  }
+  route.push({x:knots[knots.length-1][0],y:knots[knots.length-1][1]});
+  return route;
+ }
+ return previousRoutePresetTurbo(kind);
+};
+const priorVehicleTurbo=vehicleData;
+vehicleData=function(p){
+ const v=priorVehicleTurbo(p);
+ // Turbo Bowl's fast drive scale; heavy silhouettes retain the prior straight-line
+ // advantage, but pay for it through inertia and longer braking distances.
+ v.top=clamp(235+120*v.bulk,235,355);
+ v.brake=clamp(v.brake*1.27,160,365);
+ v.lateral=clamp(v.lateral*1.10,400,1030);
+ return v;
+};
+function downhillImpact(energy){return clamp(Math.max(0,energy-1800)/9200,0,32)}
+let downhillSparks=[];
+function downhillSpark(x,y,force){
+ if(downhillSparks.length>70)downhillSparks.splice(0,downhillSparks.length-40);
+ const count=clamp(Math.ceil(force/4),1,6);
+ for(let i=0;i<count;i++){
+  const a=Math.random()*Math.PI*2,v=50+Math.random()*95;
+  downhillSparks.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.22+Math.random()*.2});
+ }
+}
+function localVelocity(st){
+ const path=onRoute(st.s),nx=-path.ty,ny=path.tx;
+ return {x:path.tx*st.speed+nx*st.lateralV,y:path.ty*st.speed+ny*st.lateralV};
+}
+function restoreVelocity(st,vx,vy){
+ const path=onRoute(st.s),nx=-path.ty,ny=path.tx;
+ st.speed=clamp(vx*path.tx+vy*path.ty,0,st.vehicle.top*1.52);
+ st.lateralV=clamp(vx*nx+vy*ny,-250,250);
+ st.vx=vx;st.vy=vy;
+}
+function edgeImpact(st,dt){
+ const v=st.vehicle,maxLane=Math.max(3,downhillRoadWidth*.5-v.width*.47-3);
+ const excess=Math.abs(st.lane)-maxLane;
+ if(excess<=0){st.offroad=Math.max(0,st.offroad-dt);return}
+ const outward=Math.sign(st.lane),normalSpeed=Math.max(0,st.lateralV*outward);
+ st.lane=outward*maxLane;
+ if(normalSpeed>0){
+  const energy=.5*v.mass*normalSpeed*normalSpeed/145;
+  const crash=downhillImpact(energy);
+  // Turbo Bowl-style wall rebound, with speed loss and a glancing spin.
+  st.lateralV=-outward*normalSpeed*.39;
+  st.speed=Math.max(5,st.speed-Math.min(75,normalSpeed*.37));
+  st.yawRate=clamp(st.yawRate-outward*Math.min(.7,normalSpeed*.004),-3.4,3.4);
+  if(crash>.18){st.crashes=(st.crashes||0)+1;st.hitFlash=.20;
+   downhillSpark(st.x,st.y,crash)}
+ }
+ st.offroad+=dt;
+}
+carContacts=function(entrants){
+ // Mass-weighted penetration response and 1.39 impact impulse, matching Sketch Battle.
+ for(let i=0;i<entrants.length;i++)for(let j=i+1;j<entrants.length;j++){
+  const a=entrants[i].state,b=entrants[j].state;
+  if(!a||!b||a.status!=='racing'||b.status!=='racing')continue;
+  const dx=b.x-a.x,dy=b.y-a.y,d=Math.max(.001,Math.hypot(dx,dy));
+  if(d>180)continue;
+  const nx=dx/d,ny=dy/d,va=a.vehicle,vb=b.vehicle;
+  const extent=(v,ang)=>Math.hypot(v.length*.49*(nx*Math.cos(ang)+ny*Math.sin(ang)),
+    v.width*.49*(-nx*Math.sin(ang)+ny*Math.cos(ang)));
+  const penetration=extent(va,a.angle)+extent(vb,b.angle)-d;
+  if(penetration<=0)continue;
+  const mass=va.mass+vb.mass,ta=onRoute(a.s),tb=onRoute(b.s);
+  const ma=penetration*vb.mass/mass,mb=penetration*va.mass/mass;
+  a.s-=ma*(nx*ta.tx+ny*ta.ty);a.lane-=ma*(-nx*ta.ty+ny*ta.tx);
+  b.s+=mb*(nx*tb.tx+ny*tb.ty);b.lane+=mb*(-nx*tb.ty+ny*tb.tx);
+  const av=localVelocity(a),bv=localVelocity(b);
+  const relative=(bv.x-av.x)*nx+(bv.y-av.y)*ny;
+  if(relative<0){
+   const reduced=va.mass*vb.mass/mass,closing=-relative;
+   const impulse=-(1+.39)*relative*reduced;
+   restoreVelocity(a,av.x-impulse*nx/va.mass,av.y-impulse*ny/va.mass);
+   restoreVelocity(b,bv.x+impulse*nx/vb.mass,bv.y+impulse*ny/vb.mass);
+   const impact=downhillImpact(.5*reduced*closing*closing/145);
+   a.yawRate=clamp(a.yawRate-impulse/va.mass*.0033,-3.4,3.4);
+   b.yawRate=clamp(b.yawRate+impulse/vb.mass*.0033,-3.4,3.4);
+   if(impact>.17){
+    a.crashes=(a.crashes||0)+1;b.crashes=(b.crashes||0)+1;
+    a.hitFlash=b.hitFlash=.24;
+    downhillSpark((a.x+b.x)/2,(a.y+b.y)/2,impact);
+   }
+  }
+  a.s=clamp(a.s,-155,downhillGeometry.length);b.s=clamp(b.s,-155,downhillGeometry.length);
+  edgeImpact(a,0);edgeImpact(b,0);
+  locateRacer(a);locateRacer(b);
+ }
+};
+simulateDownhill=function(dt){
+ // Run collision-safe substeps at 180 Hz or finer; prevents high-speed tunnelling.
+ const steps=Math.max(1,Math.ceil(dt/(1/180))),h=dt/steps;
+ const entrants=activeLeagueCars(),finish=downhillGeometry.length,travel=1/trackDistanceKm;
+ for(let step=0;step<steps;step++){
+  elapsed+=h;
+  for(const p of entrants){
+   const s=p.state;if(!s||s.status!=='racing')continue;
+   const v=s.vehicle,mode=s.driveMode,line=bestLane(p,entrants,s,v);
+   let goal=targetSpeed(s.s,s.speed,v,mode);
+   if(line.front){
+    const gap=mode==='aggressive'?10+s.speed*.11:23+s.speed*.32;
+    if(!line.passing||Math.abs(s.lane-line.front.lane)<(v.width+line.front.vehicle.width)*.46)
+     goal=Math.min(goal,Math.max(20,line.front.speed+Math.max(-65,(line.gap-gap)*.9)));
+   }
+   const battleMass=clamp(8-v.bulk*4,4,8);
+   const thrust=350/(1+battleMass*.16);  // Sketch Battle chassis-mass thrust
+   const losses=8+.00018*s.speed*s.speed*(v.width/45);
+   if(s.speed>goal)s.speed=Math.max(goal,s.speed-v.brake*h);
+   else s.speed=Math.min(goal,s.speed+Math.max(15,thrust-losses)*h);
+   s.speed=clamp(s.speed,0,v.top*1.52);
+   const road=onRoute(s.s),look=onRoute(s.s+clamp(s.speed*.37,22,105));
+   const wanted=Math.abs(s.lane)>downhillRoadWidth*.44?0:line.lane;
+   const desired=wrapAngle(look.a+clamp((wanted-s.lane)*.029-s.lateralV*.011,-.48,.48));
+   const yawTarget=clamp(wrapAngle(desired-s.angle)*3.6*v.steer,-v.yaw,v.yaw);
+   s.yawRate+=(yawTarget-s.yawRate)*clamp(h/(.11+.11*v.bulk),0,1);
+   s.angle=wrapAngle(s.angle+s.yawRate*h);
+   const diff=wrapAngle(s.angle-road.a);
+   s.lateralV+=(Math.sin(diff)*s.speed-s.lateralV)*clamp(h*v.grip*4.3,0,1);
+   s.lane+=s.lateralV*h*travel;
+   s.s+=Math.max(0,s.speed*Math.cos(diff))*h*travel;
+   edgeImpact(s,h);
+   s.topSpeed=Math.max(s.topSpeed,s.speed);
+   const motion=localVelocity(s);s.vx=motion.x;s.vy=motion.y;
+   s.hitFlash=Math.max(0,(s.hitFlash||0)-h);
+   if(s.s>=finish){s.s=finish;s.status='finished';s.finishTime=elapsed}
+   else if(elapsed>maxRaceSeconds())s.status='timed out';
+   locateRacer(s);
+  }
+  carContacts(entrants);
+  for(const spark of downhillSparks){
+   spark.x+=spark.vx*h;spark.y+=spark.vy*h;
+   spark.vx*=Math.exp(-3*h);spark.vy*=Math.exp(-3*h);spark.life-=h;
+  }
+  downhillSparks=downhillSparks.filter(s=>s.life>0);
+ }
+ if(entrants.every(p=>p.state?.status!=='racing')){
+  simulation='complete';syncBeginRaceButton();completeLeagueHeat();updateDriveUI();
+ }
+};
+const originalDownhillTurboDraw=drawDownhillWorld;
+drawDownhillWorld=function(c,w,h,preview=false){
+ originalDownhillTurboDraw(c,w,h,preview);
+ if(preview||!downhillSparks.length)return;
+ const scale=clamp(Math.min(w/820,h/480),.5,1.3);
+ c.save();c.scale(scale,scale);c.translate(-camX,-camY);
+ for(const s of downhillSparks){
+  c.globalAlpha=clamp(s.life/.35,0,1);c.fillStyle='#ffe2a5';
+  c.beginPath();c.arc(s.x,s.y,2.6,0,Math.PI*2);c.fill();
+ }
+ c.restore();
+};
+function updateDownhillTrackChoices(){
+ const down=gameMode==='downhill';
+ $('downhillTrackChoices').classList.toggle('hidden',!down);
+ $('quickCourseHeading').classList.toggle('hidden',down);
+ $('quickCourseButtons').classList.toggle('hidden',down);
+ for(const [id,kind] of [['trackCircuit','circuit'],['trackWinding','winding']]){
+  const btn=$(id);btn.classList.toggle('selected',down&&downhillPreset===kind);
+  btn.setAttribute('aria-pressed',String(down&&downhillPreset===kind));
+  btn.disabled=down&&driveLocked();
+ }
+ if(down){
+  $('trackNote').textContent='Pick Circuit Bowl or Winding Descent, or draw a custom route. High-speed impacts follow Sketch Battle momentum and collision rules.';
+  $('raceNote').textContent='Automatic racing · turbo speed, strong car-to-car impacts, rebounds and corner-dependent braking.';
+ }
+}
+const previousTurboCourseUI=syncCourseUI;
+syncCourseUI=function(){previousTurboCourseUI();updateDownhillTrackChoices()};
+for(const [id,kind] of [['trackCircuit','circuit'],['trackWinding','winding']])
+ $(id).addEventListener('click',()=>{
+  if(gameMode!=='downhill'||driveLocked())return;
+  league=null;simulation='idle';players.forEach(p=>p.state=null);
+  downhillSparks=[];setDownhillPreset(kind);renderLeague();
+  $('canvasTooltip').textContent=kind==='circuit'?'Circuit Bowl · clockwise collision course':'Winding Descent · hairpins and tight bends';
+  drawAll();
+ });
+const previousTurboInit=initRacers;
+initRacers=function(){downhillSparks=[];previousTurboInit();};
+
+presetTrack('hills');setDownhillPreset('circuit');if(!['circuit','winding','custom'].includes(downhillPreset))setDownhillPreset('circuit');populate();initBeginRaceButton();setPage('cars');requestAnimationFrame(loop);
 })();
 </script>
 </body>
