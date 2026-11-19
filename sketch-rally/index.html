@@ -297,7 +297,7 @@ body:not(.challenge-mode) #downhillTrackChoices.hidden{display:none!important}
       <div class="quick-tune-head"><div><strong>Fine-tune car</strong><small id="tuneNotice">Newest registered racer</small></div><select id="tuneRacerSelect" class="field" aria-label="Choose racer to fine tune"></select></div>
       <div class="quick-tune-tools"><div class="racer-drive hidden" id="racerDriveSetting"><label for="racerDrive">Drive mode for this car</label><select class="field" id="racerDrive"><option value="realistic">Realistic Drive</option><option value="aggressive">Aggressive Drive</option></select></div>
           <div class="two-col tune-flip"><button type="button" class="btn" id="flipSide">⇋ Flip side</button><button type="button" class="btn" id="flipTop">⇋ Flip top</button></div>
-          <div class="two-col tune-actions"><button type="button" class="btn" id="retryScan">↻ Re-detect wheels</button><button type="button" class="btn warn" id="removePlayer">Remove racer</button></div>
+          <div class="two-col tune-actions"><button type="button" class="btn" id="retryScan">↻ Auto-place wheels</button><button type="button" class="btn warn" id="removePlayer">Remove racer</button></div>
           <div class="scan-controls"><label for="backgroundCleanup">Background removal · <b id="cleanupValue">Balanced</b></label><input id="backgroundCleanup" type="range" min="0" max="100" step="5" value="55" aria-label="Adjust automatic background removal strength"/><p class="help" style="margin:3px 0 0">White paper and shadows become transparent. Move right to remove more background; review light pencil lines carefully.</p></div>
           <div class="minirow"><span>Front & rear tyre anchors</span><b id="scanStatus">Physics only</b></div>
           <div class="correction"><canvas id="wheelCanvas" aria-label="Drag wheel markers to correct their positions"></canvas></div>
@@ -680,7 +680,7 @@ function applyViewArt(p,view,original,kind){
  const cleaned=transparentPhoto(original,Number($('backgroundCleanup').value)),cropped=cropInk(cleaned);
  if(!cropped)return false;
  let image=thickenInk(cropped,kind==='photo'?2:1);image=p[view==='top'?'flippedTop':'flippedSide']?flipCanvas(image):image;
- if(view==='top'){p.topCanvas=image;p.topSource=kind;p.topSketch=null;if(!['photo','drawn'].includes(p.source))p.wheels.forEach(wh=>wh.y=.5);}
+ if(view==='top'){p.topCanvas=image;p.topSource=kind;p.topSketch=null;if(!['photo','drawn'].includes(p.source))p.wheels=detectWheels(p.topCanvas);}
  else{p.canvas=image;p.sideSource=kind;p.source=kind;p.wheels=detectWheels(image);p.confidence=.5;p.sketch=null;}
  return true;
 }
@@ -710,6 +710,62 @@ for(let x=Math.round(W*.08);x<W*.93;x+=Math.max(2,Math.round(W/110)))for(let y=M
 candidates.sort((a,b)=>b.score-a.score);let left=null,right=null,best=-1;const top=candidates.slice(0,180);for(const a of top)for(const b of top){if(a.x>=b.x||b.x-a.x<.27)continue;const separation=b.x-a.x,similarity=1-Math.min(1,Math.abs(a.r-b.r)/Math.max(a.r,b.r));let score=a.score+b.score+similarity*.04+Math.min(separation,.64)*.05-Math.abs(a.y-b.y)*.09;if(score>best){best=score;left=a;right=b}}
 if(!left||!right){return [{x:.22,y:defaultY,r:.075},{x:.78,y:defaultY,r:.075}]}
 return [left,right].map(wh=>({x:clamp(wh.x,.04,.96),y:clamp(wh.y,.3,.95),r:clamp(wh.r,.045,.23)}));}
+// v1.9 · Auto fit two support points from pupils' artwork, keeping genuine drawn wheels.
+const previousWheelDetection=detectWheels;
+function fitWheelSilhouette(cv){
+ const W=180,H=120,t=document.createElement('canvas');t.width=W;t.height=H;
+ const c=t.getContext('2d',{willReadFrequently:true});c.drawImage(cv,0,0,W,H);
+ const pixels=c.getImageData(0,0,W,H).data,lowest=new Array(W).fill(0),density=new Array(W).fill(0);
+ let minX=W,maxX=0,maxY=0,totalX=0,n=0;
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+  const k=(y*W+x)*4,opacity=pixels[k+3]/255,
+   darkness=1-(pixels[k]+pixels[k+1]+pixels[k+2])/900;
+  if(opacity*darkness<.13)continue;
+  minX=Math.min(minX,x);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);
+  totalX+=x;n++;lowest[x]=Math.max(lowest[x],y);density[x]++;
+ }
+ if(n<35||maxX-minX<20)return [{x:.22,y:.72,r:.075},{x:.78,y:.72,r:.075}];
+ const width=maxX-minX,com=totalX/n/W,r=clamp(width/W*.117,.055,.104),under=clamp((maxY+2)/H,.50,.91);
+ function choose(rear){
+  const start=(minX+width*(rear?.13:.61))/W,end=(minX+width*(rear?.39:.87))/W;
+  let best=null,highest=-Infinity;
+  for(let i=0;i<=24;i++){
+   const x=start+(end-start)*i/24,col=Math.round(x*W),
+    y=clamp(Math.max(under-.065,lowest[col]/H+.012),.40,.92),
+    ideal=(minX+width*(rear?.23:.77))/W;
+   const balanced=rear?x<com-.10:x>com+.10;
+   const score=(balanced?2:-2)-7*Math.abs(x-ideal)
+       +.45*Math.min(1,density[col]/(H*.10))-2*Math.abs(y-under);
+   if(score>highest){highest=score;best={x:clamp(x,.04,.96),y,r}}
+  }
+  return best;
+ }
+ const rear=choose(true),front=choose(false);
+ if(rear.x>=com-.07)rear.x=clamp(com-.20,.06,.43);
+ if(front.x<=com+.07)front.x=clamp(com+.20,.57,.94);
+ return [rear,front];
+}
+function wheelRingScore(cv,w){
+ const W=170,H=110,t=document.createElement('canvas');t.width=W;t.height=H;
+ const c=t.getContext('2d',{willReadFrequently:true});c.drawImage(cv,0,0,W,H);
+ const img=c.getImageData(0,0,W,H).data;
+ const at=(x,y)=>{let ix=Math.round(x),iy=Math.round(y);
+  if(ix<0||iy<0||ix>=W||iy>=H)return 0;
+  const i=(iy*W+ix)*4;return img[i+3]/255*(1-(img[i]+img[i+1]+img[i+2])/765)};
+ const rx=w.r*W,ry=w.r*cv.width/Math.max(1,cv.height)*H;
+ let rim=0,outer=0;
+ for(let i=0;i<20;i++){const a=i*Math.PI/10,cos=Math.cos(a),sin=Math.sin(a);
+  rim+=at(w.x*W+rx*cos,w.y*H+ry*sin);
+  outer+=at(w.x*W+1.4*rx*cos,w.y*H+1.4*ry*sin)}
+ return (rim-.35*outer)/20;
+}
+detectWheels=function(cv){
+ const candidate=previousWheelDetection(cv);
+ if(candidate.length===2&&candidate[1].x-candidate[0].x>.28
+    &&candidate.every(w=>wheelRingScore(cv,w)>.27))return candidate;
+ return fitWheelSilhouette(cv);
+};
+
 const startLetters='BEGIN RACE!';
 function syncBeginRaceButton(){
  const btn=$('startRace');if(!btn)return;
@@ -808,7 +864,7 @@ function useDrawing(force=false){
   const raw=draftViews[view];if(!raw||!hasInk(raw))continue;
   let cleaned=cropAndThickenStudio(raw,p.color);if(!cleaned)continue;cleaned=p[view==='side'?'flippedSide':'flippedTop']?flipCanvas(cleaned):cleaned;
   if(view==='side'){p.sketch=copyCanvas(raw);p.canvas=cleaned;p.wheels=detectWheels(cleaned);p.source='drawn';p.sideSource='drawn';p.rawScan=null;}
-  else{p.topSketch=copyCanvas(raw);p.topCanvas=cleaned;p.topSource='drawn';if(!['photo','drawn'].includes(p.source))p.wheels.forEach(wh=>wh.y=.5);}
+  else{p.topSketch=copyCanvas(raw);p.topCanvas=cleaned;p.topSource='drawn';if(!['photo','drawn'].includes(p.source))p.wheels=detectWheels(p.topCanvas);}
   saved++;
  }
  if(!saved){$('drawingStatus').textContent='Draw at least one view before saving';return}
@@ -2216,6 +2272,7 @@ carContacts=function(entrants){
   locateRacer(a);locateRacer(b);
  }
 };
+let driftPuffs=[];
 simulateDownhill=function(dt){
  // Run collision-safe substeps at 180 Hz or finer; prevents high-speed tunnelling.
  const steps=Math.max(1,Math.ceil(dt/(1/180))),h=dt/steps;
@@ -2225,26 +2282,40 @@ simulateDownhill=function(dt){
   for(const p of entrants){
    const s=p.state;if(!s||s.status!=='racing')continue;
    const v=s.vehicle,mode=s.driveMode,line=bestLane(p,entrants,s,v);
+   s.driftCooldown=Math.max(0,(s.driftCooldown||0)-h);
+   const sweep=wrapAngle(onRoute(s.s+42).a-onRoute(s.s-20).a);
+   const curve=Math.abs(sweep)/62,entry=mode==='aggressive'?140:163;
+   const room=downhillRoadWidth*.5-v.width*.5-6;
+   if(!(s.driftLeft>0)&&s.driftCooldown===0&&s.speed>=entry
+      &&curve>.0038&&Math.abs(sweep)>.23&&room>9&&Math.abs(s.lane)<room*.58){
+      s.driftLeft=clamp(.56+Math.abs(sweep)*.27,.68,1.06);
+      s.driftSide=Math.sign(sweep);s.driftLane=s.lane;
+      s.driftCooldown=2.35;s.smokeClock=0;
+   }
+   const drifting=(s.driftLeft||0)>0;
    let goal=targetSpeed(s.s,s.speed,v,mode);
-   if(line.front){
+   // Keep speed and racing line through the committed slide.
+   if(drifting)goal=Math.max(goal,Math.min(v.top,s.speed*.99));
+   if(line.front&&!drifting){
     const gap=mode==='aggressive'?10+s.speed*.11:23+s.speed*.32;
     if(!line.passing||Math.abs(s.lane-line.front.lane)<(v.width+line.front.vehicle.width)*.46)
      goal=Math.min(goal,Math.max(20,line.front.speed+Math.max(-65,(line.gap-gap)*.9)));
    }
    const battleMass=clamp(8-v.bulk*4,4,8);
-   const thrust=350/(1+battleMass*.16);  // Sketch Battle chassis-mass thrust
-   const losses=8+.00018*s.speed*s.speed*(v.width/45);
+   const thrust=525/(1+battleMass*.13); // stronger turbo acceleration
+   const losses=7+.00014*s.speed*s.speed*(v.width/45);
    if(s.speed>goal)s.speed=Math.max(goal,s.speed-v.brake*h);
    else s.speed=Math.min(goal,s.speed+Math.max(15,thrust-losses)*h);
    s.speed=clamp(s.speed,0,v.top*1.52);
    const road=onRoute(s.s),look=onRoute(s.s+clamp(s.speed*.37,22,105));
-   const wanted=Math.abs(s.lane)>downhillRoadWidth*.44?0:line.lane;
-   const desired=wrapAngle(look.a+clamp((wanted-s.lane)*.029-s.lateralV*.011,-.48,.48));
+   const wanted=drifting?s.driftLane:Math.abs(s.lane)>downhillRoadWidth*.44?0:line.lane;
+   const desired=wrapAngle(look.a+clamp((wanted-s.lane)*.029-s.lateralV*.011,-.48,.48)+(drifting?s.driftSide*.30:0));
    const yawTarget=clamp(wrapAngle(desired-s.angle)*3.6*v.steer,-v.yaw,v.yaw);
    s.yawRate+=(yawTarget-s.yawRate)*clamp(h/(.11+.11*v.bulk),0,1);
    s.angle=wrapAngle(s.angle+s.yawRate*h);
    const diff=wrapAngle(s.angle-road.a);
-   s.lateralV+=(Math.sin(diff)*s.speed-s.lateralV)*clamp(h*v.grip*4.3,0,1);
+   // Drifting trades tyre grip for a sustained lateral slide, without a teleport or fake speed boost.
+   s.lateralV+=(Math.sin(diff)*s.speed-s.lateralV)*clamp(h*v.grip*(drifting?1.05:4.3),0,1);
    s.lane+=s.lateralV*h*travel;
    s.s+=Math.max(0,s.speed*Math.cos(diff))*h*travel;
    edgeImpact(s,h);
@@ -2254,6 +2325,10 @@ simulateDownhill=function(dt){
    if(s.s>=finish){s.s=finish;s.status='finished';s.finishTime=elapsed}
    else if(elapsed>maxRaceSeconds())s.status='timed out';
    locateRacer(s);
+   if(drifting){s.smokeClock=(s.smokeClock||0)+h;
+    if(s.smokeClock>.10){s.smokeClock=0;driftPuffs.push({x:s.x-Math.cos(s.angle)*v.length*.35,y:s.y-Math.sin(s.angle)*v.length*.35,life:.55});}
+    s.driftLeft=Math.max(0,s.driftLeft-h);
+   }
   }
   carContacts(entrants);
   for(const spark of downhillSparks){
@@ -2261,6 +2336,8 @@ simulateDownhill=function(dt){
    spark.vx*=Math.exp(-3*h);spark.vy*=Math.exp(-3*h);spark.life-=h;
   }
   downhillSparks=downhillSparks.filter(s=>s.life>0);
+  for(const p of driftPuffs)p.life-=h;
+  driftPuffs=driftPuffs.filter(p=>p.life>0).slice(-100);
  }
  if(entrants.every(p=>p.state?.status!=='racing')){
   simulation='complete';syncBeginRaceButton();completeLeagueHeat();updateDriveUI();
@@ -2269,9 +2346,11 @@ simulateDownhill=function(dt){
 const originalDownhillTurboDraw=drawDownhillWorld;
 drawDownhillWorld=function(c,w,h,preview=false){
  originalDownhillTurboDraw(c,w,h,preview);
- if(preview||!downhillSparks.length)return;
+ if(preview||(!downhillSparks.length&&!driftPuffs.length))return;
  const scale=clamp(Math.min(w/820,h/480),.5,1.3);
  c.save();c.scale(scale,scale);c.translate(-camX,-camY);
+ for(const puff of driftPuffs){c.globalAlpha=clamp(puff.life/.55,0,.28);c.fillStyle='#e4f0ed';
+  c.beginPath();c.arc(puff.x,puff.y,3+(1-puff.life/.55)*10,0,Math.PI*2);c.fill();}
  for(const s of downhillSparks){
   c.globalAlpha=clamp(s.life/.35,0,1);c.fillStyle='#ffe2a5';
   c.beginPath();c.arc(s.x,s.y,2.6,0,Math.PI*2);c.fill();
@@ -2290,7 +2369,7 @@ function updateDownhillTrackChoices(){
  }
  if(down){
   $('trackNote').textContent='Pick Circuit Bowl or Winding Descent, or draw a custom route. High-speed impacts follow Sketch Battle momentum and collision rules.';
-  $('raceNote').textContent='Automatic racing · turbo speed, strong car-to-car impacts, rebounds and corner-dependent braking.';
+  $('raceNote').textContent='Automatic racing · stronger acceleration, speed-triggered powerslides and physical collisions.';
  }
 }
 const previousTurboCourseUI=syncCourseUI;
@@ -2304,7 +2383,7 @@ for(const [id,kind] of [['trackCircuit','circuit'],['trackWinding','winding']])
   drawAll();
  });
 const previousTurboInit=initRacers;
-initRacers=function(){downhillSparks=[];previousTurboInit();};
+initRacers=function(){downhillSparks=[];driftPuffs=[];previousTurboInit();};
 
 presetTrack('hills');setDownhillPreset('circuit');if(!['circuit','winding','custom'].includes(downhillPreset))setDownhillPreset('circuit');populate();initBeginRaceButton();setPage('cars');requestAnimationFrame(loop);
 })();
