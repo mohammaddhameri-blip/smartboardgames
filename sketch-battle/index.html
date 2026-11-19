@@ -92,15 +92,15 @@ footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
   <button id="newBot" class="btn primary full">+ Create a battlebot</button>
 </div>
 <div id="arenaPanel" class="hide">
-  <h2>Automatic Duel Preview</h2>
-  <p>Experimental test only: basic navigation, movement, impact and equipment damage. Not yet the finalized physical combat engine.</p>
+  <h2>Bowl Collision Arena</h2>
+  <p>Experimental bowl simulation: curved terrain pulls bots inward while their motors build speed. Crashes inflict most damage; weapons add impact effects.</p>
   <div class="arena-head">
    <label>Robot A<select id="selectA" class="field"></select></label>
    <label>Robot B<select id="selectB" class="field"></select></label>
   </div>
   <button id="startDuel" class="btn primary full">⚔ Start automatic duel</button>
   <button id="stopDuel" class="btn full" style="margin-top:8px">■ Stop duel</button>
-  <p>Both bots act automatically. The preview uses a 90-second timer and simplified hit calculations. Component failures influence the demo.</p>
+  <p>Both bots act automatically. The preview uses a 90-second timer, inward bowl gravity, velocity-based crashes and simplified component damage. It is not yet a full 3D simulator.</p>
   <div class="section-title" style="margin-top:22px">Battle results</div><div id="duelResult" class="stat">Choose two bots to begin.</div>
 </div>
 </aside>
@@ -188,7 +188,7 @@ $("colors").innerHTML="";colors.forEach(color=>{const b=document.createElement("
 function chooseTool(s){tool=s;document.querySelectorAll("[data-tool]").forEach(b=>b.classList.toggle("on",b.dataset.tool===s));$("canvasTag").textContent=({freehand:"DRAW A CLOSED SHAPE",points:"TAP CORNERS · THEN CLOSE",edit:"DRAG OUTLINE VERTICES",wheels:"DRAG EACH WHEEL",weapon:"DRAG WEAPON MOUNT"})[s];render()}
 function setView(s){view=s;document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===s));["workshop","garage","arena"].forEach(k=>$(k+"Panel").classList.toggle("hide",k!==s));
 canvas.classList.toggle("hide",s!=="workshop");arena.classList.toggle("hide",s!=="arena");$("garageCanvas").classList.toggle("hide",s!=="garage");$("canvasTag").classList.toggle("hide",s!=="workshop");
-$("stageTitle").textContent=s==="workshop"?"Battlebot Workshop":s==="garage"?"Registered Battlebots":"Automatic Duel Preview";
+$("stageTitle").textContent=s==="workshop"?"Battlebot Workshop":s==="garage"?"Registered Battlebots":"Bowl Collision Arena";
 $("stageSub").textContent=s==="workshop"?"Draw a chassis and configure the equipment":s==="garage"?"Select a saved design to edit or test":"Early movement and combat sandbox";
 $("stageBadge").textContent=s==="workshop"?"CHASSIS EDITOR":s==="garage"?"LOCAL GARAGE":"EXPERIMENTAL";
 $("stageScore").classList.toggle("hide",s==="garage");if(s==="garage")renderGarage();if(s==="arena")populateArena();if(s==="workshop")render();
@@ -249,54 +249,185 @@ function seedBot(n){const b=defaultBot();b.id="demo"+n;b.name=n===1?"Example Alp
 function populateArena(){const options=[...roster.map(b=>({id:b.id,name:b.name})),{id:"demo1",name:"Example Alpha"},{id:"demo2",name:"Example Bravo"}];["selectA","selectB"].forEach((id,i)=>{const el=$(id),prev=el.value;el.innerHTML="";options.forEach(op=>{const option=document.createElement("option");option.value=op.id;option.textContent=op.name;el.append(option)});el.value=options.some(p=>p.id===prev)?prev:options[Math.min(i,options.length-1)].id});if(!duel)drawArenaStatic()}
 function selectedBot(id){return roster.find(b=>b.id===id)||(id==="demo1"?seedBot(1):seedBot(2))}
 function rotTo(angle,desired,max){let a=((desired-angle+Math.PI*3)%(Math.PI*2))-Math.PI;return angle+clamp(a,-max,max)}
-function fighter(bot,x,rot){const mid=center(bot.outline),b=bounds(bot.outline),mass=clamp(area(bot.outline)/12500,1,10);
-const wl=bot.wheels,wb=Math.abs((wl[2].y+wl[3].y-wl[0].y-wl[1].y)/2);
-const width=(Math.abs(wl[0].x-wl[1].x)+Math.abs(wl[2].x-wl[3].x))/2;
-return{bot,x,y:250,rot,mass,mid,b,radius:clamp(Math.max(b.x1-b.x0,b.y1-b.y0)*.22,36,83),speed:clamp(78-mass*3,39,75),turn:clamp(3.4-wb/125,1,2.9),width,body:100,wheels:[100,100,100,100],weapon:100,cd:0,velx:0,vely:0,dents:[],damage:0}}
-function addDamage(enemy,attacker,amount,knock){enemy.body=Math.max(0,enemy.body-amount*.63);enemy.weapon=Math.max(0,enemy.weapon-amount*.18);
-const i=Math.floor(Math.random()*4);enemy.wheels[i]=Math.max(0,enemy.wheels[i]-amount*.75);
-enemy.damage+=amount;const dx=enemy.x-attacker.x,dy=enemy.y-attacker.y,len=Math.hypot(dx,dy)||1;
-enemy.velx+=dx/len*knock/Math.max(1,enemy.mass);enemy.vely+=dy/len*knock/Math.max(1,enemy.mass);
-enemy.dents.push({x:(Math.random()-.5)*80,y:(Math.random()-.5)*60});if(enemy.dents.length>12)enemy.dents.shift()}
-function startDuel(){const a=selectedBot($("selectA").value),b=selectedBot($("selectB").value);
-if(a.id===b.id){message("Select two different robots.","error");return}
-duel={bots:[fighter(a,205,Math.PI/2),fighter(b,595,-Math.PI/2)],remain:90,running:true,winner:null};last=0;$("duelResult").textContent="Battle running…";if(!raf)raf=requestAnimationFrame(tick);message("Automatic duel started.","ok")}
-function tick(now){raf=0;if(!duel||!duel.running||view!=="arena"){drawArenaStatic();return}
-if(last){const dt=Math.min(.045,(now-last)/1000);stepDuel(dt)}last=now;drawDuel();if(duel.running)raf=requestAnimationFrame(tick)}
-function stepDuel(dt){const fighters=duel.bots;duel.remain=Math.max(0,duel.remain-dt);
-fighters.forEach((a,i)=>{const b=fighters[1-i];const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;
-const desired=Math.atan2(dx,-dy);const active=a.wheels.filter(h=>h>0).length;
-let drive=active/4;if(active<=1)drive=0;
-a.rot=rotTo(a.rot,desired,a.turn*dt*drive);a.cd=Math.max(0,a.cd-dt);
-const approach=clamp((d-80)/75,-.25,1),vx=Math.sin(a.rot)*a.speed*approach*drive,vy=-Math.cos(a.rot)*a.speed*approach*drive;
-a.x+=vx*dt+a.velx*dt;a.y+=vy*dt+a.vely*dt;a.velx*=Math.max(0,1-3.8*dt);a.vely*=Math.max(0,1-3.8*dt);
-const r=a.radius;a.x=clamp(a.x,43+r,757-r);a.y=clamp(a.y,43+r,457-r);
-const facing=Math.abs(((desired-a.rot+Math.PI*3)%(Math.PI*2))-Math.PI);
-const w=a.bot.weapon.type;if(a.weapon>0&&facing<.7&&d<a.radius+b.radius+40){if(w==="drill")addDamage(b,a,11*dt,10*dt);
-else if(w==="hammer"&&a.cd===0){addDamage(b,a,18,22);a.cd=2.5}
-else if(w==="slasher"&&a.cd===0){addDamage(b,a,6,13);a.cd=.7}}});
-const a=fighters[0],b=fighters[1],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,min=a.radius+b.radius-9;
-if(d<min){const overlap=(min-d)/2,nx=dx/d,ny=dy/d;a.x-=nx*overlap;b.x+=nx*overlap;a.y-=ny*overlap;b.y+=ny*overlap;
-a.velx-=nx*12/a.mass;b.velx+=nx*12/b.mass}
-if(a.body<=0||a.wheels.filter(v=>v>0).length<=1||b.body<=0||b.wheels.filter(v=>v>0).length<=1||duel.remain<=0){
-duel.running=false;const score=f=>f.body+f.weapon*.15+f.wheels.reduce((s,n)=>s+n,0)*.07+f.damage*.15;const win=score(a)>score(b)?a:score(b)>score(a)?b:null;
-duel.winner=win?win.bot.name:"Draw";$("duelResult").textContent=win?"Winner: "+win.bot.name+" · "+(90-duel.remain).toFixed(1)+"s":"Draw · "+(90-duel.remain).toFixed(1)+"s";
-message("Duel finished. The simulation is an experimental preview.","ok")}}
-function arenaBackground(){ac.fillStyle="#0f1922";ac.fillRect(0,0,W,H);ac.fillStyle="#37434e";ac.fillRect(30,30,740,440);
-ac.strokeStyle="#a6b3bb";ac.lineWidth=13;ac.strokeRect(30,30,740,440);ac.strokeStyle="#52616c";ac.lineWidth=2;
-for(let x=62;x<760;x+=35){ac.beginPath();ac.moveTo(x,44);ac.lineTo(x,456);ac.stroke()}
-for(let y=55;y<460;y+=35){ac.beginPath();ac.moveTo(44,y);ac.lineTo(756,y);ac.stroke()}
-ac.strokeStyle="#6f7c88";ac.setLineDash([12,12]);ac.beginPath();ac.moveTo(400,43);ac.lineTo(400,457);ac.stroke();ac.setLineDash([]);ac.beginPath();ac.arc(400,250,58,0,Math.PI*2);ac.stroke()}
-function drawFighter(f){const c=ac,s=.43;c.save();c.translate(f.x,f.y);c.rotate(f.rot);c.scale(s,s);c.translate(-f.mid.x,-f.mid.y);
-const p=f.bot.outline;c.beginPath();c.moveTo(p[0].x,p[0].y);p.slice(1).forEach(a=>c.lineTo(a.x,a.y));c.closePath();c.fillStyle=f.bot.color;c.fill();c.strokeStyle="#f2f5fb";c.lineWidth=5;c.stroke();
-f.dents.forEach(hit=>{c.strokeStyle="#593f42";c.lineWidth=7;c.beginPath();c.moveTo(f.mid.x+hit.x-8,f.mid.y+hit.y-5);c.lineTo(f.mid.x+hit.x+8,f.mid.y+hit.y+5);c.stroke()});
-drawWheels(c,f.bot,1,f.wheels);if(f.weapon>0)drawWeapon(c,f.bot.weapon,f.bot.weapon.type,f.bot.weapon.angle,1,f.weapon);
-c.restore();ac.fillStyle="#0b1421";ac.fillRect(f.x-58,f.y-f.radius-30,116,20);ac.fillStyle=f.bot.color;ac.fillRect(f.x-56,f.y-f.radius-28,112*f.body/100,5);
-ac.fillStyle="#f4f8ff";ac.font="bold 12px system-ui";ac.textAlign="center";ac.fillText(f.bot.name.slice(0,17),f.x,f.y-f.radius-11);ac.textAlign="start"}
-function drawDuel(){arenaBackground();duel.bots.forEach(drawFighter);ac.fillStyle="#f6fbff";ac.font="bold 22px system-ui";ac.textAlign="center";ac.fillText(Math.ceil(duel.remain)+"s",400,29);ac.textAlign="start";
-$("stageScore").innerHTML="<span>Auto AI</span><span>"+Math.ceil(duel.remain)+"s</span>"}
-function drawArenaStatic(){arenaBackground();const a=selectedBot($("selectA").value||"demo1"),b=selectedBot($("selectB").value||"demo2");
-drawFighter(fighter(a,205,Math.PI/2));drawFighter(fighter(b,595,-Math.PI/2));$("stageScore").innerHTML="<span>90 sec</span><span>1 vs 1</span>"}
+function fighter(bot,x,rot){
+ const mid=center(bot.outline),b=bounds(bot.outline);
+ const mass=clamp(area(bot.outline)/12500,1.2,10);
+ const top=bot.wheels.slice(0,2),rear=bot.wheels.slice(2);
+ const wb=Math.abs((rear[0].y+rear[1].y-top[0].y-top[1].y)/2);
+ const width=(Math.abs(bot.wheels[0].x-bot.wheels[1].x)+Math.abs(bot.wheels[2].x-bot.wheels[3].x))/2;
+ const r=Math.hypot(x-400,0),side=x<400?-1:1;
+ return{bot,x,y:250,rot,mass,mid,b,radius:clamp(Math.max(b.x1-b.x0,b.y1-b.y0)*.19,27,67),
+ speed:clamp(130/Math.sqrt(mass),47,125),turn:clamp(3.4-wb/150,1.2,3.2),width,body:100,
+ wheels:[100,100,100,100],weapon:100,cd:0,vx:0,vy:side*78,dents:[],damage:0,score:0,stun:0};
+}
+const BOWL={cx:400,cy:250,r:220,gravity:34,drag:.28,restitution:.62};
+function worldWheel(f,i){
+ const w=f.bot.wheels[i],dx=(w.x-f.mid.x)*.40,dy=(w.y-f.mid.y)*.40;
+ return{x:f.x+dx*Math.cos(f.rot)-dy*Math.sin(f.rot),y:f.y+dx*Math.sin(f.rot)+dy*Math.cos(f.rot)};
+}
+function debris(type,p,velocity){
+ if(!duel)return;
+ if(!duel.debris)duel.debris=[];
+ duel.debris.push({type,x:p.x,y:p.y,vx:velocity.x,vy:velocity.y,t:8});
+}
+function addDamage(target,source,amount,contact){
+ if(amount<=0)return;
+ const before=target.wheels.slice(),weaponBefore=target.weapon;
+ target.body=Math.max(0,target.body-amount*.64);
+ let near=0,best=Infinity;
+ for(let i=0;i<4;i++){const w=worldWheel(target,i),d=dist(w,contact);if(d<best){best=d;near=i}}
+ if(best<target.radius*.85)target.wheels[near]=Math.max(0,target.wheels[near]-amount*1.55);
+ if(best>=target.radius*.85 || amount>9)target.weapon=Math.max(0,target.weapon-amount*.42);
+ target.damage+=amount;source.score+=amount;
+ for(let i=0;i<4;i++)if(before[i]>0&&target.wheels[i]===0){
+  const p=worldWheel(target,i);debris("wheel",p,{x:target.vx*.6+(p.x-target.x)*.9,y:target.vy*.6+(p.y-target.y)*.9});
+ }
+ if(weaponBefore>0&&target.weapon===0)debris("weapon",{x:target.x,y:target.y},{x:target.vx+20,y:target.vy-20});
+ const lx=(contact.x-target.x)*Math.cos(-target.rot)-(contact.y-target.y)*Math.sin(-target.rot);
+ const ly=(contact.x-target.x)*Math.sin(-target.rot)+(contact.y-target.y)*Math.cos(-target.rot);
+ target.dents.push({x:lx/.4,y:ly/.4});if(target.dents.length>14)target.dents.shift();
+}
+function startDuel(){
+ const a=selectedBot($("selectA").value),b=selectedBot($("selectB").value);
+ if(a.id===b.id){message("Select two different robots.","error");return}
+ duel={bots:[fighter(a,255,Math.PI/2),fighter(b,545,-Math.PI/2)],remain:90,running:true,winner:null,debris:[],clock:0};
+ last=0;$("duelResult").textContent="Bowl clash underway…";
+ if(!raf)raf=requestAnimationFrame(tick);
+ message("Robots are circulating the bowl. High-speed collisions cause the most damage.","ok");
+}
+function tick(now){
+ raf=0;
+ if(!duel||!duel.running||view!=="arena"){drawArenaStatic();return}
+ if(last){const dt=Math.min(.045,(now-last)/1000);const substeps=Math.max(1,Math.ceil(dt/(1/120)));
+ for(let i=0;i<substeps&&duel.running;i++)stepDuel(dt/substeps)}
+ last=now;drawDuel();if(duel.running)raf=requestAnimationFrame(tick);
+}
+function stepDuel(dt){
+ duel.clock+=dt;duel.remain=Math.max(0,duel.remain-dt);
+ const bots=duel.bots;
+ bots.forEach((f,i)=>{
+  const enemy=bots[1-i],dx=enemy.x-f.x,dy=enemy.y-f.y,d=Math.hypot(dx,dy)||1;
+  const active=f.wheels.filter(h=>h>0).length,motor=active/4;
+  const rcx=f.x-BOWL.cx,rcy=f.y-BOWL.cy,r=Math.hypot(rcx,rcy)||1;
+  // Tangential clockwise approach is mixed with target seeking. Bowl slope pulls downhill naturally.
+  const tangent={x:-rcy/r,y:rcx/r},seek={x:dx/d,y:dy/d};
+  const ring=clamp((r-75)/170,0,1),orbitWeight=.18+.48*ring;
+  let tx=tangent.x*orbitWeight+seek.x*(1-orbitWeight);
+  let ty=tangent.y*orbitWeight+seek.y*(1-orbitWeight);
+  const targetHeading=Math.atan2(ty,tx)+Math.PI/2;
+  f.rot=rotTo(f.rot,targetHeading,f.turn*dt*Math.max(.15,motor));
+  const heading={x:Math.sin(f.rot),y:-Math.cos(f.rot)};
+  const accel=(200/(1+f.mass*.20))*motor*(f.stun>0?.25:1);
+  f.vx+=heading.x*accel*dt;f.vy+=heading.y*accel*dt;
+  // Parabolic bowl height h(r)=k(r/R)^2 -> inward gravity proportional to radius.
+  f.vx-=BOWL.gravity*(rcx/BOWL.r)*dt;
+  f.vy-=BOWL.gravity*(rcy/BOWL.r)*dt;
+  const damping=Math.exp(-BOWL.drag*dt);f.vx*=damping;f.vy*=damping;
+  const limit=f.speed*1.4,speed=Math.hypot(f.vx,f.vy);
+  if(speed>limit){f.vx*=limit/speed;f.vy*=limit/speed}
+  f.x+=f.vx*dt;f.y+=f.vy*dt;
+  f.cd=Math.max(0,f.cd-dt);f.stun=Math.max(0,f.stun-dt);
+  // Circular metal wall: resolve overlap and rebound along the surface normal.
+  const ox=f.x-BOWL.cx,oy=f.y-BOWL.cy,rr=Math.hypot(ox,oy)||1;
+  const wallR=BOWL.r-f.radius*.4;
+  if(rr>wallR){
+   const nx=ox/rr,ny=oy/rr,into=f.vx*nx+f.vy*ny;
+   f.x=BOWL.cx+nx*wallR;f.y=BOWL.cy+ny*wallR;
+   if(into>0){
+    f.vx-=(1+BOWL.restitution)*into*nx;f.vy-=(1+BOWL.restitution)*into*ny;
+    if(into>58)f.body=Math.max(0,f.body-(into-58)*.055);
+   }
+  }
+ });
+ const a=bots[0],b=bots[1],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;
+ const min=a.radius*.55+b.radius*.55+14;
+ if(d<min){
+  const nx=dx/d,ny=dy/d,penetration=min-d,total=a.mass+b.mass;
+  a.x-=nx*penetration*b.mass/total;b.x+=nx*penetration*a.mass/total;
+  a.y-=ny*penetration*b.mass/total;b.y+=ny*penetration*a.mass/total;
+  const relative=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+  if(relative<0){
+   const reduced=a.mass*b.mass/(a.mass+b.mass),closing=-relative;
+   const restitution=.40;
+   const impulse=-(1+restitution)*relative*reduced;
+   a.vx-=impulse*nx/a.mass;a.vy-=impulse*ny/a.mass;
+   b.vx+=impulse*nx/b.mass;b.vy+=impulse*ny/b.mass;
+   // Collision energy dominates damage. Weapon impact adds a situational modifier.
+   const impactEnergy=.5*reduced*closing*closing;
+   const crashDamage=clamp(Math.max(0,impactEnergy-100)*.0012,0,27);
+   const contactA={x:a.x+nx*a.radius*.5,y:a.y+ny*a.radius*.5};
+   const contactB={x:b.x-nx*b.radius*.5,y:b.y-ny*b.radius*.5};
+   const bonus=(attacker,victim,normal)=>{
+    if(attacker.weapon<=0)return 0;
+    const w=attacker.bot.weapon.type;
+    const aimX=Math.sin(attacker.rot+(attacker.bot.weapon.angle+90)*Math.PI/180);
+    const aimY=-Math.cos(attacker.rot+(attacker.bot.weapon.angle+90)*Math.PI/180);
+    const facing=aimX*normal.x+aimY*normal.y;
+    if(facing<.48)return 0;
+    if(w==="hammer"&&attacker.cd<=0){attacker.cd=2.5;return 4}
+    if(w==="slasher"&&attacker.cd<=0){attacker.cd=.65;return 2.6}
+    if(w==="drill")return Math.min(2,closing*.02);
+    return 0;
+   };
+   const boostA=bonus(a,b,{x:nx,y:ny}),boostB=bonus(b,a,{x:-nx,y:-ny});
+   if(crashDamage>0||boostA||boostB){
+    addDamage(a,b,crashDamage+boostB,contactA);
+    addDamage(b,a,crashDamage+boostA,contactB);
+    a.stun=clamp(closing/450,0,.3);b.stun=a.stun;
+   }
+  }
+ }
+ (duel.debris||[]).forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.exp(-2*dt);p.vy*=Math.exp(-2*dt);p.t-=dt});
+ duel.debris=duel.debris.filter(p=>p.t>0);
+ const knocked=bots.map(f=>f.body<=0||f.wheels.filter(x=>x>0).length<=1);
+ if(knocked[0]||knocked[1]||duel.remain<=0){
+  duel.running=false;
+  const score=f=>f.body*.60+f.wheels.reduce((s,n)=>s+n,0)*.08+f.weapon*.08+f.score*.65;
+  const winner=knocked[0]&&!knocked[1]?b:knocked[1]&&!knocked[0]?a:score(a)>score(b)+.01?a:score(b)>score(a)+.01?b:null;
+  duel.winner=winner?winner.bot.name:"Draw";
+  $("duelResult").textContent=(winner?"Winner: "+winner.bot.name:"Draw")+" · "+(90-duel.remain).toFixed(1)+"s · "+
+    "Crash damage A/B: "+Math.round(a.damage)+"/"+Math.round(b.damage);
+  message("Bowl collision duel completed. Impact-based physics remains an experimental approximation.","ok");
+ }
+}
+function arenaBackground(){
+ ac.fillStyle="#101b29";ac.fillRect(0,0,W,H);
+ const g=ac.createRadialGradient(400,250,15,400,250,225);
+ g.addColorStop(0,"#253340");g.addColorStop(.23,"#3a4955");g.addColorStop(.53,"#536571");g.addColorStop(.84,"#82929b");g.addColorStop(1,"#adb9bd");
+ ac.fillStyle=g;ac.beginPath();ac.arc(400,250,220,0,Math.PI*2);ac.fill();
+ // Shaded floor contours help pupils perceive the bowl's inward slope.
+ [45,85,125,165,200].forEach((r,i)=>{ac.strokeStyle="rgba(223,239,246,"+(.10+i*.025)+")";ac.lineWidth=2;ac.beginPath();ac.arc(400,250,r,0,Math.PI*2);ac.stroke()});
+ ac.beginPath();ac.arc(400,250,22,0,Math.PI*2);ac.strokeStyle="#273b49";ac.lineWidth=4;ac.stroke();
+ ac.beginPath();ac.arc(400,250,220,0,Math.PI*2);ac.strokeStyle="#0a1017";ac.lineWidth=18;ac.stroke();
+ ac.beginPath();ac.arc(400,250,208,0,Math.PI*2);ac.strokeStyle="#d8e7ed";ac.lineWidth=3;ac.stroke();
+ ac.fillStyle="#c3d1dc";ac.font="11px system-ui";ac.fillText("BOWL ARENA · COLLISION ZONE",16,25);
+}
+function drawFighter(f){
+ const c=ac,s=.40;c.save();c.translate(f.x,f.y);c.rotate(f.rot);c.scale(s,s);c.translate(-f.mid.x,-f.mid.y);
+ const p=f.bot.outline;c.beginPath();c.moveTo(p[0].x,p[0].y);p.slice(1).forEach(a=>c.lineTo(a.x,a.y));c.closePath();
+ c.fillStyle=f.bot.color;c.fill();c.strokeStyle="#f2f5fb";c.lineWidth=5;c.stroke();
+ f.dents.forEach(hit=>{c.strokeStyle="#5c3f47";c.lineWidth=9;c.beginPath();c.moveTo(f.mid.x+hit.x-8,f.mid.y+hit.y-5);c.lineTo(f.mid.x+hit.x+8,f.mid.y+hit.y+5);c.stroke()});
+ drawWheels(c,f.bot,1,f.wheels);
+ if(f.weapon>0)drawWeapon(c,f.bot.weapon,f.bot.weapon.type,f.bot.weapon.angle,1,f.weapon);
+ c.restore();
+ ac.fillStyle="#0b1421";ac.fillRect(f.x-52,f.y-f.radius*.60-29,104,19);
+ ac.fillStyle=f.bot.color;ac.fillRect(f.x-50,f.y-f.radius*.60-27,100*f.body/100,5);
+ ac.fillStyle="#f4f8ff";ac.font="bold 11px system-ui";ac.textAlign="center";
+ ac.fillText(f.bot.name.slice(0,17),f.x,f.y-f.radius*.60-11);ac.textAlign="start";
+}
+function drawDuel(){
+ arenaBackground();duel.bots.forEach(drawFighter);
+ (duel.debris||[]).forEach(p=>{ac.save();ac.translate(p.x,p.y);ac.rotate(p.t*2);ac.fillStyle=p.type==="wheel"?"#1a222b":"#efb66e";ac.strokeStyle="#c3d4d9";ac.lineWidth=2;ac.fillRect(-7,-7,14,14);ac.strokeRect(-7,-7,14,14);ac.restore()});
+ ac.fillStyle="#f6fbff";ac.font="bold 24px system-ui";ac.textAlign="center";
+ ac.fillText(Math.ceil(duel.remain)+"s",400,27);ac.textAlign="start";
+ $("stageScore").innerHTML="<span>Auto AI</span><span>Crash damage</span><span>"+Math.ceil(duel.remain)+"s</span>";
+}
+function drawArenaStatic(){
+ arenaBackground();
+ const a=selectedBot($("selectA").value||"demo1"),b=selectedBot($("selectB").value||"demo2");
+ drawFighter(fighter(a,255,Math.PI/2));drawFighter(fighter(b,545,-Math.PI/2));
+ $("stageScore").innerHTML="<span>Bowl terrain</span><span>90 sec</span><span>Impact damage</span>";
+}
 $("startDuel").onclick=()=>{if(view!=="arena")setView("arena");startDuel()};
 $("stopDuel").onclick=()=>{if(duel)duel.running=false;message("Duel stopped.");drawArenaStatic()};
 $("selectA").onchange=()=>{duel=null;drawArenaStatic()};$("selectB").onchange=()=>{duel=null;drawArenaStatic()};
