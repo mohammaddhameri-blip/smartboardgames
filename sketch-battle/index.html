@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c1422">
+<title>Sketch Battle — Battlebot Workshop v0.1</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1421;--panel:#15243a;--panel2:#1d304a;--line:#33475d;--ink:#f2f7ff;--mute:#a6bad0;--lime:#c4f26b;--orange:#f7b16c;--danger:#ff8390}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 75% 0,#19334a,transparent 55%),var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.42;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+.app{max-width:1540px;margin:auto;padding:18px 20px 26px}.header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:46px;height:46px;display:grid;place-items:center;background:var(--lime);color:#102024;font-size:25px;border-radius:12px}
+h1{font-size:23px;line-height:1.05;margin:0;letter-spacing:-.7px}small,.muted{color:var(--mute)}.brand small{display:block;margin-top:5px;font-size:11px}
+.chip{font-size:11px;padding:7px 12px;border:1px solid #45684a;border-radius:99px;background:#203b30;color:var(--lime);font-weight:850}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.nav button{border:1px solid var(--line);background:#18283d;border-radius:10px;color:var(--mute);padding:11px 18px;font-weight:800}
+.nav button.active{color:#11211c;background:var(--lime);border-color:var(--lime)}
+.layout{display:grid;grid-template-columns:minmax(270px,338px) minmax(0,1fr);gap:16px}.panel,.stage{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.panel{padding:17px;max-height:calc(100vh - 144px);overflow:auto;min-height:580px}.section{margin-bottom:19px}
+.section-title{font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:var(--lime);font-weight:850;margin:0 0 10px}
+h2{font-size:18px;margin:0 0 9px;letter-spacing:-.3px}p{margin:8px 0;color:var(--mute);font-size:12px}
+label{display:block;font-size:12px;font-weight:750;color:#d7e5f4;margin:8px 0 5px}
+.field{width:100%;background:#0e1c2e;border:1px solid #48617a;border-radius:9px;color:var(--ink);padding:10px 11px;min-width:0}
+.row{display:flex;gap:8px;align-items:center}.row>*{min-width:0}.grow{flex:1}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.btn{border:1px solid #466078;background:var(--panel2);border-radius:9px;color:var(--ink);font-weight:800;padding:10px 11px;font-size:12px;min-height:39px}
+.btn:hover{border-color:#8ca8be}.btn.on{border-color:var(--lime);background:#2c4238;color:var(--lime)}.btn.primary{background:var(--lime);border-color:var(--lime);color:#15251b}.btn.warn{color:var(--danger)}.btn.full{width:100%}
+.upload{cursor:pointer;display:block;background:#20344c;border:1px dashed #7291ab;padding:13px;border-radius:11px;text-align:center;margin-top:8px;color:#e0efff;font-weight:850}.upload input{display:none}
+.color-row{display:flex;gap:8px;flex-wrap:wrap;padding:4px 0}.swatch{width:31px;height:31px;border-radius:50%;border:2px solid #60758a;background:var(--c);padding:0}.swatch.on{outline:2px solid var(--lime);outline-offset:2px}
+.toolset{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.toolset button:last-child:nth-child(odd){grid-column:span 2}
+.range{width:100%;accent-color:var(--lime)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:7px}.stat{background:#21364e;padding:10px;border:1px solid #3a536b;border-radius:9px}.stat b{display:block;color:#effbff;font-size:17px}.stat span{font-size:10px;color:var(--mute)}
+.stage{display:flex;flex-direction:column;min-height:600px;background:#111e30}.stage-head{padding:15px 17px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line)}
+.stage-head strong{display:block;font-size:16px}.stage-head span{display:block;font-size:11px;color:var(--mute);margin-top:3px}
+.stage-canvas{position:relative;flex:1;min-height:465px;display:grid;place-items:center;overflow:hidden;background:#101c2b}
+canvas{display:block;width:100%;height:100%;touch-action:none;user-select:none}
+.canvas-tag{position:absolute;top:12px;left:12px;pointer-events:none;font-size:10px;font-weight:850;letter-spacing:.1em;text-transform:uppercase;padding:7px 9px;border-radius:8px;background:#0a1620be;color:#d0e2f4}
+.stage-foot{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--line);flex-wrap:wrap;min-height:56px}
+#notice{font-size:12px;color:var(--mute);max-width:70%}#notice.error{color:var(--danger)}#notice.ok{color:var(--lime)}
+.hide{display:none!important}.garage-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;width:100%;max-width:950px;padding:18px;align-content:start;overflow:auto;max-height:70vh}
+.bot-card{background:#1a2b42;border:1px solid #405975;border-radius:14px;padding:13px}.bot-card b{font-size:15px}.bot-card small{display:block;margin:4px 0 12px;font-size:11px}.bot-card .row{margin-top:10px}.bot-card .btn{flex:1}
+.bot-icon{width:100%;height:86px;display:grid;place-items:center;border-radius:10px;background:radial-gradient(circle,#2e4960,#132536);font-size:40px}
+.arena-head{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:15px}.arena-head>label{flex:1;margin:0;min-width:105px}
+#arenaCanvas{background:#19222b}.score{display:flex;gap:10px;flex-wrap:wrap}.score span{padding:5px 9px;background:#22374b;border-radius:6px;font-size:11px;color:#d7e7f7}
+footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.panel{max-height:none;min-height:0;order:2}.stage{order:1;min-height:0}.stage-canvas{height:49vh;min-height:310px;max-height:550px}.app{padding:11px}.header{margin-bottom:11px}.brand small{font-size:9px}.chip{font-size:9px;padding:6px 8px}h1{font-size:18px}.logo{width:38px;height:38px}.nav button{flex:1;padding:10px}.panel{padding:14px}#notice{max-width:100%}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="header"><div class="brand"><div class="logo">⚔</div><div><h1>SKETCH BATTLE</h1><small>by MrDhameri · Workshop &amp; Combat Preview</small></div></div><span class="chip">PROTOTYPE v0.1</span></header>
+<nav class="nav" aria-label="Game sections">
+<button class="active" data-view="workshop">🔧 Workshop</button><button data-view="garage">🤖 My Battlebots</button><button data-view="arena">⚔ Test Arena</button>
+</nav>
+<div class="layout">
+<aside class="panel">
+<div id="workshopPanel">
+  <section class="section"><div class="section-title">01 / Identity</div>
+    <label for="botName">Pupil / battlebot name</label><input id="botName" class="field" maxlength="40" placeholder="Enter battlebot name" autocomplete="off">
+    <div class="color-row" id="colors" aria-label="Chassis colour"></div>
+  </section>
+  <section class="section"><div class="section-title">02 / Draw or scan chassis</div>
+    <div class="toolset" id="tools">
+      <button class="btn on" data-tool="freehand">✏ Freehand</button><button class="btn" data-tool="points">⬡ Plot points</button>
+      <button class="btn" data-tool="edit">✥ Edit outline</button><button class="btn" data-tool="wheels">◉ Move wheels</button>
+      <button class="btn" data-tool="weapon">⚒ Move weapon</button>
+    </div>
+    <label class="upload">📷 Scan drawing / choose photo<input id="photo" type="file" accept="image/*" capture="environment"></label>
+    <div class="grid2" style="margin-top:8px"><button id="closeShape" class="btn">Close points</button><button id="undo" class="btn">Undo point</button>
+    <button id="newShape" class="btn">New outline</button><button id="resetDemo" class="btn">Example shape</button></div>
+    <p>Freehand: draw a closed shape in one stroke. Points: tap to add corners. Edit: drag corners. Photo tracing gives a rough outline; correct it manually.</p>
+  </section>
+  <section class="section"><div class="section-title">03 / Equipment</div>
+    <label>Weapon</label><div class="grid3" id="weapons">
+      <button class="btn on" data-weapon="drill">🔩 Drill</button><button class="btn" data-weapon="hammer">🔨 Hammer</button><button class="btn" data-weapon="slasher">⚙ Slasher</button>
+    </div>
+    <label for="weaponAngle">Weapon facing <span id="angleLabel">-90°</span></label><input id="weaponAngle" class="range" type="range" min="-180" max="180" step="5" value="-90">
+    <p>Choose <b>Move wheels</b> to drag the four identical wheels. Choose <b>Move weapon</b> to drag its mount. Green = valid attachment; red = invalid.</p>
+  </section>
+  <section class="section"><div class="section-title">04 / Calculated design properties</div>
+    <div class="stats"><div class="stat"><b id="mass">—</b><span>Relative mass</span></div><div class="stat"><b id="wheelbase">—</b><span>Wheelbase</span></div><div class="stat"><b id="stability">—</b><span>Support width</span></div><div class="stat"><b id="validity">—</b><span>Mounting</span></div></div>
+    <p>These are geometry indicators, not final tested performance ratings.</p>
+  </section>
+  <button id="save" class="btn primary full">✓ Save battlebot</button>
+  <button id="exportPNG" class="btn full" style="margin-top:7px">↓ Save design PNG</button>
+</div>
+<div id="garagePanel" class="hide">
+  <h2>My Battlebots</h2><p>Saved on this browser and device. Export a backup before clearing browser data.</p>
+  <div class="grid2"><button id="exportJSON" class="btn">↓ Export roster</button><label class="upload" style="margin:0;padding:9px">↑ Import roster<input id="importJSON" type="file" accept=".json,application/json"></label></div>
+  <p id="garageCount">No saved battlebots yet.</p>
+  <button id="newBot" class="btn primary full">+ Create a battlebot</button>
+</div>
+<div id="arenaPanel" class="hide">
+  <h2>Automatic Duel Preview</h2>
+  <p>Experimental test only: basic navigation, movement, impact and equipment damage. Not yet the finalized physical combat engine.</p>
+  <div class="arena-head">
+   <label>Robot A<select id="selectA" class="field"></select></label>
+   <label>Robot B<select id="selectB" class="field"></select></label>
+  </div>
+  <button id="startDuel" class="btn primary full">⚔ Start automatic duel</button>
+  <button id="stopDuel" class="btn full" style="margin-top:8px">■ Stop duel</button>
+  <p>Both bots act automatically. The preview uses a 90-second timer and simplified hit calculations. Component failures influence the demo.</p>
+  <div class="section-title" style="margin-top:22px">Battle results</div><div id="duelResult" class="stat">Choose two bots to begin.</div>
+</div>
+</aside>
+<main class="stage">
+  <div class="stage-head"><div><strong id="stageTitle">Battlebot Workshop</strong><span id="stageSub">Draw a body and configure your robot</span></div><span class="chip" id="stageBadge">CHASSIS EDITOR</span></div>
+  <div class="stage-canvas">
+    <canvas id="editor" width="800" height="500" aria-label="Interactive battlebot design surface"></canvas>
+    <canvas id="arenaCanvas" width="800" height="500" class="hide" aria-label="Automatic battle arena preview"></canvas>
+    <div id="garageCanvas" class="garage-list hide"></div>
+    <div class="canvas-tag" id="canvasTag">DRAG TO DRAW · THEN PLACE EQUIPMENT</div>
+  </div>
+  <div class="stage-foot"><div id="notice" role="status">Ready. Draw a shape, or adjust the example robot.</div><div class="score" id="stageScore"><span>4 wheels</span><span>1 weapon</span></div></div>
+</main>
+</div>
+<footer>Sketch Battle v0.1 · Standalone classroom prototype · No account or external service required · Phone-to-smartboard live pairing comes later</footer>
+</div>
+<script>
+"use strict";
+(function(){
+const W=800,H=500,KEY="sketchBattleWorkshopV01",ROSTER="sketchBattleGarageV01";
+const $=id=>document.getElementById(id);
+const canvas=$("editor"),ctx=canvas.getContext("2d"),arena=$("arenaCanvas"),ac=arena.getContext("2d");
+const colors=["#7fb4c9","#f0a85b","#b6d76b","#da829c","#c9a2e6","#dee4ef"];
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const defaultBot=()=>({id:"bot-"+Date.now()+"-"+Math.floor(Math.random()*10000),name:"",color:colors[0],outline:[{x:292,y:170},{x:510,y:170},{x:545,y:245},{x:515,y:355},{x:285,y:355},{x:255,y:245}],wheels:[{x:276,y:194},{x:524,y:194},{x:278,y:333},{x:523,y:333}],weapon:{type:"drill",x:400,y:164,angle:-90},reference:""});
+let draft=defaultBot(),roster=[],view="workshop",tool="freehand",drag=null,stroke=[],referenceImage=null,pointHistory=[],duel=null,last=0,raf=0;
+function safeRead(k,fallback){try{return JSON.parse(localStorage.getItem(k))||fallback}catch{return fallback}}
+function point(p){return {x:clamp(Number(p.x)||0,20,W-20),y:clamp(Number(p.y)||0,20,H-20)}}
+function cleanBot(o){if(!o||!Array.isArray(o.outline)||!Array.isArray(o.wheels))return null;
+const outline=o.outline.slice(0,140).filter(p=>p&&Number.isFinite(+p.x)&&Number.isFinite(+p.y)).map(point);
+const wheels=o.wheels.slice(0,4).filter(p=>p&&Number.isFinite(+p.x)&&Number.isFinite(+p.y)).map(point);
+if(outline.length<3||wheels.length!==4)return null;
+const type=["drill","hammer","slasher"].includes(o.weapon&&o.weapon.type)?o.weapon.type:"drill";
+return {id:String(o.id||"bot-"+Date.now()).slice(0,80),name:String(o.name||"Unnamed Bot").slice(0,40),color:colors.includes(o.color)?o.color:colors[0],outline,wheels,weapon:{type,x:clamp(Number(o.weapon&&o.weapon.x)||400,20,780),y:clamp(Number(o.weapon&&o.weapon.y)||150,20,480),angle:clamp(Number(o.weapon&&o.weapon.angle)||-90,-180,180)},reference:typeof o.reference==="string"&&o.reference.length<800000?o.reference:""}}
+function persistent(){try{localStorage.setItem(KEY,JSON.stringify(draft));localStorage.setItem(ROSTER,JSON.stringify(roster))}catch{message("Storage full. Export your roster and use a smaller photo.","error")}}
+function area(poly){let a=0;for(let i=0;i<poly.length;i++){const q=poly[(i+1)%poly.length],p=poly[i];a+=p.x*q.y-q.x*p.y}return Math.abs(a)*.5}
+function center(poly){const a=poly.reduce((s,p)=>({x:s.x+p.x,y:s.y+p.y}),{x:0,y:0});return{x:a.x/poly.length,y:a.y/poly.length}}
+function segDist(p,a,b){const vx=b.x-a.x,vy=b.y-a.y,k=clamp(((p.x-a.x)*vx+(p.y-a.y)*vy)/(vx*vx+vy*vy||1),0,1);return dist(p,{x:a.x+k*vx,y:a.y+k*vy})}
+function edgeDistance(p,poly){if(poly.length<2)return Infinity;let d=Infinity;for(let i=0;i<poly.length;i++)d=Math.min(d,segDist(p,poly[i],poly[(i+1)%poly.length]));return d}
+function inside(p,poly){let inn=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if((a.y>p.y)!==(b.y>p.y)&&p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x)inn=!inn}return inn}
+function wheelOK(i){const p=draft.wheels[i];if(!p||draft.outline.length<3)return false;
+if(edgeDistance(p,draft.outline)>51)return false;
+for(let j=0;j<4;j++)if(i!==j&&dist(p,draft.wheels[j])<39)return false;
+return true}
+function weaponOK(){const p=draft.weapon;if(draft.outline.length<3||edgeDistance(p,draft.outline)>55)return false;
+return draft.wheels.every(w=>dist(p,w)>36)}
+function polygonOK(){return draft.outline.length>=3&&area(draft.outline)>1800}
+function message(t,kind){$("notice").textContent=t;$("notice").className=kind||""}
+function bounds(poly){return{x0:Math.min(...poly.map(p=>p.x)),x1:Math.max(...poly.map(p=>p.x)),y0:Math.min(...poly.map(p=>p.y)),y1:Math.max(...poly.map(p=>p.y))}}
+function updateStats(){const v=polygonOK(),b=v?bounds(draft.outline):{x0:0,x1:0,y0:0,y1:0};const valid=v&&draft.wheels.every((w,i)=>wheelOK(i))&&weaponOK();
+$("mass").textContent=v?(area(draft.outline)/12500).toFixed(1)+" u":"—";
+const top=draft.wheels.slice(0,2),bottom=draft.wheels.slice(2),dy=Math.abs((bottom[0].y+bottom[1].y-top[0].y-top[1].y)/2);
+$("wheelbase").textContent=Math.round(dy)+" px";
+$("stability").textContent=Math.round((Math.abs(draft.wheels[0].x-draft.wheels[1].x)+Math.abs(draft.wheels[2].x-draft.wheels[3].x))/2)+" px";
+$("validity").textContent=valid?"Valid":"Check";
+$("validity").style.color=valid?"var(--lime)":"var(--danger)";
+$("angleLabel").textContent=draft.weapon.angle+"°";
+return valid}
+function paintBackground(c){c.fillStyle="#101d2d";c.fillRect(0,0,W,H);c.strokeStyle="#26394b";c.lineWidth=1;for(let x=0;x<W;x+=25){c.beginPath();c.moveTo(x,0);c.lineTo(x,H);c.stroke()}for(let y=0;y<H;y+=25){c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke()}
+c.fillStyle="#405a70";c.font="12px system-ui";c.fillText("TOP / FORWARD",W/2-50,28)}
+function drawWeapon(c,p,type,angle,scale=1,health=100){c.save();c.translate(p.x,p.y);c.rotate((angle+90)*Math.PI/180);c.scale(scale,scale);
+c.lineWidth=3;c.strokeStyle=health>0?"#d9e2e9":"#914c58";c.fillStyle="#627b89";
+c.fillRect(-16,-12,32,24);c.strokeRect(-16,-12,32,24);
+if(type==="drill"){c.fillStyle="#f7b16c";c.beginPath();c.moveTo(-9,-12);c.lineTo(0,-44);c.lineTo(9,-12);c.closePath();c.fill();c.stroke();c.beginPath();c.moveTo(-7,-23);c.lineTo(7,-23);c.stroke()}
+if(type==="hammer"){c.strokeStyle="#ecba77";c.lineWidth=8;c.beginPath();c.moveTo(0,-8);c.lineTo(0,-38);c.stroke();c.fillStyle="#e2ac69";c.fillRect(-23,-51,46,16);c.strokeRect(-23,-51,46,16)}
+if(type==="slasher"){c.fillStyle="#ebc178";c.beginPath();c.arc(0,-23,24,0,Math.PI*2);c.fill();c.stroke();for(let k=0;k<4;k++){c.save();c.translate(0,-23);c.rotate(k*Math.PI/2);c.fillStyle="#f6dfbd";c.fillRect(-3,-35,6,15);c.restore()}c.fillStyle="#344b5e";c.beginPath();c.arc(0,-23,7,0,Math.PI*2);c.fill()}
+c.restore()}
+function drawWheels(c,bot,scale=1,health=null){bot.wheels.forEach((p,i)=>{if(health&&health[i]<=0)return;c.save();c.translate(p.x,p.y);c.scale(scale,scale);c.fillStyle="#0d1117";c.strokeStyle=(bot===draft&&!wheelOK(i))?"#ff8390":"#97c6b4";c.lineWidth=3;c.beginPath();c.roundRect(-16,-22,32,44,7);c.fill();c.stroke();c.strokeStyle="#606e7a";c.lineWidth=3;for(let j=-12;j<=12;j+=8){c.beginPath();c.moveTo(-10,j);c.lineTo(10,j);c.stroke()}c.fillStyle="#c7d0d9";c.beginPath();c.arc(0,0,5,0,Math.PI*2);c.fill();c.restore()})}
+function shape(c,bot,editable=false){const poly=bot.outline;if(poly.length<2)return;c.beginPath();c.moveTo(poly[0].x,poly[0].y);poly.slice(1).forEach(p=>c.lineTo(p.x,p.y));c.closePath();c.fillStyle=bot.color;c.fill();c.strokeStyle="#e0e9f1";c.lineWidth=3;c.stroke();
+const mid=center(poly);c.save();c.globalAlpha=.3;c.strokeStyle="#1d3345";c.lineWidth=3;for(let i=0;i<4;i++){c.beginPath();c.moveTo(mid.x-50+i*12,mid.y-24);c.lineTo(mid.x+50+i*12,mid.y+24);c.stroke()}c.restore();
+if(editable&&["edit","points"].includes(tool)){poly.forEach((p,i)=>{c.beginPath();c.arc(p.x,p.y,7,0,Math.PI*2);c.fillStyle=i===0?"#c4f26b":"#e5f8ff";c.fill();c.lineWidth=2;c.strokeStyle="#12323a";c.stroke()})}}
+function render(){if(view!=="workshop")return;paintBackground(ctx);
+if(referenceImage){ctx.save();ctx.globalAlpha=.32;ctx.drawImage(referenceImage,60,44,680,412);ctx.restore()}
+if(draft.outline.length>=2)shape(ctx,draft,true);
+if(stroke.length>1){ctx.lineWidth=4;ctx.strokeStyle="#c4f26b";ctx.beginPath();ctx.moveTo(stroke[0].x,stroke[0].y);stroke.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.stroke()}
+drawWheels(ctx,draft);
+drawWeapon(ctx,draft.weapon,draft.weapon.type,draft.weapon.angle);
+const valid=updateStats();
+ctx.fillStyle=valid?"#c4f26b":"#ff9897";ctx.font="bold 13px system-ui";ctx.fillText(valid?"✓ ALL MOUNTS VALID":"⚠ CHECK MOUNTING",18,H-18)}
+function photoLoaded(){referenceImage=null;if(!draft.reference){render();return}const image=new Image();image.onload=()=>{referenceImage=image;render()};image.src=draft.reference}
+function sync(){document.querySelectorAll("[data-tool]").forEach(b=>b.classList.toggle("on",b.dataset.tool===tool));document.querySelectorAll("[data-weapon]").forEach(b=>b.classList.toggle("on",b.dataset.weapon===draft.weapon.type));
+$("botName").value=draft.name;$("weaponAngle").value=draft.weapon.angle;
+$("colors").innerHTML="";colors.forEach(color=>{const b=document.createElement("button");b.className="swatch"+(color===draft.color?" on":"");b.style.setProperty("--c",color);b.title="Chassis colour "+color;b.setAttribute("aria-label",b.title);b.onclick=()=>{draft.color=color;persistent();sync();render()};$("colors").append(b)});photoLoaded();updateStats();render()}
+function chooseTool(s){tool=s;document.querySelectorAll("[data-tool]").forEach(b=>b.classList.toggle("on",b.dataset.tool===s));$("canvasTag").textContent=({freehand:"DRAW A CLOSED SHAPE",points:"TAP CORNERS · THEN CLOSE",edit:"DRAG OUTLINE VERTICES",wheels:"DRAG EACH WHEEL",weapon:"DRAG WEAPON MOUNT"})[s];render()}
+function setView(s){view=s;document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===s));["workshop","garage","arena"].forEach(k=>$(k+"Panel").classList.toggle("hide",k!==s));
+canvas.classList.toggle("hide",s!=="workshop");arena.classList.toggle("hide",s!=="arena");$("garageCanvas").classList.toggle("hide",s!=="garage");$("canvasTag").classList.toggle("hide",s!=="workshop");
+$("stageTitle").textContent=s==="workshop"?"Battlebot Workshop":s==="garage"?"Registered Battlebots":"Automatic Duel Preview";
+$("stageSub").textContent=s==="workshop"?"Draw a chassis and configure the equipment":s==="garage"?"Select a saved design to edit or test":"Early movement and combat sandbox";
+$("stageBadge").textContent=s==="workshop"?"CHASSIS EDITOR":s==="garage"?"LOCAL GARAGE":"EXPERIMENTAL";
+$("stageScore").classList.toggle("hide",s==="garage");if(s==="garage")renderGarage();if(s==="arena")populateArena();if(s==="workshop")render();
+message(s==="workshop"?"Drag to draw or move components.":s==="garage"?"Saved battlebots are stored in this browser.":"Automatic combat preview uses simplified physics.");}
+function canvasPoint(ev){const r=canvas.getBoundingClientRect();return point({x:(ev.clientX-r.left)*W/r.width,y:(ev.clientY-r.top)*H/r.height})}
+function nearest(p,items,max){let best=-1,d=max;items.forEach((q,i)=>{const e=dist(p,q);if(e<d){d=e;best=i}});return best}
+function simplify(points,step=6){if(points.length<3)return points;const out=[points[0]];for(let i=1;i<points.length;i++)if(dist(out[out.length-1],points[i])>step)out.push(points[i]);while(out.length>110){const z=[];for(let i=0;i<out.length;i+=2)z.push(out[i]);out.splice(0,out.length,...z)}return out}
+canvas.addEventListener("pointerdown",ev=>{if(view!=="workshop")return;ev.preventDefault();const p=canvasPoint(ev);canvas.setPointerCapture(ev.pointerId);
+if(tool==="freehand"){stroke=[p];drag={kind:"draw"}}
+else if(tool==="points"){if(draft.outline.length>0&&dist(p,draft.outline[0])<20&&draft.outline.length>2){chooseTool("edit");message("Outline closed. Edit corners or add equipment.","ok");return}pointHistory.push(draft.outline.slice());draft.outline.push(p);drag=null;persistent();render()}
+else if(tool==="edit"){const i=nearest(p,draft.outline,22);if(i>=0){pointHistory.push(draft.outline.map(a=>({...a})));drag={kind:"vertex",i}}}
+else if(tool==="wheels"){const i=nearest(p,draft.wheels,42);if(i>=0)drag={kind:"wheel",i}}
+else if(tool==="weapon"){if(dist(p,draft.weapon)<76)drag={kind:"weapon"}}
+});
+canvas.addEventListener("pointermove",ev=>{if(!drag)return;ev.preventDefault();const p=canvasPoint(ev);
+if(drag.kind==="draw"){if(dist(p,stroke[stroke.length-1])>3)stroke.push(p)}
+if(drag.kind==="vertex")draft.outline[drag.i]=p;
+if(drag.kind==="wheel")draft.wheels[drag.i]=p;
+if(drag.kind==="weapon"){draft.weapon.x=p.x;draft.weapon.y=p.y}
+render()});
+function pointerEnd(){if(!drag)return;if(drag.kind==="draw"){let poly=simplify(stroke,7);if(poly.length>=3&&area(poly)>1800){pointHistory.push(draft.outline.slice());draft.outline=poly;message("Chassis drawn. Move wheels and weapon into valid positions.","ok")}else message("Draw a larger closed body outline.","error");stroke=[]}
+drag=null;persistent();render()}
+canvas.addEventListener("pointerup",pointerEnd);canvas.addEventListener("pointercancel",pointerEnd);
+function hull(points){points.sort((a,b)=>a.x-b.x||a.y-b.y);const cross=(o,a,b)=>(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x);const lo=[],up=[];for(const p of points){while(lo.length>=2&&cross(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p)}for(let i=points.length-1;i>=0;i--){const p=points[i];while(up.length>=2&&cross(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p)}up.pop();lo.pop();return lo.concat(up)}
+function detectOutline(image){const c=document.createElement("canvas");c.width=800;c.height=500;const g=c.getContext("2d",{willReadFrequently:true});g.fillStyle="#fff";g.fillRect(0,0,800,500);g.drawImage(image,60,44,680,412);const d=g.getImageData(0,0,800,500).data;let pts=[];
+for(let y=70;y<435;y+=5)for(let x=85;x<710;x+=5){const k=(y*800+x)*4,r=d[k],gg=d[k+1],b=d[k+2],lum=(r*3+gg*4+b)/8;if(lum<112&&Math.max(r,gg,b)-Math.min(r,gg,b)<95)pts.push({x,y})}
+if(pts.length<24)return null;let poly=hull(pts);poly=simplify(poly,12);return poly.length>=3&&area(poly)>1800?poly:null}
+$("photo").addEventListener("change",ev=>{const file=ev.target.files&&ev.target.files[0];if(!file)return;if(!file.type.startsWith("image/")){message("Please choose an image file.","error");return}
+const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas");const k=Math.min(1,1000/Math.max(img.width,img.height));c.width=Math.max(1,Math.floor(img.width*k));c.height=Math.max(1,Math.floor(img.height*k));const g=c.getContext("2d");g.drawImage(img,0,0,c.width,c.height);draft.reference=c.toDataURL("image/jpeg",.65);const shaped=new Image();shaped.onload=()=>{referenceImage=shaped;const detected=detectOutline(shaped);if(detected){pointHistory.push(draft.outline.slice());draft.outline=detected;message("Photo traced approximately. Edit outline corners and check mounts.","ok")}else message("Photo loaded. No clear dark outline found; trace manually.","error");persistent();render()};shaped.src=draft.reference};img.src=reader.result};reader.readAsDataURL(file);ev.target.value=""});
+$("closeShape").onclick=()=>{if(draft.outline.length>=3){chooseTool("edit");message("Shape closed. Drag corners to correct it.","ok")}else message("Add at least three outline points.","error")};
+$("undo").onclick=()=>{if(pointHistory.length){draft.outline=pointHistory.pop();persistent();render()}else if(draft.outline.length){draft.outline.pop();persistent();render()}};
+$("newShape").onclick=()=>{pointHistory.push(draft.outline.slice());draft.outline=[];chooseTool("freehand");persistent();render();message("Draw a new chassis in the editor.")};
+$("resetDemo").onclick=()=>{const d=defaultBot();draft.outline=d.outline;draft.wheels=d.wheels;draft.weapon.x=d.weapon.x;draft.weapon.y=d.weapon.y;draft.reference="";photoLoaded();persistent();render();message("Example chassis restored.","ok")};
+document.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>chooseTool(b.dataset.tool));
+document.querySelectorAll("[data-weapon]").forEach(b=>b.onclick=()=>{draft.weapon.type=b.dataset.weapon;persistent();sync()});
+$("weaponAngle").oninput=ev=>{draft.weapon.angle=+ev.target.value;updateStats();render()};$("weaponAngle").onchange=persistent;
+$("botName").oninput=ev=>{draft.name=ev.target.value;persistent()};
+$("save").onclick=()=>{if(!polygonOK()){message("Draw a larger, closed chassis first.","error");return}
+if(!draft.wheels.every((w,i)=>wheelOK(i))){message("Reposition all four wheels near the chassis edge without overlaps.","error");return}
+if(!weaponOK()){message("Weapon must connect to the chassis and clear the wheels.","error");return}
+if(!draft.name.trim()){message("Enter a battlebot name before saving.","error");$("botName").focus();return}
+const sanitized=cleanBot(draft);const ix=roster.findIndex(b=>b.id===sanitized.id);if(ix>=0)roster[ix]=sanitized;else roster.push(sanitized);
+persistent();message("Battlebot saved to My Battlebots.","ok")};
+$("exportPNG").onclick=()=>{const a=document.createElement("a");a.download="sketch-battle-design.png";a.href=canvas.toDataURL("image/png");a.click()};
+$("newBot").onclick=()=>{draft=defaultBot();chooseTool("freehand");sync();persistent();setView("workshop")};
+function renderGarage(){const box=$("garageCanvas");box.innerHTML="";$("garageCount").textContent=roster.length+" registered battlebot"+(roster.length===1?"":"s");
+if(!roster.length){const p=document.createElement("p");p.textContent="No saved battlebots yet. Design one in the Workshop.";box.append(p);return}
+roster.forEach(bot=>{const card=document.createElement("div");card.className="bot-card";const icon=document.createElement("div");icon.className="bot-icon";icon.textContent=bot.weapon.type==="drill"?"🔩":bot.weapon.type==="hammer"?"🔨":"⚙️";icon.style.borderBottom="3px solid "+bot.color;
+const name=document.createElement("b");name.textContent=bot.name;const meta=document.createElement("small");meta.textContent=bot.weapon.type+" · 4 wheels · "+(area(bot.outline)/12500).toFixed(1)+" relative mass";
+const actions=document.createElement("div");actions.className="row";const edit=document.createElement("button");edit.className="btn";edit.textContent="Edit";edit.onclick=()=>{draft=JSON.parse(JSON.stringify(bot));sync();persistent();setView("workshop")};
+const del=document.createElement("button");del.className="btn warn";del.textContent="Delete";del.onclick=()=>{if(!confirm("Delete "+bot.name+"?"))return;roster=roster.filter(x=>x.id!==bot.id);persistent();renderGarage()};
+actions.append(edit,del);card.append(icon,name,meta,actions);box.append(card)})}
+function download(name,body,mime){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([body],{type:mime}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)}
+$("exportJSON").onclick=()=>download("sketch-battle-battlebots.json",JSON.stringify({version:1,battlebots:roster},null,2),"application/json");
+$("importJSON").onchange=async ev=>{const f=ev.target.files&&ev.target.files[0];if(!f)return;try{if(f.size>4e6)throw Error("File exceeds 4 MB");const data=JSON.parse(await f.text());const list=Array.isArray(data)?data:data.battlebots;if(!Array.isArray(list))throw Error("Missing battlebots list");
+let count=0;list.slice(0,200).forEach(item=>{const bot=cleanBot(item);if(bot){bot.id="bot-import-"+Date.now()+"-"+count;roster.push(bot);count++}});persistent();renderGarage();message("Imported "+count+" battlebots.","ok")}catch(e){message("Import failed: "+e.message,"error")}ev.target.value=""};
+function seedBot(n){const b=defaultBot();b.id="demo"+n;b.name=n===1?"Example Alpha":"Example Bravo";b.color=n===1?colors[0]:colors[1];b.weapon.type=n===1?"slasher":"hammer";return b}
+function populateArena(){const options=[...roster.map(b=>({id:b.id,name:b.name})),{id:"demo1",name:"Example Alpha"},{id:"demo2",name:"Example Bravo"}];["selectA","selectB"].forEach((id,i)=>{const el=$(id),prev=el.value;el.innerHTML="";options.forEach(op=>{const option=document.createElement("option");option.value=op.id;option.textContent=op.name;el.append(option)});el.value=options.some(p=>p.id===prev)?prev:options[Math.min(i,options.length-1)].id});if(!duel)drawArenaStatic()}
+function selectedBot(id){return roster.find(b=>b.id===id)||(id==="demo1"?seedBot(1):seedBot(2))}
+function rotTo(angle,desired,max){let a=((desired-angle+Math.PI*3)%(Math.PI*2))-Math.PI;return angle+clamp(a,-max,max)}
+function fighter(bot,x,rot){const mid=center(bot.outline),b=bounds(bot.outline),mass=clamp(area(bot.outline)/12500,1,10);
+const wl=bot.wheels,wb=Math.abs((wl[2].y+wl[3].y-wl[0].y-wl[1].y)/2);
+const width=(Math.abs(wl[0].x-wl[1].x)+Math.abs(wl[2].x-wl[3].x))/2;
+return{bot,x,y:250,rot,mass,mid,b,radius:clamp(Math.max(b.x1-b.x0,b.y1-b.y0)*.22,36,83),speed:clamp(78-mass*3,39,75),turn:clamp(3.4-wb/125,1,2.9),width,body:100,wheels:[100,100,100,100],weapon:100,cd:0,velx:0,vely:0,dents:[],damage:0}}
+function addDamage(enemy,attacker,amount,knock){enemy.body=Math.max(0,enemy.body-amount*.63);enemy.weapon=Math.max(0,enemy.weapon-amount*.18);
+const i=Math.floor(Math.random()*4);enemy.wheels[i]=Math.max(0,enemy.wheels[i]-amount*.75);
+enemy.damage+=amount;const dx=enemy.x-attacker.x,dy=enemy.y-attacker.y,len=Math.hypot(dx,dy)||1;
+enemy.velx+=dx/len*knock/Math.max(1,enemy.mass);enemy.vely+=dy/len*knock/Math.max(1,enemy.mass);
+enemy.dents.push({x:(Math.random()-.5)*80,y:(Math.random()-.5)*60});if(enemy.dents.length>12)enemy.dents.shift()}
+function startDuel(){const a=selectedBot($("selectA").value),b=selectedBot($("selectB").value);
+if(a.id===b.id){message("Select two different robots.","error");return}
+duel={bots:[fighter(a,205,Math.PI/2),fighter(b,595,-Math.PI/2)],remain:90,running:true,winner:null};last=0;$("duelResult").textContent="Battle running…";if(!raf)raf=requestAnimationFrame(tick);message("Automatic duel started.","ok")}
+function tick(now){raf=0;if(!duel||!duel.running||view!=="arena"){drawArenaStatic();return}
+if(last){const dt=Math.min(.045,(now-last)/1000);stepDuel(dt)}last=now;drawDuel();if(duel.running)raf=requestAnimationFrame(tick)}
+function stepDuel(dt){const fighters=duel.bots;duel.remain=Math.max(0,duel.remain-dt);
+fighters.forEach((a,i)=>{const b=fighters[1-i];const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;
+const desired=Math.atan2(dx,-dy);const active=a.wheels.filter(h=>h>0).length;
+let drive=active/4;if(active<=1)drive=0;
+a.rot=rotTo(a.rot,desired,a.turn*dt*drive);a.cd=Math.max(0,a.cd-dt);
+const approach=clamp((d-80)/75,-.25,1),vx=Math.sin(a.rot)*a.speed*approach*drive,vy=-Math.cos(a.rot)*a.speed*approach*drive;
+a.x+=vx*dt+a.velx*dt;a.y+=vy*dt+a.vely*dt;a.velx*=Math.max(0,1-3.8*dt);a.vely*=Math.max(0,1-3.8*dt);
+const r=a.radius;a.x=clamp(a.x,43+r,757-r);a.y=clamp(a.y,43+r,457-r);
+const facing=Math.abs(((desired-a.rot+Math.PI*3)%(Math.PI*2))-Math.PI);
+const w=a.bot.weapon.type;if(a.weapon>0&&facing<.7&&d<a.radius+b.radius+40){if(w==="drill")addDamage(b,a,11*dt,10*dt);
+else if(w==="hammer"&&a.cd===0){addDamage(b,a,18,22);a.cd=2.5}
+else if(w==="slasher"&&a.cd===0){addDamage(b,a,6,13);a.cd=.7}}});
+const a=fighters[0],b=fighters[1],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,min=a.radius+b.radius-9;
+if(d<min){const overlap=(min-d)/2,nx=dx/d,ny=dy/d;a.x-=nx*overlap;b.x+=nx*overlap;a.y-=ny*overlap;b.y+=ny*overlap;
+a.velx-=nx*12/a.mass;b.velx+=nx*12/b.mass}
+if(a.body<=0||a.wheels.filter(v=>v>0).length<=1||b.body<=0||b.wheels.filter(v=>v>0).length<=1||duel.remain<=0){
+duel.running=false;const score=f=>f.body+f.weapon*.15+f.wheels.reduce((s,n)=>s+n,0)*.07+f.damage*.15;const win=score(a)>score(b)?a:score(b)>score(a)?b:null;
+duel.winner=win?win.bot.name:"Draw";$("duelResult").textContent=win?"Winner: "+win.bot.name+" · "+(90-duel.remain).toFixed(1)+"s":"Draw · "+(90-duel.remain).toFixed(1)+"s";
+message("Duel finished. The simulation is an experimental preview.","ok")}}
+function arenaBackground(){ac.fillStyle="#0f1922";ac.fillRect(0,0,W,H);ac.fillStyle="#37434e";ac.fillRect(30,30,740,440);
+ac.strokeStyle="#a6b3bb";ac.lineWidth=13;ac.strokeRect(30,30,740,440);ac.strokeStyle="#52616c";ac.lineWidth=2;
+for(let x=62;x<760;x+=35){ac.beginPath();ac.moveTo(x,44);ac.lineTo(x,456);ac.stroke()}
+for(let y=55;y<460;y+=35){ac.beginPath();ac.moveTo(44,y);ac.lineTo(756,y);ac.stroke()}
+ac.strokeStyle="#6f7c88";ac.setLineDash([12,12]);ac.beginPath();ac.moveTo(400,43);ac.lineTo(400,457);ac.stroke();ac.setLineDash([]);ac.beginPath();ac.arc(400,250,58,0,Math.PI*2);ac.stroke()}
+function drawFighter(f){const c=ac,s=.43;c.save();c.translate(f.x,f.y);c.rotate(f.rot);c.scale(s,s);c.translate(-f.mid.x,-f.mid.y);
+const p=f.bot.outline;c.beginPath();c.moveTo(p[0].x,p[0].y);p.slice(1).forEach(a=>c.lineTo(a.x,a.y));c.closePath();c.fillStyle=f.bot.color;c.fill();c.strokeStyle="#f2f5fb";c.lineWidth=5;c.stroke();
+f.dents.forEach(hit=>{c.strokeStyle="#593f42";c.lineWidth=7;c.beginPath();c.moveTo(f.mid.x+hit.x-8,f.mid.y+hit.y-5);c.lineTo(f.mid.x+hit.x+8,f.mid.y+hit.y+5);c.stroke()});
+drawWheels(c,f.bot,1,f.wheels);if(f.weapon>0)drawWeapon(c,f.bot.weapon,f.bot.weapon.type,f.bot.weapon.angle,1,f.weapon);
+c.restore();ac.fillStyle="#0b1421";ac.fillRect(f.x-58,f.y-f.radius-30,116,20);ac.fillStyle=f.bot.color;ac.fillRect(f.x-56,f.y-f.radius-28,112*f.body/100,5);
+ac.fillStyle="#f4f8ff";ac.font="bold 12px system-ui";ac.textAlign="center";ac.fillText(f.bot.name.slice(0,17),f.x,f.y-f.radius-11);ac.textAlign="start"}
+function drawDuel(){arenaBackground();duel.bots.forEach(drawFighter);ac.fillStyle="#f6fbff";ac.font="bold 22px system-ui";ac.textAlign="center";ac.fillText(Math.ceil(duel.remain)+"s",400,29);ac.textAlign="start";
+$("stageScore").innerHTML="<span>Auto AI</span><span>"+Math.ceil(duel.remain)+"s</span>"}
+function drawArenaStatic(){arenaBackground();const a=selectedBot($("selectA").value||"demo1"),b=selectedBot($("selectB").value||"demo2");
+drawFighter(fighter(a,205,Math.PI/2));drawFighter(fighter(b,595,-Math.PI/2));$("stageScore").innerHTML="<span>90 sec</span><span>1 vs 1</span>"}
+$("startDuel").onclick=()=>{if(view!=="arena")setView("arena");startDuel()};
+$("stopDuel").onclick=()=>{if(duel)duel.running=false;message("Duel stopped.");drawArenaStatic()};
+$("selectA").onchange=()=>{duel=null;drawArenaStatic()};$("selectB").onchange=()=>{duel=null;drawArenaStatic()};
+document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{if(duel)duel.running=false;setView(b.dataset.view)});
+const saved=safeRead(KEY,null);if(saved){const b=cleanBot(saved);if(b)draft=b}
+roster=safeRead(ROSTER,[]);if(!Array.isArray(roster))roster=[];roster=roster.slice(0,250).map(cleanBot).filter(Boolean);
+sync();setView("workshop");
+})();
+</script>
+</body>
+</html>
