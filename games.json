@@ -1,7 +1,7 @@
 [
   {
-    "name": "Sketch Battle (Prototype)",
-    "description": "Draw or scan battlebots, fit four wheels and a weapon, then test an automatic duel preview.",
+    "name": "Sketch Battle (Turbo Bowl v0.2)",
+    "description": "Draw and equip battlebots, launch them at high speed into a bowl, and create rock-and-ramp combat arenas.",
     "category": "Creative STEM",
     "icon": "⚔️",
     "path": "sketch-battle/",
