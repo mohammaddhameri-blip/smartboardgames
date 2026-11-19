@@ -1,4 +1,4 @@
-# Sketch Battle — Turbo Bowl Prototype v0.2
+# Sketch Battle — Weapon Combat Prototype v0.3
 
 Sketch Battle is an automatic 1v1 battlebot game in the `smartboardgames` collection. Pupils draw or scan their chassis, move four standardized wheels, mount one drill/hammer/slasher weapon, and launch their robots into a concave bowl arena.
 
@@ -9,7 +9,7 @@ Sketch Battle is an automatic 1v1 battlebot game in the `smartboardgames` collec
 - Four movable standardized wheels, weapon placement and orientation, basic mounting checks.
 - Local browser battlebot library, JSON import/export, design PNG export.
 
-### Turbo Bowl v0.2
+### Turbo Bowl v0.2 (retained)
 - Faster, momentum-driven automatic combat inside a simulated bowl with inward acceleration and wall rebounds.
 - **Independent pre-match launch controls** for Robot A and Robot B: directions from 0–355° and powers from 0–100%. Two fixed opposing gates. Initial arrows show directions/power.
 - **Three-second countdown and simultaneous launch**. Launch direction influences the initial trajectory before AI steering takes over.
@@ -20,6 +20,15 @@ Sketch Battle is an automatic 1v1 battlebot game in the `smartboardgames` collec
 - Rocks rebound robots and may damage parts. Ramps accelerate robots in the indicated downhill direction and can briefly lift them with simplified landing damage.
 - Separate wheels, weapon and chassis health; visual dents and falling debris for disabled components.
 
+### Weapon animation update v0.3
+- Replaced the two large launch-setting arrow cards with compact, collapsible direction/power controls. Initial launch arrows remain drawn on the bowl.
+- Drill barrel bands visibly rotate; close sustained contact produces sparks and incremental damage.
+- Slasher teeth rotate continuously during combat; close oriented passes add strike damage and sparks with a brief cooldown.
+- Hammer swings through a visible wind-up, fast strike and recovery cycle. The blow can miss if the opponent escapes during wind-up.
+- Component weapon health affects animation speed/availability; disabled weapons stop rendering.
+- Weapon damage occurs during the corresponding animation/contact window instead of granting arbitrary bonuses on every body collision.
+- Rigid-body impacts remain the primary source of damage. Weapon timing and contact are approximate.
+
 ## How to test
 1. Open the Workshop tab. Save at least two unique battlebots, or use the two provided example robots.
 2. Open **Test Arena**. Choose Robot A and Robot B.
@@ -27,6 +36,7 @@ Sketch Battle is an automatic 1v1 battlebot game in the `smartboardgames` collec
 4. Set each robot's **direction and launch power**. A direction of 0° means right, 90° down, 180° left, and 270° up. Arrows show each selection.
 5. Choose **Launch both battlebots** and observe the countdown and automatic fight.
 6. To design your own arena, select **Custom**, add obstacles, then tap/drag them on the bowl. Select a ramp to rotate it. Save the custom layout.
+7. Equip the example bots with different weapons in the Workshop, then watch each drill spin, hammer swing and slasher rotate in the Test Arena.
 
 ## Important limitations
 - This is a **prototype with approximate 2.5D physics**, not a validated 3D rigid-body simulation. The visible bowl slope is represented by an inward acceleration. Ramps use directional acceleration and short simulated hops, not full geometric height and ballistic flight.
@@ -34,7 +44,7 @@ Sketch Battle is an automatic 1v1 battlebot game in the `smartboardgames` collec
 - Full rigid-body deformation, accurate 3D overturning, shape-specific wheel traction, physical weapon pivot constraints and fully independent detachable rigid parts remain future work.
 - Photo tracing uses a simple dark-pixel convex hull. Concave shapes and ruled backgrounds can need manual correction.
 - Battlebots and custom arenas live in **localStorage on the same device**. Export the roster before clearing browser data. Phone-to-smartboard live pairing and Android packaging are **not yet implemented**.
-- This update has been checked for JavaScript syntax and mock runtime startup/duel flow, but gameplay is not yet device-tested.
+- This update has been checked for JavaScript syntax and mock combat simulations across drill, hammer, and slasher attacks, but gameplay is not yet device-tested.
 
 ## Run
 Host `index.html` via GitHub Pages or serve it locally. It has no external library or backend dependencies.
