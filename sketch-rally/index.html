@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <meta name="theme-color" content="#101827" />
-<title>Sketch Rally v1.7 — Draw. Scan. Race.</title>
+<title>Sketch Rally v1.9 — Draw. Scan. Race.</title>
 <style>
 :root{--bg:#0c1422;--panel:#152237;--panel2:#1c2b43;--border:#30425c;--text:#f2f7ff;--muted:#a1b0c8;--lime:#c4f26b;--blue:#6fc8fa;--orange:#ffb478;--danger:#ff8191;--radius:15px}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.42}.app{max-width:1530px;margin:auto;min-height:100vh;padding:22px 26px 30px}.header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:13px}.logo{width:44px;height:44px;display:grid;place-items:center;background:var(--lime);color:var(--bg);border-radius:13px;box-shadow:0 0 0 4px rgba(196,242,107,.08);font-size:24px}.brand h1{margin:0;font-size:21px;letter-spacing:-.8px;line-height:1.1}.brand small{color:var(--muted);font-size:12px;font-weight:500}.chip{border:1px solid #4a6647;background:#223c30;border-radius:100px;color:var(--lime);font-size:11px;font-weight:800;letter-spacing:.09em;padding:9px 12px;text-transform:uppercase}.layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:19px;align-items:stretch}.sidebar,.stage{border:1px solid var(--border);border-radius:20px;background:var(--panel);overflow:hidden}.sidebar{display:flex;flex-direction:column}.tabs{display:grid;grid-template-columns:repeat(3,1fr);padding:12px;gap:6px;border-bottom:1px solid var(--border)}.tab{border:0;border-radius:10px;background:transparent;color:var(--muted);padding:12px 6px;font-size:12px;font-weight:800;letter-spacing:.02em}.tab.on{color:var(--bg);background:var(--lime)}.content{padding:20px;overflow-y:auto;max-height:calc(100vh - 160px);min-height:565px}.pane{display:none}.pane.active{display:block}h2{font-size:21px;margin:0 0 6px;letter-spacing:-.5px}h3{font-size:13px;font-weight:800;margin:18px 0 9px}.sub{color:var(--muted);font-size:13px;line-height:1.55;margin:0 0 19px}.section-label{display:block;color:#afc0d7;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin:16px 0 8px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px}.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.btn{border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:10px;min-height:39px;padding:10px 12px;font-size:12px;font-weight:700;transition:background .1s,border-color .1s}.btn:hover{border-color:#7189a8}.btn.selected{border-color:var(--lime);color:var(--lime);background:#273c30}.btn.primary{color:#0b1920;background:var(--lime);border-color:var(--lime)}.btn.primary:hover{background:#ddffa8}.btn.secondary{background:#294861;color:#dff5ff}.btn.warn{color:var(--danger)}.btn.full{width:100%;margin-top:12px}.btn.large{min-height:47px;font-size:14px}.help{font-size:12px;line-height:1.55;color:var(--muted);margin:11px 0 0}.note{font-size:12px;line-height:1.45;border:1px solid #405676;border-radius:12px;padding:11px 12px;color:#cbd9eb;background:rgba(108,166,238,.06);margin-top:15px}.rule{height:1px;background:var(--border);margin:18px 0}.player-list{display:grid;gap:7px}.player-row{width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:1px solid var(--border);background:var(--panel2);border-radius:10px;padding:8px 9px;color:var(--text)}.player-row.active{border-color:var(--lime);background:#293c34}.player-icon{width:31px;height:28px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;color:#0e1b26;font-weight:900;font-size:13px}.player-info{min-width:0;flex:1}.player-info b{display:block;font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.player-info small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.player-row .tick{color:var(--lime);font-weight:900}.field{width:100%;padding:11px 12px;background:#0f1a2b;border:1px solid #49607a;color:white;border-radius:10px;outline:0;font-size:13px}.field:focus{border-color:var(--lime)}.upload{border:1px dashed #7890a8;border-radius:12px;min-height:70px;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;color:#e2efff;font-weight:700;font-size:12px;text-align:center;padding:12px;background:#1a2e45}.upload input{display:none}.upload:hover{border-color:var(--lime)}.correction{position:relative;border:1px solid #426077;background:linear-gradient(45deg,#ebedf1 25%,#ffffff 25% 50%,#ebedf1 50% 75%,#ffffff 75%);background-size:18px 18px;border-radius:12px;overflow:hidden;margin-top:9px}.correction canvas{display:block;width:100%;height:184px;touch-action:none;cursor:grab}.correction canvas:active{cursor:grabbing}.minirow{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:10px 0 0}.minirow span{font-size:11px;color:var(--muted)}.minirow b{font-size:11px;color:var(--lime)}.range{width:100%;accent-color:var(--lime)}.standings{display:grid;gap:8px;margin-top:15px}.result{display:flex;gap:8px;align-items:center;background:#1d2e46;border:1px solid var(--border);padding:10px;border-radius:10px}.result .rank{font-size:11px;width:18px;color:var(--muted);font-weight:900}.result-name{min-width:0;flex:1}.result-name b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.result-name small{color:var(--muted);font-size:10px}.result .progress{width:70px;background:#0d1a2b;border-radius:10px;height:5px;overflow:hidden}.result .fill{height:100%;background:var(--lime);width:0}.stage{min-height:630px;display:flex;flex-direction:column;background:#101e32}.stage-top{min-height:79px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:17px 20px;border-bottom:1px solid var(--border)}.stage-title{font-weight:900;font-size:17px;letter-spacing:-.3px}.stage-description{font-size:12px;color:var(--muted);margin-top:4px}.stage-counter{font-weight:900;font-size:15px;color:var(--lime);font-variant-numeric:tabular-nums;white-space:nowrap}.canvas-wrap{height:min(65vh,608px);min-height:455px;position:relative;overflow:hidden;background:#a6d8eb}.canvas-wrap canvas{width:100%;height:100%;display:block;touch-action:none}.canvas-tooltip{position:absolute;top:17px;left:17px;border-radius:10px;background:rgba(13,29,46,.78);color:#f7fcff;font-size:12px;font-weight:700;padding:10px 12px;pointer-events:none;max-width:70%;backdrop-filter:blur(5px)}.canvas-tooltip:empty{display:none}.footer{min-height:66px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 19px;background:#152237;border-top:1px solid var(--border)}.footer .message{color:var(--muted);font-size:12px;line-height:1.45}.footer .message strong{color:var(--text)}.footer-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.small-pill{font-size:11px;font-weight:800;display:inline-block;border-radius:20px;padding:5px 9px;background:#31435b;color:#e3eefd}.hidden{display:none!important}.muted{color:var(--muted)}.status{font-size:11px;margin-top:9px;color:var(--lime);min-height:16px}.checkbox{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);margin:12px 0}.checkbox input{accent-color:var(--lime)}@media(max-width:1000px){.layout{grid-template-columns:300px minmax(0,1fr)}.app{padding:15px}.content{padding:15px}.canvas-wrap{min-height:400px}}@media(max-width:770px){.app{padding:12px 12px 25px}.header{margin-bottom:12px}.layout{grid-template-columns:1fr;gap:11px}.sidebar{order:2}.stage{order:1;min-height:0}.content{max-height:none;min-height:0}.stage-top{min-height:61px;padding:12px 13px}.canvas-wrap{height:53vh;min-height:300px;max-height:530px}.canvas-tooltip{font-size:10px;top:10px;left:10px}.footer{padding:12px;min-height:60px;flex-wrap:wrap}.brand h1{font-size:17px}.logo{width:36px;height:36px;font-size:20px}.chip{font-size:9px;padding:7px 9px}.sidebar{border-radius:16px}.tabs{padding:8px}.content{padding:16px}.stage-title{font-size:15px}}@media(max-width:380px){.canvas-wrap{min-height:275px;height:43vh}.btn{padding:9px 8px}.header .chip{display:none}}
 /* In-game car drawing studio, transparent scan and phone-camera pairing */
@@ -165,6 +165,9 @@ body:not(.challenge-mode) #downhillTrackChoices.hidden{display:none!important}
 .drive-mode-pair button{font-size:12px;padding:10px 6px}
 .racer-drive{background:#11293c;border:1px solid #516a69;border-radius:10px;padding:10px;margin-bottom:12px}
 .racer-drive label{display:block;color:#c5f391;font-weight:800;font-size:12px;margin-bottom:6px}
+.downhill-contact-setting{margin-top:12px;padding:11px 8px 7px;border-top:1px solid #40576b;border-bottom:0;font-size:13px}
+.downhill-contact-setting input{flex-shrink:0}
+.downhill-speed-help{margin-top:5px!important}
 </style>
 </head>
 <body class="menu-open">
@@ -179,7 +182,7 @@ body:not(.challenge-mode) #downhillTrackChoices.hidden{display:none!important}
 </div>
 <div class="menu-cover" id="mainMenu" role="region" aria-label="Sketch Rally main menu">
   <div class="menu-inner">
-    <div class="menu-eyebrow"><span class="menu-bullet"></span> SKETCH RALLY <span class="menu-inline-version">v1.7</span></div><div class="menu-byline">by MrDhameri</div>
+    <div class="menu-eyebrow"><span class="menu-bullet"></span> SKETCH RALLY <span class="menu-inline-version">v1.9</span></div><div class="menu-byline">by MrDhameri</div>
     <div class="menu-art" aria-hidden="true">
       <svg viewBox="0 0 680 195" preserveAspectRatio="xMidYMid meet">
         <defs><linearGradient id="menuRoad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#587a6a"/><stop offset="1" stop-color="#284f58"/></linearGradient></defs>
@@ -202,7 +205,7 @@ body:not(.challenge-mode) #downhillTrackChoices.hidden{display:none!important}
 </div>
 <div class="app">
   <header class="header">
-    <div class="brand"><button type="button" class="menu-home" id="menuHome" aria-label="Open main menu" title="Main menu">⌂</button><div class="logo">✎</div><div><h1>SKETCH RALLY <span class="header-version">v1.7</span></h1><small>Draw · Race</small></div></div>
+    <div class="brand"><button type="button" class="menu-home" id="menuHome" aria-label="Open main menu" title="Main menu">⌂</button><div class="logo">✎</div><div><h1>SKETCH RALLY <span class="header-version">v1.9</span></h1><small>Draw · Race</small></div></div>
     <div class="header-actions"><button type="button" class="btn gear-btn" id="settingsOpen" title="Settings" aria-label="Open game settings">⚙ Settings</button></div>
   </header>
   <main class="layout">
@@ -222,7 +225,9 @@ body:not(.challenge-mode) #downhillTrackChoices.hidden{display:none!important}
 <span class="section-label">Downhill Drive Modes</span><select class="field" id="drivePolicy" aria-label="Choose drive mode policy">
 <option value="shared">Teacher chooses for all cars</option><option value="individual">Each racer chooses</option></select>
 <div id="sharedModes" class="drive-mode-pair"><button type="button" class="btn selected" id="modeRealistic">Realistic Drive</button><button type="button" class="btn" id="modeAggressive">Aggressive Drive</button></div>
-<p id="driveExplanation" class="help">Realistic: safer braking and overtaking.</p></section>
+<p id="driveExplanation" class="help">Realistic: safer braking and overtaking.</p>
+<label class="setting-row downhill-contact-setting"><span>Car-to-car collisions<small id="collisionHelp">On: cars can bump, block and spin each other.</small></span><input id="downhillCollisions" type="checkbox" checked aria-label="Enable collisions between downhill cars"></label>
+<p class="help downhill-speed-help">Longer downhill races unlock more straight-line speed. Cars still brake for bends.</p></section>
 <label class="section-label" for="trackDistance">Race distance</label>
           <select id="trackDistance" class="field"><option value="1">1 km · Sprint</option><option value="2">2 km</option><option value="5">5 km</option><option value="10">10 km</option><option value="20">20 km · Endurance</option></select>
           <section id="downhillTrackChoices" class="downhill-track-choices hidden" aria-label="Downhill race tracks">
@@ -1907,7 +1912,8 @@ $('resetRace').addEventListener('click',e=>{
 },true);
 
 // v1.7 · Car dynamics (same physical laws for both drive strategies).
-let drivePolicy='shared',sharedDrive='realistic';
+let drivePolicy='shared',sharedDrive='realistic',downhillCollisionsEnabled=true;
+try{downhillCollisionsEnabled=localStorage.getItem('sketchRallyDownhillCollisionsV19')!=='false'}catch{}
 try{const x=JSON.parse(localStorage.getItem('sketchRallyDriveV17')||'{}');if(['shared','individual'].includes(x.policy))drivePolicy=x.policy;if(['realistic','aggressive'].includes(x.mode))sharedDrive=x.mode}catch{}
 const areaCache=new WeakMap();
 function silhouetteDensity(img){
@@ -1949,12 +1955,21 @@ function updateDriveUI(){
  $('racerDrive').disabled=!activePlayer()||locked;
  $('driveExplanation').textContent=individual?'Choose each pupil’s mode in Garage → Fine-tune.':
   sharedDrive==='realistic'?'Realistic: earlier braking and safer overtaking.':'Aggressive: later braking, tighter passes and higher crash risk.';
- if(down&&page==='race')$('raceDescription').textContent='Automatic downhill · '+(individual?'Individual Drive Modes':sharedDrive==='realistic'?'Realistic Drive':'Aggressive Drive');
+ $('downhillCollisions').checked=downhillCollisionsEnabled;
+ $('downhillCollisions').disabled=locked;
+ $('collisionHelp').textContent=downhillCollisionsEnabled?'On: cars can bump, block and spin each other.':'Off: non-contact racing; no bumping or traffic slowdown.';
+ if(down&&page==='race')$('raceDescription').textContent='Automatic downhill · '+(individual?'Individual Drive Modes':sharedDrive==='realistic'?'Realistic Drive':'Aggressive Drive')+(downhillCollisionsEnabled?' · Contact':' · Non-contact');
 }
 function persistDrive(){try{localStorage.setItem('sketchRallyDriveV17',JSON.stringify({policy:drivePolicy,mode:sharedDrive}))}catch{}}
 $('drivePolicy').addEventListener('change',e=>{if(!driveLocked()){drivePolicy=e.target.value==='individual'?'individual':'shared';persistDrive()}updateDriveUI()});
 for(const [id,m] of [['modeRealistic','realistic'],['modeAggressive','aggressive']])$(id).addEventListener('click',()=>{if(!driveLocked()){sharedDrive=m;persistDrive()}updateDriveUI()});
 $('racerDrive').addEventListener('change',e=>{if(!driveLocked()&&activePlayer())activePlayer().driveMode=e.target.value==='aggressive'?'aggressive':'realistic';updateDriveUI()});
+$('downhillCollisions').addEventListener('change',e=>{
+ if(driveLocked()){e.target.checked=downhillCollisionsEnabled;return}
+ downhillCollisionsEnabled=e.target.checked;
+ try{localStorage.setItem('sketchRallyDownhillCollisionsV19',String(downhillCollisionsEnabled))}catch{}
+ syncCourseUI();
+});
 const oldSyncCourseV17=syncCourseUI;
 syncCourseUI=function(){oldSyncCourseV17();updateDriveUI()};
 const oldRefreshPlayersV17=refreshPlayers;
@@ -1968,7 +1983,8 @@ function entrySpeed(pos,v,mode){
 }
 function targetSpeed(pos,speed,v,mode){
  const braking=v.brake*(mode==='aggressive'?.92:1),margin=mode==='aggressive'?5:18+v.bulk*14;
- const range=clamp(speed*speed/(2*braking)+115,135,350);
+ // High-speed straights require extra braking lookahead.
+ const range=clamp(speed*speed/(2*braking)+140,135,780);
  let target=v.top;
  for(let d=0;d<=range;d+=12){
   const corner=entrySpeed(pos+d,v,mode);
@@ -1979,6 +1995,8 @@ function targetSpeed(pos,speed,v,mode){
 // Passing requires enough lateral room; narrow cars can exploit smaller gaps.
 function bestLane(p,entrants,s,v){
  let front=null,gap=Infinity,desired=s.s<145?s.startLane:0;
+ // No traffic avoidance or forced slowdown in non-contact races.
+ if(!downhillCollisionsEnabled)return {lane:desired,front:null,passing:false};
  for(const other of entrants){
   const t=other.state;if(other===p||t?.status!=='racing')continue;
   const d=t.s-s.s;
@@ -2187,12 +2205,19 @@ routePreset=function(kind){
  }
  return previousRoutePresetTurbo(kind);
 };
+// Scale speed for the chosen distance and exceptionally long custom routes.
+function downhillSpeedMultiplier(){
+ const km=Math.max(1,Number(trackDistanceKm)||1);
+ const distanceBoost=.45*clamp(Math.log2(km)/Math.log2(20),0,1);
+ const routeBoost=.13*clamp(Math.max(0,(downhillGeometry?.length||0)-3300)/4700,0,1);
+ return 1+distanceBoost+routeBoost;
+}
 const priorVehicleTurbo=vehicleData;
 vehicleData=function(p){
  const v=priorVehicleTurbo(p);
  // Turbo Bowl's fast drive scale; heavy silhouettes retain the prior straight-line
  // advantage, but pay for it through inertia and longer braking distances.
- v.top=clamp(235+120*v.bulk,235,355);
+ v.top=clamp(235+120*v.bulk,235,355)*downhillSpeedMultiplier();
  v.brake=clamp(v.brake*1.27,160,365);
  v.lateral=clamp(v.lateral*1.10,400,1030);
  return v;
@@ -2236,6 +2261,7 @@ function edgeImpact(st,dt){
  st.offroad+=dt;
 }
 carContacts=function(entrants){
+ if(!downhillCollisionsEnabled)return;
  // Mass-weighted penetration response and 1.39 impact impulse, matching Sketch Battle.
  for(let i=0;i<entrants.length;i++)for(let j=i+1;j<entrants.length;j++){
   const a=entrants[i].state,b=entrants[j].state;
@@ -2277,6 +2303,7 @@ simulateDownhill=function(dt){
  // Run collision-safe substeps at 180 Hz or finer; prevents high-speed tunnelling.
  const steps=Math.max(1,Math.ceil(dt/(1/180))),h=dt/steps;
  const entrants=activeLeagueCars(),finish=downhillGeometry.length,travel=1/trackDistanceKm;
+ const longTrackAcceleration=1+.18*(downhillSpeedMultiplier()-1);
  for(let step=0;step<steps;step++){
   elapsed+=h;
   for(const p of entrants){
@@ -2302,7 +2329,7 @@ simulateDownhill=function(dt){
      goal=Math.min(goal,Math.max(20,line.front.speed+Math.max(-65,(line.gap-gap)*.9)));
    }
    const battleMass=clamp(8-v.bulk*4,4,8);
-   const thrust=525/(1+battleMass*.13); // stronger turbo acceleration
+   const thrust=525/(1+battleMass*.13)*longTrackAcceleration; // extra turbo acceleration on long courses
    const losses=7+.00014*s.speed*s.speed*(v.width/45);
    if(s.speed>goal)s.speed=Math.max(goal,s.speed-v.brake*h);
    else s.speed=Math.min(goal,s.speed+Math.max(15,thrust-losses)*h);
@@ -2368,8 +2395,8 @@ function updateDownhillTrackChoices(){
   btn.disabled=down&&driveLocked();
  }
  if(down){
-  $('trackNote').textContent='Pick Circuit Bowl or Winding Descent, or draw a custom route. High-speed impacts follow Sketch Battle momentum and collision rules.';
-  $('raceNote').textContent='Automatic racing · stronger acceleration, speed-triggered powerslides and physical collisions.';
+  $('trackNote').textContent=downhillCollisionsEnabled?'Pick Circuit Bowl or Winding Descent, or draw your own. Car-to-car collisions are on.':'Pick Circuit Bowl or Winding Descent, or draw your own. Non-contact racing is on.';
+  $('raceNote').textContent=downhillCollisionsEnabled?'Automatic racing · distance-based speed, powerslides and car-to-car impacts.':'Automatic racing · distance-based speed and powerslides, without car-to-car contact.';
  }
 }
 const previousTurboCourseUI=syncCourseUI;
