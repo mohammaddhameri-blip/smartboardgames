@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0c1422">
-<title>Sketch Battle — Battlebot Workshop v0.1</title>
+<title>Sketch Battle — Turbo Bowl v0.2</title>
 <style>
 :root{color-scheme:dark;--bg:#0b1421;--panel:#15243a;--panel2:#1d304a;--line:#33475d;--ink:#f2f7ff;--mute:#a6bad0;--lime:#c4f26b;--orange:#f7b16c;--danger:#ff8390}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 75% 0,#19334a,transparent 55%),var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -42,14 +42,14 @@ canvas{display:block;width:100%;height:100%;touch-action:none;user-select:none}
 .bot-card{background:#1a2b42;border:1px solid #405975;border-radius:14px;padding:13px}.bot-card b{font-size:15px}.bot-card small{display:block;margin:4px 0 12px;font-size:11px}.bot-card .row{margin-top:10px}.bot-card .btn{flex:1}
 .bot-icon{width:100%;height:86px;display:grid;place-items:center;border-radius:10px;background:radial-gradient(circle,#2e4960,#132536);font-size:40px}
 .arena-head{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:15px}.arena-head>label{flex:1;margin:0;min-width:105px}
-#arenaCanvas{background:#19222b}.score{display:flex;gap:10px;flex-wrap:wrap}.score span{padding:5px 9px;background:#22374b;border-radius:6px;font-size:11px;color:#d7e7f7}
+#arenaCanvas{background:#19222b}.launch-panel{padding:11px;border:1px solid #37556b;border-radius:11px;background:#162c3f;margin:9px 0}.launch-panel label{display:flex;justify-content:space-between}.launch-panel strong{color:var(--lime)}.launch-name{font-weight:900;display:flex;align-items:center;gap:7px}.launch-name small{margin-left:auto;font-weight:500;font-size:10px}.launch-dot{display:inline-block;width:10px;height:10px;border-radius:50%}.small-help{font-size:11px}.range{min-height:25px}.arena-label{display:flex;justify-content:space-between}.score{display:flex;gap:10px;flex-wrap:wrap}.score span{padding:5px 9px;background:#22374b;border-radius:6px;font-size:11px;color:#d7e7f7}
 footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
 @media(max-width:850px){.layout{grid-template-columns:1fr}.panel{max-height:none;min-height:0;order:2}.stage{order:1;min-height:0}.stage-canvas{height:49vh;min-height:310px;max-height:550px}.app{padding:11px}.header{margin-bottom:11px}.brand small{font-size:9px}.chip{font-size:9px;padding:6px 8px}h1{font-size:18px}.logo{width:38px;height:38px}.nav button{flex:1;padding:10px}.panel{padding:14px}#notice{max-width:100%}}
 </style>
 </head>
 <body>
 <div class="app">
-<header class="header"><div class="brand"><div class="logo">⚔</div><div><h1>SKETCH BATTLE</h1><small>by MrDhameri · Workshop &amp; Combat Preview</small></div></div><span class="chip">PROTOTYPE v0.1</span></header>
+<header class="header"><div class="brand"><div class="logo">⚔</div><div><h1>SKETCH BATTLE</h1><small>by MrDhameri · Turbo Bowl Arena</small></div></div><span class="chip">PROTOTYPE v0.2</span></header>
 <nav class="nav" aria-label="Game sections">
 <button class="active" data-view="workshop">🔧 Workshop</button><button data-view="garage">🤖 My Battlebots</button><button data-view="arena">⚔ Test Arena</button>
 </nav>
@@ -93,14 +93,56 @@ footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
 </div>
 <div id="arenaPanel" class="hide">
   <h2>Bowl Collision Arena</h2>
-  <p>Experimental bowl simulation: curved terrain pulls bots inward while their motors build speed. Crashes inflict most damage; weapons add impact effects.</p>
+  <p>Launch both robots at high speed into a sloped bowl. Crashes do most of the damage. Select rocks, ramps, or create your own arena.</p>
   <div class="arena-head">
    <label>Robot A<select id="selectA" class="field"></select></label>
    <label>Robot B<select id="selectB" class="field"></select></label>
   </div>
-  <button id="startDuel" class="btn primary full">⚔ Start automatic duel</button>
+  
+  <div class="section-title">01 / Arena layout</div>
+  <label for="arenaPreset">Arena preset</label>
+  <select id="arenaPreset" class="field">
+    <option value="classic">Classic Bowl · clear</option>
+    <option value="rocks">Rock Bowl</option>
+    <option value="ramps">Ramp Bowl</option>
+    <option value="mixed">Mixed Bowl</option>
+    <option value="custom">Custom Arena</option>
+  </select>
+  <div id="arenaTools" class="hide">
+    <p>Tap an obstacle to select and drag it. Add rocks or ramps anywhere inside the bowl except the starting zones.</p>
+    <div class="grid2">
+      <button id="addRock" class="btn">🪨 Add rock</button>
+      <button id="addRamp" class="btn">↗ Add ramp</button>
+      <button id="removeObstacle" class="btn warn">✕ Remove selected</button>
+      <button id="clearObstacles" class="btn warn">Clear obstacles</button>
+    </div>
+    <label for="rampRotation">Selected ramp direction <span id="rampRotationLabel">0°</span></label>
+    <input id="rampRotation" class="range" type="range" min="0" max="355" step="5" value="0">
+    <div class="grid2">
+      <button id="copyPreset" class="btn">Copy preset to custom</button>
+      <button id="saveArena" class="btn">✓ Save custom arena</button>
+    </div>
+  </div>
+  <div class="section-title" style="margin-top:19px">02 / Launch control</div>
+  <div class="launch-panel">
+    <div class="launch-name"><span class="launch-dot" style="background:#69c8ed"></span> Robot A <small>Left starting gate</small></div>
+    <label for="angleA">Direction: <strong id="angleAValue">0°</strong></label>
+    <input id="angleA" class="range" type="range" min="0" max="355" step="5" value="0">
+    <label for="powerA">Launch power: <strong id="powerAValue">90%</strong></label>
+    <input id="powerA" class="range" type="range" min="0" max="100" step="5" value="90">
+  </div>
+  <div class="launch-panel">
+    <div class="launch-name"><span class="launch-dot" style="background:#f6a76f"></span> Robot B <small>Right starting gate</small></div>
+    <label for="angleB">Direction: <strong id="angleBValue">180°</strong></label>
+    <input id="angleB" class="range" type="range" min="0" max="355" step="5" value="180">
+    <label for="powerB">Launch power: <strong id="powerBValue">90%</strong></label>
+    <input id="powerB" class="range" type="range" min="0" max="100" step="5" value="90">
+  </div>
+  <p class="small-help">0° = right, 90° = down, 180° = left, 270° = up. Arrows on the bowl show each launch direction and strength.</p>
+  <div class="section-title" style="margin-top:19px">03 / Automatic battle</div>
+  <button id="startDuel" class="btn primary full">⚔ Launch both battlebots</button>
   <button id="stopDuel" class="btn full" style="margin-top:8px">■ Stop duel</button>
-  <p>Both bots act automatically. The preview uses a 90-second timer, inward bowl gravity, velocity-based crashes and simplified component damage. It is not yet a full 3D simulator.</p>
+  <p>Both bots launch together after a 3-second countdown. The collision model uses fast substeps, and rocks and ramps affect motion and damage. 2.5D physics preview, not a full 3D simulator.</p>
   <div class="section-title" style="margin-top:22px">Battle results</div><div id="duelResult" class="stat">Choose two bots to begin.</div>
 </div>
 </aside>
@@ -115,7 +157,7 @@ footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
   <div class="stage-foot"><div id="notice" role="status">Ready. Draw a shape, or adjust the example robot.</div><div class="score" id="stageScore"><span>4 wheels</span><span>1 weapon</span></div></div>
 </main>
 </div>
-<footer>Sketch Battle v0.1 · Standalone classroom prototype · No account or external service required · Phone-to-smartboard live pairing comes later</footer>
+<footer>Sketch Battle v0.2 · Standalone classroom prototype · No account or external service required · Phone-to-smartboard live pairing comes later</footer>
 </div>
 <script>
 "use strict";
@@ -249,192 +291,341 @@ function seedBot(n){const b=defaultBot();b.id="demo"+n;b.name=n===1?"Example Alp
 function populateArena(){const options=[...roster.map(b=>({id:b.id,name:b.name})),{id:"demo1",name:"Example Alpha"},{id:"demo2",name:"Example Bravo"}];["selectA","selectB"].forEach((id,i)=>{const el=$(id),prev=el.value;el.innerHTML="";options.forEach(op=>{const option=document.createElement("option");option.value=op.id;option.textContent=op.name;el.append(option)});el.value=options.some(p=>p.id===prev)?prev:options[Math.min(i,options.length-1)].id});if(!duel)drawArenaStatic()}
 function selectedBot(id){return roster.find(b=>b.id===id)||(id==="demo1"?seedBot(1):seedBot(2))}
 function rotTo(angle,desired,max){let a=((desired-angle+Math.PI*3)%(Math.PI*2))-Math.PI;return angle+clamp(a,-max,max)}
-function fighter(bot,x,rot){
- const mid=center(bot.outline),b=bounds(bot.outline);
- const mass=clamp(area(bot.outline)/12500,1.2,10);
+// ===== TURBO BOWL v0.2: arena editor, launch control and impact combat =====
+const BOWL={cx:400,cy:250,r:220,gravity:158,drag:.105,restitution:.53};
+const ARENA_KEY="sketchBattleArenaV02",PRESET_DATA={
+ classic:[],
+ rocks:[{type:"rock",x:400,y:142,r:23},{type:"rock",x:368,y:355,r:20},{type:"rock",x:484,y:245,r:21}],
+ ramps:[{type:"ramp",x:330,y:168,angle:125},{type:"ramp",x:472,y:332,angle:300}],
+ mixed:[{type:"rock",x:388,y:144,r:21},{type:"rock",x:455,y:355,r:19},{type:"ramp",x:313,y:319,angle:305},{type:"ramp",x:500,y:174,angle:148}]
+};
+const savedArena=safeRead(ARENA_KEY,{});
+let arenaMode=["classic","rocks","ramps","mixed","custom"].includes(savedArena.mode)?savedArena.mode:"classic";
+let customObstacles=Array.isArray(savedArena.custom)?savedArena.custom.filter(validateObstacle).slice(0,18):[];
+let selectedObstacle=-1,dragObstacle=-1,arenaObstacles=[],countdownFrame=0;
+let launches={a:{angle:0,power:90},b:{angle:180,power:90}};
+if(savedArena.launches)for(const key of ["a","b"]){
+ const p=savedArena.launches[key]||{};
+ if(Number.isFinite(Number(p.angle)))launches[key].angle=clamp(Math.round(Number(p.angle)/5)*5,0,355);
+ if(Number.isFinite(Number(p.power)))launches[key].power=clamp(Math.round(Number(p.power)/5)*5,0,100);
+}
+function validateObstacle(o){return o&&["rock","ramp"].includes(o.type)&&Number.isFinite(+o.x)&&Number.isFinite(+o.y)&&
+ Number(o.x)>=60&&Number(o.x)<=740&&Number(o.y)>=60&&Number(o.y)<=440&&
+ (o.type==="rock"?Number.isFinite(+o.r)&&+o.r>=12&&+o.r<=35:Number.isFinite(+o.angle))}
+function makeObstacle(o){return o.type==="rock"?{type:"rock",x:+o.x,y:+o.y,r:clamp(+o.r,12,35)}:
+ {type:"ramp",x:+o.x,y:+o.y,angle:((+o.angle%360)+360)%360};}
+function saveArenaState(){try{localStorage.setItem(ARENA_KEY,JSON.stringify({mode:arenaMode,custom:customObstacles,launches}))}
+ catch{message("Cannot save arena settings. Browser storage may be full.","error")}}
+function applyPreset(){arenaObstacles=(arenaMode==="custom"?customObstacles:PRESET_DATA[arenaMode]).map(makeObstacle)}
+function setArenaMode(mode){
+ if(duel&&duel.running){message("Finish or stop the current duel to edit the arena.","error");return}
+ arenaMode=mode;selectedObstacle=-1;applyPreset();$("arenaPreset").value=mode;
+ $("arenaTools").classList.toggle("hide",mode!=="custom");saveArenaState();drawArenaStatic();
+}
+function validPosition(p,size=30,index=-1){
+ const r=Math.hypot(p.x-400,p.y-250);
+ if(r> BOWL.r-size-13)return false;
+ if(Math.hypot(p.x-255,p.y-250)<size+43 ||Math.hypot(p.x-545,p.y-250)<size+43)return false;
+ for(let i=0;i<arenaObstacles.length;i++)if(i!==index){
+  const o=arenaObstacles[i],rr=o.type==="rock"?o.r:25;
+  if(Math.hypot(o.x-p.x,o.y-p.y)<rr+size+5)return false}
+ return true;
+}
+function editCustom(){
+ if(arenaMode!=="custom"){customObstacles=arenaObstacles.map(o=>({...o}));arenaMode="custom";$("arenaPreset").value="custom";$("arenaTools").classList.remove("hide")}
+ applyPreset();
+}
+function addObstacle(type){
+ if(duel&&duel.running){message("Stop the duel before changing the arena.","error");return}
+ editCustom();
+ if(arenaObstacles.length>=18){message("Maximum 18 obstacles per arena.","error");return}
+ const candidates=[{x:400,y:130},{x:400,y:370},{x:316,y:165},{x:485,y:333},{x:315,y:330},{x:480,y:165},{x:390,y:102},{x:390,y:398},
+ {x:525,y:315},{x:278,y:188},{x:480,y:388},{x:330,y:120}];
+ const size=type==="rock"?23:27;
+ const pos=candidates.find(p=>validPosition(p,size));
+ if(!pos){message("No free space. Move or remove obstacles first.","error");return}
+ const obj=type==="rock"?{type,x:pos.x,y:pos.y,r:23}:{type,x:pos.x,y:pos.y,angle:40};
+ customObstacles.push(obj);selectedObstacle=customObstacles.length-1;applyPreset();syncRampControl();saveArenaState();drawArenaStatic();
+ message("Obstacle added. Drag it on the arena to position it.","ok");
+}
+function syncRampControl(){
+ const o=arenaObstacles[selectedObstacle];const isRamp=!!o&&o.type==="ramp";
+ $("rampRotation").disabled=!isRamp;$("rampRotation").value=isRamp?o.angle:0;
+ $("rampRotationLabel").textContent=isRamp?Math.round(o.angle)+"°":"Select a ramp";
+ $("removeObstacle").disabled=!o;
+}
+function initArenaControls(){
+ $("arenaPreset").value=arenaMode;applyPreset();
+ for(const [side,key] of [["A","a"],["B","b"]]){
+  for(const kind of ["angle","power"]){
+   const inp=$(kind+side);inp.value=launches[key][kind];
+   inp.oninput=()=>{launches[key][kind]=+inp.value;syncLaunchLabels();saveArenaState();if(!duel||!duel.running)drawArenaStatic()};
+  }
+ }
+ $("arenaPreset").onchange=e=>setArenaMode(e.target.value);
+ $("addRock").onclick=()=>addObstacle("rock");$("addRamp").onclick=()=>addObstacle("ramp");
+ $("copyPreset").onclick=()=>{if(duel&&duel.running)return;customObstacles=PRESET_DATA.mixed.map(o=>({...o}));arenaMode="custom";selectedObstacle=-1;applyPreset();saveArenaState();syncRampControl();drawArenaStatic();message("Mixed layout copied into Custom Arena.","ok")};
+ $("removeObstacle").onclick=()=>{if(arenaMode!=="custom"||selectedObstacle<0||duel&&duel.running)return;
+ customObstacles.splice(selectedObstacle,1);selectedObstacle=-1;applyPreset();saveArenaState();syncRampControl();drawArenaStatic()};
+ $("clearObstacles").onclick=()=>{if(duel&&duel.running)return;customObstacles=[];selectedObstacle=-1;arenaMode="custom";$("arenaPreset").value="custom";applyPreset();saveArenaState();syncRampControl();drawArenaStatic();message("Custom arena cleared.","ok")};
+ $("saveArena").onclick=()=>{saveArenaState();message("Custom arena and launch settings saved on this device.","ok")};
+ $("rampRotation").oninput=e=>{if(selectedObstacle<0||arenaMode!=="custom"||!arenaObstacles[selectedObstacle])return;
+ if(arenaObstacles[selectedObstacle].type==="ramp"){customObstacles[selectedObstacle].angle=+e.target.value;applyPreset();syncRampControl();saveArenaState();drawArenaStatic()}};
+ $("arenaTools").classList.toggle("hide",arenaMode!=="custom");syncRampControl();syncLaunchLabels();
+}
+function syncLaunchLabels(){for(const [side,k] of [["A","a"],["B","b"]]){
+ $("angle"+side+"Value").textContent=launches[k].angle+"°";
+ $("power"+side+"Value").textContent=launches[k].power+"%"}}
+function arenaPoint(ev){const r=arena.getBoundingClientRect();return{x:clamp((ev.clientX-r.left)*800/r.width,0,800),y:clamp((ev.clientY-r.top)*500/r.height,0,500)}}
+function nearestObstacle(p){let best=-1,dd=Infinity;arenaObstacles.forEach((o,i)=>{const r=o.type==="rock"?o.r+14:38,d=Math.hypot(p.x-o.x,p.y-o.y);if(d<r&&d<dd){dd=d;best=i}});return best}
+arena.addEventListener("pointerdown",ev=>{if(view!=="arena"||arenaMode!=="custom"||duel&&duel.running)return;
+ const p=arenaPoint(ev);selectedObstacle=nearestObstacle(p);dragObstacle=selectedObstacle;
+ syncRampControl();drawArenaStatic();
+ if(dragObstacle>=0){ev.preventDefault();arena.setPointerCapture(ev.pointerId)}});
+arena.addEventListener("pointermove",ev=>{if(dragObstacle<0||arenaMode!=="custom")return;
+ const p=arenaPoint(ev),o=arenaObstacles[dragObstacle],size=o.type==="rock"?o.r:28;
+ if(validPosition(p,size,dragObstacle)){customObstacles[dragObstacle].x=p.x;customObstacles[dragObstacle].y=p.y;applyPreset();drawArenaStatic()}
+});
+function releaseObstacle(){if(dragObstacle>=0){dragObstacle=-1;saveArenaState()}}
+arena.addEventListener("pointerup",releaseObstacle);arena.addEventListener("pointercancel",releaseObstacle);
+function fighter(bot,x,rot,side,angle,power){
+ const mid=center(bot.outline),b=bounds(bot.outline),mass=clamp(area(bot.outline)/12500,1.2,10);
  const top=bot.wheels.slice(0,2),rear=bot.wheels.slice(2);
  const wb=Math.abs((rear[0].y+rear[1].y-top[0].y-top[1].y)/2);
  const width=(Math.abs(bot.wheels[0].x-bot.wheels[1].x)+Math.abs(bot.wheels[2].x-bot.wheels[3].x))/2;
- const r=Math.hypot(x-400,0),side=x<400?-1:1;
- return{bot,x,y:250,rot,mass,mid,b,radius:clamp(Math.max(b.x1-b.x0,b.y1-b.y0)*.19,27,67),
- speed:clamp(130/Math.sqrt(mass),47,125),turn:clamp(3.4-wb/150,1.2,3.2),width,body:100,
- wheels:[100,100,100,100],weapon:100,cd:0,vx:0,vy:side*78,dents:[],damage:0,score:0,stun:0};
+ return {bot,x,y:250,rot,angle,power,mass,mid,b,radius:clamp(Math.max(b.x1-b.x0,b.y1-b.y0)*.17,25,58),
+ speed:clamp(330/Math.sqrt(mass/2),155,365),turn:clamp(2.9-wb/190,1.2,3),width,body:100,
+ wheels:[100,100,100,100],weapon:100,cd:0,vx:0,vy:0,air:0,prevRamp:-1,dents:[],damage:0,score:0,stun:0,side};
 }
-const BOWL={cx:400,cy:250,r:220,gravity:34,drag:.28,restitution:.62};
-function worldWheel(f,i){
- const w=f.bot.wheels[i],dx=(w.x-f.mid.x)*.40,dy=(w.y-f.mid.y)*.40;
- return{x:f.x+dx*Math.cos(f.rot)-dy*Math.sin(f.rot),y:f.y+dx*Math.sin(f.rot)+dy*Math.cos(f.rot)};
-}
-function debris(type,p,velocity){
- if(!duel)return;
- if(!duel.debris)duel.debris=[];
- duel.debris.push({type,x:p.x,y:p.y,vx:velocity.x,vy:velocity.y,t:8});
-}
-function addDamage(target,source,amount,contact){
+function launchFighter(f){const speed=(f.power/100)*350;const a=f.angle*Math.PI/180;
+ f.vx=Math.cos(a)*speed;f.vy=Math.sin(a)*speed;f.rot=a+Math.PI/2}
+function worldWheel(f,i){const w=f.bot.wheels[i],dx=(w.x-f.mid.x)*.40,dy=(w.y-f.mid.y)*.40;
+ return{x:f.x+dx*Math.cos(f.rot)-dy*Math.sin(f.rot),y:f.y+dx*Math.sin(f.rot)+dy*Math.cos(f.rot)}}
+function debris(type,p,velocity){if(!duel)return;duel.debris.push({type,x:p.x,y:p.y,vx:velocity.x,vy:velocity.y,t:7})}
+function hitDamage(target,source,amount,contact,label){
  if(amount<=0)return;
- const before=target.wheels.slice(),weaponBefore=target.weapon;
- target.body=Math.max(0,target.body-amount*.64);
- let near=0,best=Infinity;
- for(let i=0;i<4;i++){const w=worldWheel(target,i),d=dist(w,contact);if(d<best){best=d;near=i}}
- if(best<target.radius*.85)target.wheels[near]=Math.max(0,target.wheels[near]-amount*1.55);
- if(best>=target.radius*.85 || amount>9)target.weapon=Math.max(0,target.weapon-amount*.42);
- target.damage+=amount;source.score+=amount;
+ const before=target.wheels.slice(),wp=target.weapon;
+ target.body=Math.max(0,target.body-amount*.65);
+ let nearest=0,dd=Infinity;
+ for(let i=0;i<4;i++){const d=dist(worldWheel(target,i),contact);if(d<dd){dd=d;nearest=i}}
+ if(dd<target.radius*.90)target.wheels[nearest]=Math.max(0,target.wheels[nearest]-amount*1.55);
+ if(dd>=target.radius*.90||amount>9)target.weapon=Math.max(0,target.weapon-amount*.5);
+ target.damage+=amount;if(source)source.score+=amount;
+ if(label&&duel)duel.hits[label]=(duel.hits[label]||0)+amount;
  for(let i=0;i<4;i++)if(before[i]>0&&target.wheels[i]===0){
-  const p=worldWheel(target,i);debris("wheel",p,{x:target.vx*.6+(p.x-target.x)*.9,y:target.vy*.6+(p.y-target.y)*.9});
- }
- if(weaponBefore>0&&target.weapon===0)debris("weapon",{x:target.x,y:target.y},{x:target.vx+20,y:target.vy-20});
- const lx=(contact.x-target.x)*Math.cos(-target.rot)-(contact.y-target.y)*Math.sin(-target.rot);
- const ly=(contact.x-target.x)*Math.sin(-target.rot)+(contact.y-target.y)*Math.cos(-target.rot);
+ const p=worldWheel(target,i);debris("wheel",p,{x:target.vx*.65+(p.x-target.x),y:target.vy*.65+(p.y-target.y)})}
+ if(wp>0&&target.weapon===0)debris("weapon",{x:target.x,y:target.y},{x:target.vx*.7+20,y:target.vy*.7-15});
+ const dx=contact.x-target.x,dy=contact.y-target.y;
+ const lx=dx*Math.cos(-target.rot)-dy*Math.sin(-target.rot),ly=dx*Math.sin(-target.rot)+dy*Math.cos(-target.rot);
  target.dents.push({x:lx/.4,y:ly/.4});if(target.dents.length>14)target.dents.shift();
 }
+function crashDamage(energy){return clamp(Math.max(0,energy-1800)/9200,0,32)}
 function startDuel(){
  const a=selectedBot($("selectA").value),b=selectedBot($("selectB").value);
- if(a.id===b.id){message("Select two different robots.","error");return}
- duel={bots:[fighter(a,255,Math.PI/2),fighter(b,545,-Math.PI/2)],remain:90,running:true,winner:null,debris:[],clock:0};
- last=0;$("duelResult").textContent="Bowl clash underway…";
+ if(a.id===b.id){message("Choose two different battlebots.","error");return}
+ selectedObstacle=-1;syncRampControl();
+ duel={bots:[fighter(a,255,Math.PI/2,"a",launches.a.angle,launches.a.power),
+ fighter(b,545,-Math.PI/2,"b",launches.b.angle,launches.b.power)],remain:90,running:true,winner:null,debris:[],clock:0,countdown:3,hits:{}};
+ last=0;$("duelResult").textContent="Preparing simultaneous launch…";
  if(!raf)raf=requestAnimationFrame(tick);
- message("Robots are circulating the bowl. High-speed collisions cause the most damage.","ok");
+ message("3… 2… 1… LAUNCH! Robots retain the momentum from your chosen launch settings.","ok");
 }
 function tick(now){
  raf=0;
- if(!duel||!duel.running||view!=="arena"){drawArenaStatic();return}
- if(last){const dt=Math.min(.045,(now-last)/1000);const substeps=Math.max(1,Math.ceil(dt/(1/120)));
- for(let i=0;i<substeps&&duel.running;i++)stepDuel(dt/substeps)}
+ if(!duel||!duel.running||view!=="arena"){if(view==="arena")drawArenaStatic();return}
+ if(last){const frame=Math.min(.05,(now-last)/1000);if(duel.countdown>0){
+ duel.countdown=Math.max(0,duel.countdown-frame);
+ if(duel.countdown===0)duel.bots.forEach(launchFighter);
+ }else{const steps=Math.max(1,Math.ceil(frame/(1/180))),dt=frame/steps;
+ for(let i=0;i<steps&&duel.running;i++)stepDuel(dt);}}
  last=now;drawDuel();if(duel.running)raf=requestAnimationFrame(tick);
+}
+function setInsideBowl(f){const ox=f.x-BOWL.cx,oy=f.y-BOWL.cy,d=Math.hypot(ox,oy)||1;
+ const wall=BOWL.r-f.radius*.48;
+ if(d<=wall)return;
+ const nx=ox/d,ny=oy/d,relative=f.vx*nx+f.vy*ny;
+ f.x=BOWL.cx+nx*wall;f.y=BOWL.cy+ny*wall;
+ if(relative>0){
+ f.vx-=nx*relative*(1+BOWL.restitution);f.vy-=ny*relative*(1+BOWL.restitution);
+ const energy=.5*f.mass*relative*relative;
+ const damage=crashDamage(energy)*.55;
+ if(damage>0)hitDamage(f,null,damage,{x:f.x+nx*f.radius*.4,y:f.y+ny*f.radius*.4},"wall");
+ }
+}
+function hitRock(f,o){
+ if(f.air>.14)return;
+ const dx=f.x-o.x,dy=f.y-o.y,d=Math.hypot(dx,dy)||.001,min=f.radius*.55+o.r;
+ if(d>=min)return;
+ const nx=dx/d,ny=dy/d,into=f.vx*nx+f.vy*ny;
+ f.x+=nx*(min-d);f.y+=ny*(min-d);
+ if(into<0){
+ f.vx-=nx*into*1.55;f.vy-=ny*into*1.55;
+ const energy=.5*f.mass*into*into;
+ const damage=crashDamage(energy)*.88;
+ if(damage>0)hitDamage(f,null,damage,{x:f.x-nx*f.radius*.45,y:f.y-ny*f.radius*.45},"rock");
+ }
+}
+function hitRamp(f,o,i,dt){
+ const a=o.angle*Math.PI/180,dx=f.x-o.x,dy=f.y-o.y;
+ const along=dx*Math.cos(a)+dy*Math.sin(a),across=-dx*Math.sin(a)+dy*Math.cos(a);
+ if(Math.abs(along)>39||Math.abs(across)>24)return false;
+ const alongV=f.vx*Math.cos(a)+f.vy*Math.sin(a);
+ // Arrow points downhill. Approaching from the high edge gains speed and may briefly hop.
+ if(f.air<=0){const boost=120*dt;f.vx+=Math.cos(a)*boost;f.vy+=Math.sin(a)*boost;
+ if(along>24&&alongV>95&&f.prevRamp!==i){f.air=.28;f.prevRamp=i}}
+ return true;
 }
 function stepDuel(dt){
  duel.clock+=dt;duel.remain=Math.max(0,duel.remain-dt);
  const bots=duel.bots;
- bots.forEach((f,i)=>{
-  const enemy=bots[1-i],dx=enemy.x-f.x,dy=enemy.y-f.y,d=Math.hypot(dx,dy)||1;
-  const active=f.wheels.filter(h=>h>0).length,motor=active/4;
-  const rcx=f.x-BOWL.cx,rcy=f.y-BOWL.cy,r=Math.hypot(rcx,rcy)||1;
-  // Tangential clockwise approach is mixed with target seeking. Bowl slope pulls downhill naturally.
-  const tangent={x:-rcy/r,y:rcx/r},seek={x:dx/d,y:dy/d};
-  const ring=clamp((r-75)/170,0,1),orbitWeight=.18+.48*ring;
-  let tx=tangent.x*orbitWeight+seek.x*(1-orbitWeight);
-  let ty=tangent.y*orbitWeight+seek.y*(1-orbitWeight);
-  const targetHeading=Math.atan2(ty,tx)+Math.PI/2;
-  f.rot=rotTo(f.rot,targetHeading,f.turn*dt*Math.max(.15,motor));
-  const heading={x:Math.sin(f.rot),y:-Math.cos(f.rot)};
-  const accel=(200/(1+f.mass*.20))*motor*(f.stun>0?.25:1);
-  f.vx+=heading.x*accel*dt;f.vy+=heading.y*accel*dt;
-  // Parabolic bowl height h(r)=k(r/R)^2 -> inward gravity proportional to radius.
-  f.vx-=BOWL.gravity*(rcx/BOWL.r)*dt;
-  f.vy-=BOWL.gravity*(rcy/BOWL.r)*dt;
-  const damping=Math.exp(-BOWL.drag*dt);f.vx*=damping;f.vy*=damping;
-  const limit=f.speed*1.4,speed=Math.hypot(f.vx,f.vy);
-  if(speed>limit){f.vx*=limit/speed;f.vy*=limit/speed}
-  f.x+=f.vx*dt;f.y+=f.vy*dt;
-  f.cd=Math.max(0,f.cd-dt);f.stun=Math.max(0,f.stun-dt);
-  // Circular metal wall: resolve overlap and rebound along the surface normal.
-  const ox=f.x-BOWL.cx,oy=f.y-BOWL.cy,rr=Math.hypot(ox,oy)||1;
-  const wallR=BOWL.r-f.radius*.4;
-  if(rr>wallR){
-   const nx=ox/rr,ny=oy/rr,into=f.vx*nx+f.vy*ny;
-   f.x=BOWL.cx+nx*wallR;f.y=BOWL.cy+ny*wallR;
-   if(into>0){
-    f.vx-=(1+BOWL.restitution)*into*nx;f.vy-=(1+BOWL.restitution)*into*ny;
-    if(into>58)f.body=Math.max(0,f.body-(into-58)*.055);
-   }
-  }
- });
- const a=bots[0],b=bots[1],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;
- const min=a.radius*.55+b.radius*.55+14;
- if(d<min){
-  const nx=dx/d,ny=dy/d,penetration=min-d,total=a.mass+b.mass;
-  a.x-=nx*penetration*b.mass/total;b.x+=nx*penetration*a.mass/total;
-  a.y-=ny*penetration*b.mass/total;b.y+=ny*penetration*a.mass/total;
-  const relative=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
-  if(relative<0){
-   const reduced=a.mass*b.mass/(a.mass+b.mass),closing=-relative;
-   const restitution=.40;
-   const impulse=-(1+restitution)*relative*reduced;
-   a.vx-=impulse*nx/a.mass;a.vy-=impulse*ny/a.mass;
-   b.vx+=impulse*nx/b.mass;b.vy+=impulse*ny/b.mass;
-   // Collision energy dominates damage. Weapon impact adds a situational modifier.
-   const impactEnergy=.5*reduced*closing*closing;
-   const crashDamage=clamp(Math.max(0,impactEnergy-100)*.0012,0,27);
-   const contactA={x:a.x+nx*a.radius*.5,y:a.y+ny*a.radius*.5};
-   const contactB={x:b.x-nx*b.radius*.5,y:b.y-ny*b.radius*.5};
-   const bonus=(attacker,victim,normal)=>{
-    if(attacker.weapon<=0)return 0;
-    const w=attacker.bot.weapon.type;
-    const aimX=Math.sin(attacker.rot+(attacker.bot.weapon.angle+90)*Math.PI/180);
-    const aimY=-Math.cos(attacker.rot+(attacker.bot.weapon.angle+90)*Math.PI/180);
-    const facing=aimX*normal.x+aimY*normal.y;
-    if(facing<.48)return 0;
-    if(w==="hammer"&&attacker.cd<=0){attacker.cd=2.5;return 4}
-    if(w==="slasher"&&attacker.cd<=0){attacker.cd=.65;return 2.6}
-    if(w==="drill")return Math.min(2,closing*.02);
-    return 0;
-   };
-   const boostA=bonus(a,b,{x:nx,y:ny}),boostB=bonus(b,a,{x:-nx,y:-ny});
-   if(crashDamage>0||boostA||boostB){
-    addDamage(a,b,crashDamage+boostB,contactA);
-    addDamage(b,a,crashDamage+boostA,contactB);
-    a.stun=clamp(closing/450,0,.3);b.stun=a.stun;
-   }
-  }
+ for(let i=0;i<2;i++){
+ const f=bots[i],enemy=bots[1-i],ex=enemy.x-f.x,ey=enemy.y-f.y,ed=Math.hypot(ex,ey)||1;
+ const active=f.wheels.filter(h=>h>0).length,motor=active/4;
+ const rx=f.x-BOWL.cx,ry=f.y-BOWL.cy,r=Math.hypot(rx,ry)||1;
+ const tangent={x:-ry/r,y:rx/r},seek={x:ex/ed,y:ey/ed},ring=clamp((r-65)/170,0,1);
+ const orbit=.15+.42*ring,dx=tangent.x*orbit+seek.x*(1-orbit),dy=tangent.y*orbit+seek.y*(1-orbit);
+ const desired=Math.atan2(dx,-dy);
+ // Protect launch direction in the opening two seconds, then let autonomous steering take over.
+ const steering=clamp((duel.clock-1)/2,0,1);
+ f.rot=rotTo(f.rot,desired,f.turn*dt*motor*steering*(f.stun>0?.4:1));
+ const hx=Math.sin(f.rot),hy=-Math.cos(f.rot);
+ const thrust=(350/(1+f.mass*.16))*motor*(f.air>0?.13:1)*(f.stun>0?.4:1);
+ f.vx+=hx*thrust*dt;f.vy+=hy*thrust*dt;
+ // Parabolic slope is an inward acceleration. Momentum is retained while descending and circling.
+ f.vx-=BOWL.gravity*(rx/BOWL.r)*dt;f.vy-=BOWL.gravity*(ry/BOWL.r)*dt;
+ let onRamp=false;
+ for(let j=0;j<arenaObstacles.length;j++){const o=arenaObstacles[j];
+ if(o.type==="ramp"&&hitRamp(f,o,j,dt))onRamp=true}
+ if(!onRamp)f.prevRamp=-1;
+ if(f.air>0){f.air=Math.max(0,f.air-dt);
+ if(f.air===0){const landing=crashDamage(.5*f.mass*Math.pow(Math.hypot(f.vx,f.vy)*.40,2))*.5;
+ if(landing>1)hitDamage(f,null,landing,{x:f.x,y:f.y},"landing")}}
+ const damp=Math.exp(-(BOWL.drag+(onRamp?.015:0))*dt);f.vx*=damp;f.vy*=damp;
+ const maxSpeed=f.speed*1.52,v=Math.hypot(f.vx,f.vy);
+ if(v>maxSpeed){f.vx*=maxSpeed/v;f.vy*=maxSpeed/v}
+ f.x+=f.vx*dt;f.y+=f.vy*dt;
+ for(const o of arenaObstacles)if(o.type==="rock")hitRock(f,o);
+ setInsideBowl(f);
+ f.cd=Math.max(0,f.cd-dt);f.stun=Math.max(0,f.stun-dt);
  }
- (duel.debris||[]).forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.exp(-2*dt);p.vy*=Math.exp(-2*dt);p.t-=dt});
+ // Bot-to-bot impulse, with fixed 180 Hz substeps to reduce high-speed tunneling.
+ const a=bots[0],b=bots[1],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.001;
+ const min=a.radius*.60+b.radius*.60+12;
+ if(d<min && a.air<.17 && b.air<.17){
+ const nx=dx/d,ny=dy/d,penetration=min-d,total=a.mass+b.mass;
+ a.x-=nx*penetration*b.mass/total;b.x+=nx*penetration*a.mass/total;
+ a.y-=ny*penetration*b.mass/total;b.y+=ny*penetration*a.mass/total;
+ const relative=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+ if(relative<0){
+ const reduced=a.mass*b.mass/(total),closing=-relative,impulse=-(1+.39)*relative*reduced;
+ a.vx-=impulse*nx/a.mass;a.vy-=impulse*ny/a.mass;
+ b.vx+=impulse*nx/b.mass;b.vy+=impulse*ny/b.mass;
+ const impactEnergy=.5*reduced*closing*closing;
+ const crash=crashDamage(impactEnergy);
+ const bonus=(attacker,normal)=>{
+ if(attacker.weapon<=0)return 0;
+ const weaponAngle=attacker.rot+(attacker.bot.weapon.angle+90)*Math.PI/180;
+ const face=Math.sin(weaponAngle)*normal.x-Math.cos(weaponAngle)*normal.y;
+ if(face<.45)return 0;
+ if(attacker.bot.weapon.type==="hammer"&&attacker.cd===0){attacker.cd=2.5;return 3.4}
+ if(attacker.bot.weapon.type==="slasher"&&attacker.cd===0){attacker.cd=.65;return 2.2}
+ if(attacker.bot.weapon.type==="drill")return Math.min(1.7,closing*.008);
+ return 0};
+ const ba=bonus(a,{x:nx,y:ny}),bb=bonus(b,{x:-nx,y:-ny});
+ const ca={x:a.x+nx*a.radius*.5,y:a.y+ny*a.radius*.5},cb={x:b.x-nx*b.radius*.5,y:b.y-ny*b.radius*.5};
+ if(crash+bb>0)hitDamage(a,b,crash+bb,ca,"bot");
+ if(crash+ba>0)hitDamage(b,a,crash+ba,cb,"bot");
+ a.stun=Math.max(a.stun,clamp(closing/1300,0,.19));b.stun=Math.max(b.stun,a.stun);
+ }
+ }
+ for(const p of duel.debris){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.exp(-2*dt);p.vy*=Math.exp(-2*dt);p.t-=dt}
  duel.debris=duel.debris.filter(p=>p.t>0);
- const knocked=bots.map(f=>f.body<=0||f.wheels.filter(x=>x>0).length<=1);
- if(knocked[0]||knocked[1]||duel.remain<=0){
-  duel.running=false;
-  const score=f=>f.body*.60+f.wheels.reduce((s,n)=>s+n,0)*.08+f.weapon*.08+f.score*.65;
-  const winner=knocked[0]&&!knocked[1]?b:knocked[1]&&!knocked[0]?a:score(a)>score(b)+.01?a:score(b)>score(a)+.01?b:null;
-  duel.winner=winner?winner.bot.name:"Draw";
-  $("duelResult").textContent=(winner?"Winner: "+winner.bot.name:"Draw")+" · "+(90-duel.remain).toFixed(1)+"s · "+
-    "Crash damage A/B: "+Math.round(a.damage)+"/"+Math.round(b.damage);
-  message("Bowl collision duel completed. Impact-based physics remains an experimental approximation.","ok");
+ const ko=bots.map(f=>f.body<=0||f.wheels.filter(w=>w>0).length<=1);
+ if(ko[0]||ko[1]||duel.remain<=0){
+ duel.running=false;
+ const score=f=>f.body*.6+f.wheels.reduce((s,n)=>s+n,0)*.08+f.weapon*.07+f.score*.6;
+ const winner=ko[0]&&!ko[1]?b:ko[1]&&!ko[0]?a:score(a)>score(b)+.01?a:score(b)>score(a)+.01?b:null;
+ duel.winner=winner?winner.bot.name:"Draw";
+ $("duelResult").textContent=(winner?"Winner: "+winner.bot.name:"Draw")+" · "+(90-duel.remain).toFixed(1)+" s · "+
+ "Damage taken "+a.bot.name+": "+Math.round(a.damage)+", "+b.bot.name+": "+Math.round(b.damage)+
+ " · rock impacts "+Math.round(duel.hits.rock||0);
+ message("Battle completed. The prototype uses simplified 2.5D impact physics.","ok");
  }
 }
 function arenaBackground(){
  ac.fillStyle="#101b29";ac.fillRect(0,0,W,H);
  const g=ac.createRadialGradient(400,250,15,400,250,225);
- g.addColorStop(0,"#253340");g.addColorStop(.23,"#3a4955");g.addColorStop(.53,"#536571");g.addColorStop(.84,"#82929b");g.addColorStop(1,"#adb9bd");
+ g.addColorStop(0,"#243842");g.addColorStop(.25,"#334956");g.addColorStop(.57,"#596e79");g.addColorStop(.88,"#899ba4");g.addColorStop(1,"#c0ced0");
  ac.fillStyle=g;ac.beginPath();ac.arc(400,250,220,0,Math.PI*2);ac.fill();
- // Shaded floor contours help pupils perceive the bowl's inward slope.
- [45,85,125,165,200].forEach((r,i)=>{ac.strokeStyle="rgba(223,239,246,"+(.10+i*.025)+")";ac.lineWidth=2;ac.beginPath();ac.arc(400,250,r,0,Math.PI*2);ac.stroke()});
- ac.beginPath();ac.arc(400,250,22,0,Math.PI*2);ac.strokeStyle="#273b49";ac.lineWidth=4;ac.stroke();
- ac.beginPath();ac.arc(400,250,220,0,Math.PI*2);ac.strokeStyle="#0a1017";ac.lineWidth=18;ac.stroke();
- ac.beginPath();ac.arc(400,250,208,0,Math.PI*2);ac.strokeStyle="#d8e7ed";ac.lineWidth=3;ac.stroke();
- ac.fillStyle="#c3d1dc";ac.font="11px system-ui";ac.fillText("BOWL ARENA · COLLISION ZONE",16,25);
+ [40,85,130,175,205].forEach((r,i)=>{ac.strokeStyle="rgba(229,244,249,"+(.08+i*.04)+")";ac.lineWidth=2;ac.beginPath();ac.arc(400,250,r,0,Math.PI*2);ac.stroke()});
+ ac.strokeStyle="#0b1219";ac.lineWidth=17;ac.beginPath();ac.arc(400,250,220,0,Math.PI*2);ac.stroke();
+ ac.strokeStyle="#b6c9cf";ac.lineWidth=3;ac.beginPath();ac.arc(400,250,208,0,Math.PI*2);ac.stroke();
+ ac.fillStyle="#d4e7ef";ac.font="bold 12px system-ui";ac.fillText("TURBO BOWL · "+arenaMode.toUpperCase(),13,22);
+}
+function drawObstacles(){
+ for(let i=0;i<arenaObstacles.length;i++){
+ const o=arenaObstacles[i];ac.save();ac.translate(o.x,o.y);
+ if(o.type==="rock"){
+ ac.fillStyle="#121b22aa";ac.beginPath();ac.ellipse(5,7,o.r+6,o.r*.80,0,0,Math.PI*2);ac.fill();
+ ac.fillStyle="#67747b";ac.strokeStyle="#2f3942";ac.lineWidth=3;ac.beginPath();
+ for(let p=0;p<9;p++){const a=p*Math.PI*2/9,r=o.r*(p%3===0?.86:p%2===0?1.07:.95);if(p===0)ac.moveTo(Math.cos(a)*r,Math.sin(a)*r);else ac.lineTo(Math.cos(a)*r,Math.sin(a)*r)}ac.closePath();ac.fill();ac.stroke();
+ ac.fillStyle="#aebec5";ac.beginPath();ac.moveTo(-o.r*.4,-o.r*.6);ac.lineTo(o.r*.25,-o.r*.75);ac.lineTo(o.r*.6,-o.r*.1);ac.lineTo(-o.r*.15,0);ac.closePath();ac.fill();
+ }else{
+ ac.rotate(o.angle*Math.PI/180);
+ ac.fillStyle="#141d26aa";ac.fillRect(-34+5,-23+6,68,46);
+ const ramp=ac.createLinearGradient(-32,0,32,0);ramp.addColorStop(0,"#3b515f");ramp.addColorStop(1,"#debc76");
+ ac.fillStyle=ramp;ac.fillRect(-34,-23,68,46);ac.strokeStyle="#eef3f6";ac.lineWidth=2;ac.strokeRect(-34,-23,68,46);
+ ac.strokeStyle="#182b38";ac.lineWidth=4;ac.beginPath();ac.moveTo(-18,0);ac.lineTo(18,0);ac.stroke();
+ ac.beginPath();ac.moveTo(8,-9);ac.lineTo(19,0);ac.lineTo(8,9);ac.stroke();
+ }
+ if(arenaMode==="custom"&&selectedObstacle===i&&(!duel||!duel.running)){
+ ac.strokeStyle="#c4f26b";ac.lineWidth=3;ac.setLineDash([6,4]);ac.strokeRect(-39,-32,78,64);ac.setLineDash([])}
+ ac.restore();
+ }
+}
+function arrow(c,x,y,deg,power,colour){
+ c.save();c.translate(x,y);c.rotate(deg*Math.PI/180);
+ const len=24+power*.52;c.strokeStyle=colour;c.lineWidth=5;c.lineCap="round";c.beginPath();c.moveTo(0,0);c.lineTo(len,0);c.moveTo(len-13,-10);c.lineTo(len,0);c.lineTo(len-13,10);c.stroke();c.restore();
 }
 function drawFighter(f){
- const c=ac,s=.40;c.save();c.translate(f.x,f.y);c.rotate(f.rot);c.scale(s,s);c.translate(-f.mid.x,-f.mid.y);
- const p=f.bot.outline;c.beginPath();c.moveTo(p[0].x,p[0].y);p.slice(1).forEach(a=>c.lineTo(a.x,a.y));c.closePath();
- c.fillStyle=f.bot.color;c.fill();c.strokeStyle="#f2f5fb";c.lineWidth=5;c.stroke();
- f.dents.forEach(hit=>{c.strokeStyle="#5c3f47";c.lineWidth=9;c.beginPath();c.moveTo(f.mid.x+hit.x-8,f.mid.y+hit.y-5);c.lineTo(f.mid.x+hit.x+8,f.mid.y+hit.y+5);c.stroke()});
- drawWheels(c,f.bot,1,f.wheels);
- if(f.weapon>0)drawWeapon(c,f.bot.weapon,f.bot.weapon.type,f.bot.weapon.angle,1,f.weapon);
- c.restore();
- ac.fillStyle="#0b1421";ac.fillRect(f.x-52,f.y-f.radius*.60-29,104,19);
- ac.fillStyle=f.bot.color;ac.fillRect(f.x-50,f.y-f.radius*.60-27,100*f.body/100,5);
- ac.fillStyle="#f4f8ff";ac.font="bold 11px system-ui";ac.textAlign="center";
- ac.fillText(f.bot.name.slice(0,17),f.x,f.y-f.radius*.60-11);ac.textAlign="start";
+ const c=ac,s=.4;c.save();c.translate(f.x,f.y);
+ if(f.air>0){c.fillStyle="#151e2588";c.beginPath();c.ellipse(7,10,f.radius*.65,f.radius*.4,0,0,Math.PI*2);c.fill();c.translate(0,-f.air*30)}
+ c.rotate(f.rot);c.scale(s,s);c.translate(-f.mid.x,-f.mid.y);
+ const p=f.bot.outline;c.beginPath();c.moveTo(p[0].x,p[0].y);p.slice(1).forEach(v=>c.lineTo(v.x,v.y));c.closePath();
+ c.fillStyle=f.bot.color;c.fill();c.strokeStyle="#eaf5fa";c.lineWidth=5;c.stroke();
+ f.dents.forEach(hit=>{c.strokeStyle="#614d4e";c.lineWidth=9;c.beginPath();c.moveTo(f.mid.x+hit.x-8,f.mid.y+hit.y-6);c.lineTo(f.mid.x+hit.x+8,f.mid.y+hit.y+6);c.stroke()});
+ drawWheels(c,f.bot,1,f.wheels);if(f.weapon>0)drawWeapon(c,f.bot.weapon,f.bot.weapon.type,f.bot.weapon.angle,1,f.weapon);
+ c.restore();ac.fillStyle="#0e1b2b";ac.fillRect(f.x-54,f.y-f.radius*.67-29,108,21);
+ ac.fillStyle=f.bot.color;ac.fillRect(f.x-51,f.y-f.radius*.67-26,102*f.body/100,5);
+ ac.font="bold 11px system-ui";ac.fillStyle="#f7fcff";ac.textAlign="center";ac.fillText(f.bot.name.slice(0,16),f.x,f.y-f.radius*.67-11);ac.textAlign="left";
 }
 function drawDuel(){
- arenaBackground();duel.bots.forEach(drawFighter);
- (duel.debris||[]).forEach(p=>{ac.save();ac.translate(p.x,p.y);ac.rotate(p.t*2);ac.fillStyle=p.type==="wheel"?"#1a222b":"#efb66e";ac.strokeStyle="#c3d4d9";ac.lineWidth=2;ac.fillRect(-7,-7,14,14);ac.strokeRect(-7,-7,14,14);ac.restore()});
- ac.fillStyle="#f6fbff";ac.font="bold 24px system-ui";ac.textAlign="center";
- ac.fillText(Math.ceil(duel.remain)+"s",400,27);ac.textAlign="start";
- $("stageScore").innerHTML="<span>Auto AI</span><span>Crash damage</span><span>"+Math.ceil(duel.remain)+"s</span>";
+ arenaBackground();drawObstacles();duel.bots.forEach(drawFighter);
+ for(const p of duel.debris){ac.save();ac.translate(p.x,p.y);ac.rotate(p.t*2);ac.fillStyle=p.type==="wheel"?"#131b27":"#efb66e";ac.strokeStyle="#cfdae4";ac.fillRect(-7,-7,14,14);ac.strokeRect(-7,-7,14,14);ac.restore()}
+ if(duel.countdown>0){
+ ac.fillStyle="#c4f26b";ac.font="bold 75px system-ui";ac.textAlign="center";ac.fillText(Math.ceil(duel.countdown),400,275);ac.textAlign="left";
+ }else{
+ ac.fillStyle="#fff";ac.font="bold 25px system-ui";ac.textAlign="center";ac.fillText(Math.ceil(duel.remain)+"s",400,28);ac.textAlign="left";
+ }
+ $("stageScore").innerHTML="<span>Automatic</span><span>"+Math.ceil(duel.remain)+"s</span><span>Turbo impact</span>";
 }
 function drawArenaStatic(){
- arenaBackground();
+ arenaBackground();drawObstacles();
  const a=selectedBot($("selectA").value||"demo1"),b=selectedBot($("selectB").value||"demo2");
- drawFighter(fighter(a,255,Math.PI/2));drawFighter(fighter(b,545,-Math.PI/2));
- $("stageScore").innerHTML="<span>Bowl terrain</span><span>90 sec</span><span>Impact damage</span>";
+ drawFighter(fighter(a,255,(launches.a.angle+90)*Math.PI/180,"a",launches.a.angle,launches.a.power));
+ drawFighter(fighter(b,545,(launches.b.angle+90)*Math.PI/180,"b",launches.b.angle,launches.b.power));
+ arrow(ac,255,250,launches.a.angle,launches.a.power,"#72d1ff");
+ arrow(ac,545,250,launches.b.angle,launches.b.power,"#ffbb78");
+ $("stageScore").innerHTML="<span>"+arenaMode+" bowl</span><span>Launch A "+launches.a.power+"%</span><span>Launch B "+launches.b.power+"%</span>";
 }
+// ===== end Turbo Bowl engine =====
 $("startDuel").onclick=()=>{if(view!=="arena")setView("arena");startDuel()};
-$("stopDuel").onclick=()=>{if(duel)duel.running=false;message("Duel stopped.");drawArenaStatic()};
-$("selectA").onchange=()=>{duel=null;drawArenaStatic()};$("selectB").onchange=()=>{duel=null;drawArenaStatic()};
+$("stopDuel").onclick=()=>{if(duel)duel.running=false;duel=null;message("Duel stopped. Configure the next launch.");drawArenaStatic()};
+$("selectA").onchange=()=>{if(duel)duel.running=false;duel=null;drawArenaStatic()};$("selectB").onchange=()=>{if(duel)duel.running=false;duel=null;drawArenaStatic()};
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{if(duel)duel.running=false;setView(b.dataset.view)});
 const saved=safeRead(KEY,null);if(saved){const b=cleanBot(saved);if(b)draft=b}
 roster=safeRead(ROSTER,[]);if(!Array.isArray(roster))roster=[];roster=roster.slice(0,250).map(cleanBot).filter(Boolean);
-sync();setView("workshop");
+initArenaControls();sync();setView("workshop");
 })();
 </script>
 </body>
