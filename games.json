@@ -1,7 +1,7 @@
 [
   {
-    "name": "Sketch Battle (Turbo Bowl v0.2)",
-    "description": "Draw and equip battlebots, launch them at high speed into a bowl, and create rock-and-ramp combat arenas.",
+    "name": "Sketch Battle (Weapon Combat v0.3)",
+    "description": "Build battlebots with animated drills, hammers and slashers, then launch them into customizable turbo bowl arenas.",
     "category": "Creative STEM",
     "icon": "⚔️",
     "path": "sketch-battle/",
