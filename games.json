@@ -1,5 +1,13 @@
 [
   {
+    "name": "Sketch Battle (Prototype)",
+    "description": "Draw or scan battlebots, fit four wheels and a weapon, then test an automatic duel preview.",
+    "category": "Creative STEM",
+    "icon": "⚔️",
+    "path": "sketch-battle/",
+    "published": true
+  },
+  {
     "name": "Sketch Boat (Prototype)",
     "description": "Draw a boat and race automatically in an early top-down water-physics prototype.",
     "category": "Creative STEM",
