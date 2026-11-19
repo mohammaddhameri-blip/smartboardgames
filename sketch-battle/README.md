@@ -1,32 +1,40 @@
-# Sketch Battle — Prototype v0.1
+# Sketch Battle — Turbo Bowl Prototype v0.2
 
-A standalone, mobile-friendly HTML5 Sketch Battle prototype for the smartboardgames collection.
+Sketch Battle is an automatic 1v1 battlebot game in the `smartboardgames` collection. Pupils draw or scan their chassis, move four standardized wheels, mount one drill/hammer/slasher weapon, and launch their robots into a concave bowl arena.
 
-## What works
+## What is implemented
 
-- Draw a pupil-designed chassis with a freehand stroke or a series of polygon points.
-- Import a camera photo or existing image. The auto-trace attempts a **rough convex outline** from dark pixels; clean paper and manual vertex correction are often needed.
-- Drag four identical wheels to positions around the chassis.
-- Select drill, hammer, or slasher, drag its mounting position, and rotate the attachment.
-- Validate basic mounting geometry. A wheel or weapon must stay near the body edge and avoid other mounts.
-- Name, colour, save, reopen, delete, export and import battlebots locally.
-- Export a workshop PNG.
-- Try a simple automatic 1v1 combat **preview** with basic navigation, impacts, weapon-specific hits, component health and 90-second timer.
+### Workshop and garage (retained from v0.1)
+- Freehand and point-by-point body drawing, editable vertices, photo import with rough outline tracing.
+- Four movable standardized wheels, weapon placement and orientation, basic mounting checks.
+- Local browser battlebot library, JSON import/export, design PNG export.
 
-## Known limitations
+### Turbo Bowl v0.2
+- Faster, momentum-driven automatic combat inside a simulated bowl with inward acceleration and wall rebounds.
+- **Independent pre-match launch controls** for Robot A and Robot B: directions from 0–355° and powers from 0–100%. Two fixed opposing gates. Initial arrows show directions/power.
+- **Three-second countdown and simultaneous launch**. Launch direction influences the initial trajectory before AI steering takes over.
+- Faster fixed-step physics (up to 180 Hz substeps) to reduce missed high-speed collisions.
+- Impact-energy-based damage from bot collisions, rock impacts and high-speed wall hits; weapon hits remain smaller bonuses.
+- **Arena choices**: Classic (no obstacles), Rocks, Ramps, Mixed, or Custom.
+- **Interactive custom arena editor**: add rocks and ramps, select and drag them, rotate a selected ramp, remove or clear obstacles, copy the last preset, and persist your custom layout on this browser.
+- Rocks rebound robots and may damage parts. Ramps accelerate robots in the indicated downhill direction and can briefly lift them with simplified landing damage.
+- Separate wheels, weapon and chassis health; visual dents and falling debris for disabled components.
 
-This is **not the finished physical combat engine**. The duel preview approximates movement, mounting effects, collisions, and damage. Detailed 3D flipping, fracture mechanics, detached rigid-body debris, validated material mechanics and precise weapon contact must be developed and tested later.
+## How to test
+1. Open the Workshop tab. Save at least two unique battlebots, or use the two provided example robots.
+2. Open **Test Arena**. Choose Robot A and Robot B.
+3. Select Classic, Rock, Ramp, Mixed or Custom.
+4. Set each robot's **direction and launch power**. A direction of 0° means right, 90° down, 180° left, and 270° up. Arrows show each selection.
+5. Choose **Launch both battlebots** and observe the countdown and automatic fight.
+6. To design your own arena, select **Custom**, add obstacles, then tap/drag them on the bowl. Select a ramp to rotate it. Save the custom layout.
 
-Chassis photo outlining uses a basic dark-pixel convex hull, so concave sections and ruled notebook lines are not reliably recovered. Correct the polygon manually. The original photo is only used as a light reference layer.
-
-Workshop images and registered battlebots are stored in the **current browser's localStorage**, not synchronized between devices. The phone's file/camera picker works on the device running the page; **live phone-to-smartboard pairing is not implemented** in this prototype. Use the JSON export for backups.
+## Important limitations
+- This is a **prototype with approximate 2.5D physics**, not a validated 3D rigid-body simulation. The visible bowl slope is represented by an inward acceleration. Ramps use directional acceleration and short simulated hops, not full geometric height and ballistic flight.
+- Robot and rock collisions approximate shapes as circles. High-frequency stepping reduces, but does not eliminate, all tunneling and collision edge cases.
+- Full rigid-body deformation, accurate 3D overturning, shape-specific wheel traction, physical weapon pivot constraints and fully independent detachable rigid parts remain future work.
+- Photo tracing uses a simple dark-pixel convex hull. Concave shapes and ruled backgrounds can need manual correction.
+- Battlebots and custom arenas live in **localStorage on the same device**. Export the roster before clearing browser data. Phone-to-smartboard live pairing and Android packaging are **not yet implemented**.
+- This update has been checked for JavaScript syntax and mock runtime startup/duel flow, but gameplay is not yet device-tested.
 
 ## Run
-
-Open `index.html` in a modern browser or serve the folder from GitHub Pages.
-
-The game has no external JavaScript, CSS or backend dependencies.
-
-### Next development phase
-
-Improve scanning and contour detection, reliable silhouette data for concave shapes, true wheel-contact forces, actual collision shapes, detachable-part physics, persistence/phone-host pairing, combat AI and browser/Android shared packaging.
+Host `index.html` via GitHub Pages or serve it locally. It has no external library or backend dependencies.
