@@ -85,6 +85,7 @@ test("leaving the arena aborts the active duel cleanly for a new phone scan",()=
  const duel={running:true};
  const context={
   view:"arena",duel,
+  canvas:{classList:{toggle(){}}},arena:{classList:{toggle(){}}},
   document:{querySelectorAll:()=>[]},
   $:get,
   render(){},renderGarage(){},populateArena(){},message(){},
