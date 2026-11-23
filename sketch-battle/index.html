@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0c1422">
-<title>Sketch Battle — Weapon Combat v0.3</title>
+<title>Sketch Battle — Classroom Combat v0.4</title>
 <style>
 :root{color-scheme:dark;--bg:#0b1421;--panel:#15243a;--panel2:#1d304a;--line:#33475d;--ink:#f2f7ff;--mute:#a6bad0;--lime:#c4f26b;--orange:#f7b16c;--danger:#ff8390}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 75% 0,#19334a,transparent 55%),var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -49,7 +49,7 @@ footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
 </head>
 <body>
 <div class="app">
-<header class="header"><div class="brand"><div class="logo">⚔</div><div><h1>SKETCH BATTLE</h1><small>by MrDhameri · Turbo Bowl Arena</small></div></div><span class="chip">PROTOTYPE v0.3</span></header>
+<header class="header"><div class="brand"><div class="logo">⚔</div><div><h1>SKETCH BATTLE</h1><small>by MrDhameri · Turbo Bowl Arena</small></div></div><span class="chip">CLASSROOM v0.4</span></header>
 <nav class="nav" aria-label="Game sections">
 <button class="active" data-view="workshop">🔧 Workshop</button><button data-view="garage">🤖 My Battlebots</button><button data-view="arena">⚔ Test Arena</button>
 </nav>
@@ -75,7 +75,7 @@ footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
     <label>Weapon</label><div class="grid3" id="weapons">
       <button class="btn on" data-weapon="drill">🔩 Drill</button><button class="btn" data-weapon="hammer">🔨 Hammer</button><button class="btn" data-weapon="slasher">⚙ Slasher</button>
     </div>
-    <label for="weaponAngle">Weapon facing <span id="angleLabel">-90°</span></label><input id="weaponAngle" class="range" type="range" min="-180" max="180" step="5" value="-90">
+    <label for="weaponAngle">Weapon facing <span id="angleLabel">-90°</span></label><input id="weaponAngle" class="range" type="range" min="-180" max="180" step="1" value="-90">
     <p>Choose <b>Move wheels</b> to drag the four identical wheels. Choose <b>Move weapon</b> to drag its mount. Green = valid attachment; red = invalid.</p>
   </section>
   <section class="section"><div class="section-title">04 / Calculated design properties</div>
@@ -163,8 +163,9 @@ footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
   <div class="stage-foot"><div id="notice" role="status">Ready. Draw a shape, or adjust the example robot.</div><div class="score" id="stageScore"><span>4 wheels</span><span>1 weapon</span></div></div>
 </main>
 </div>
-<footer>Sketch Battle v0.3 · Standalone classroom prototype · No account or external service required · Phone-to-smartboard live pairing comes later</footer>
+<footer>Sketch Battle v0.4 · 30-pupil classroom tournament · Phone camera host · Export backups regularly</footer>
 </div>
+<script src="./trace.js"></script>
 <script>
 "use strict";
 (function(){
@@ -655,6 +656,7 @@ function stepDuel(dt){
  const score=f=>f.body*.6+f.wheels.reduce((s,n)=>s+n,0)*.08+f.weapon*.07+f.score*.6;
  const winner=ko[0]&&!ko[1]?b:ko[1]&&!ko[0]?a:score(a)>score(b)+.01?a:score(b)>score(a)+.01?b:null;
  duel.winner=winner?winner.bot.name:"Draw";
+  duel.winnerId=winner?winner.bot.id:null;
  $("duelResult").textContent=(winner?"Winner: "+winner.bot.name:"Draw")+" · "+(90-duel.remain).toFixed(1)+" s · "+
  "Damage taken "+a.bot.name+": "+Math.round(a.damage)+", "+b.bot.name+": "+Math.round(b.damage)+
  " · rock impacts "+Math.round(duel.hits.rock||0);
@@ -738,7 +740,67 @@ document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{if(duel)duel.
 const saved=safeRead(KEY,null);if(saved){const b=cleanBot(saved);if(b)draft=b}
 roster=safeRead(ROSTER,[]);if(!Array.isArray(roster))roster=[];roster=roster.slice(0,250).map(cleanBot).filter(Boolean);
 initArenaControls();sync();setView("workshop");
+
+// Classroom integration bridge: shares only explicitly needed workshop and duel actions.
+function suggestMounts(){
+ if(!polygonOK())return;
+ const b=bounds(draft.outline),mid=center(draft.outline);
+ const targets=[
+  {x:b.x0+Math.min(20,(b.x1-b.x0)*.15),y:b.y0+Math.min(23,(b.y1-b.y0)*.18)},
+  {x:b.x1-Math.min(20,(b.x1-b.x0)*.15),y:b.y0+Math.min(23,(b.y1-b.y0)*.18)},
+  {x:b.x0+Math.min(20,(b.x1-b.x0)*.15),y:b.y1-Math.min(23,(b.y1-b.y0)*.18)},
+  {x:b.x1-Math.min(20,(b.x1-b.x0)*.15),y:b.y1-Math.min(23,(b.y1-b.y0)*.18)}
+ ];
+ const placed=[];
+ draft.wheels=targets.map(t=>{
+  const candidates=draft.outline.slice().sort((a,b)=>dist(a,t)-dist(b,t));
+  const v=candidates.find(p=>placed.every(w=>dist(w,p)>=42));
+  const p=point(v||t);placed.push(p);return p;
+ });
+ const front=draft.outline.reduce((best,p)=>dist(p,{x:mid.x,y:b.y0})<dist(best,{x:mid.x,y:b.y0})?p:best,draft.outline[0]);
+ draft.weapon.x=front.x;draft.weapon.y=front.y;draft.weapon.angle=-90;
+ persistent();render();
+}
+window.SketchBattleBridge={
+ getRoster:()=>roster.map(b=>({id:b.id,name:b.name,weapon:b.weapon.type})),
+ getDraft:()=>JSON.parse(JSON.stringify(draft)),
+ moveEquipment:(kind,i,x,y)=>{
+  const p=kind==="weapon"?draft.weapon:kind==="wheel"?draft.wheels[i]:null;
+  if(!p||!Number.isFinite(Number(x))||!Number.isFinite(Number(y)))return false;
+  p.x=clamp(Number(x),20,780);p.y=clamp(Number(y),20,480);
+  persistent();render();return true;
+ },
+ autoPlace:()=>{suggestMounts();render()},
+ importPhoto:(data,name)=>new Promise((resolve,reject)=>{
+  if(typeof data!=="string"||!data.startsWith("data:image/jpeg;base64,")||data.length>330000){reject(Error("Invalid photo"));return}
+  const image=new Image();
+  image.onload=()=>{
+   try{
+    const traced=window.traceBattlebotOutline?window.traceBattlebotOutline(image):null;
+    const poly=traced||detectOutline(image);
+    draft=defaultBot();draft.id="scan-"+Date.now()+"-"+Math.random().toString(36).slice(2,8);
+    draft.name=String(name||"").trim().slice(0,40);draft.reference=data;draft.outline=poly||[];
+    if(poly)suggestMounts();
+    chooseTool(poly?"edit":"points");sync();setView("workshop");persistent();
+    message(poly?"Photo received. Correct outline, wheels and weapon before saving.":"Photo received. Trace the chassis manually, then attach equipment.",poly?"ok":"error");
+    resolve({traced:!!poly});
+   }catch(error){reject(error)}
+  };
+  image.onerror=()=>reject(Error("Photo decoding failed"));
+  image.src=data;
+ }),
+ startMatch:(a,b)=>{
+  if(duel&&duel.running)return false;
+  if(!a||!b||a===b||!roster.some(x=>x.id===a)||!roster.some(x=>x.id===b))return false;
+  setView("arena");populateArena();$("selectA").value=a;$("selectB").value=b;
+  drawArenaStatic();startDuel();return !!(duel&&duel.running);
+ },
+ getMatch:()=>duel?{running:duel.running&&view==="arena",winnerId:duel.winnerId||null}:null
+};
+
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="./classroom.js"></script>
 </body>
 </html>
