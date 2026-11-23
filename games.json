@@ -1,7 +1,7 @@
 [
   {
-    "name": "Sketch Battle (Weapon Combat v0.3)",
-    "description": "Build battlebots with animated drills, hammers and slashers, then launch them into customizable turbo bowl arenas.",
+    "name": "Sketch Battle — Classroom v0.4",
+    "description": "Scan pupils' battlebot drawings using a paired phone host, fine-tune wheels and weapons on the smartboard, then run automatic bowl battles and knockout tournaments for up to 30 pupils.",
     "category": "Creative STEM",
     "icon": "⚔️",
     "path": "sketch-battle/",
