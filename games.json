@@ -1,7 +1,7 @@
 [
   {
-    "name": "Sketch Battle — Classroom v0.4",
-    "description": "Scan pupils' battlebot drawings using a paired phone host, fine-tune wheels and weapons on the smartboard, then run automatic bowl battles and knockout tournaments for up to 30 pupils.",
+    "name": "Sketch Battle — Multibot Bowl v0.5",
+    "description": "Scan pupils' battlebots with a paired phone, place wheels and animated weapons, then use Add Bot or Add All for 2–30 simultaneous combatants in the bowl; 1v1 classroom tournaments remain available.",
     "category": "Creative STEM",
     "icon": "⚔️",
     "path": "sketch-battle/",
