@@ -69,7 +69,7 @@ footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
     <label class="upload">📷 Scan drawing / choose photo<input id="photo" type="file" accept="image/*" capture="environment"></label>
     <div class="grid2" style="margin-top:8px"><button id="closeShape" class="btn">Close points</button><button id="undo" class="btn">Undo point</button>
     <button id="newShape" class="btn">New outline</button><button id="resetDemo" class="btn">Example shape</button></div>
-    <p>Freehand: draw a closed shape in one stroke. Points: tap to add corners. Edit: drag corners. Photo tracing gives a rough outline; correct it manually.</p>
+    <p>Freehand: draw a closed shape in one stroke. Points: tap to add corners. Edit: drag corners. Photo tracing can preserve inward corners and unusual silhouettes. Correct missed corners manually.</p>
   </section>
   <section class="section"><div class="section-title">03 / Equipment</div>
     <label>Weapon</label><div class="grid3" id="weapons">
@@ -740,6 +740,7 @@ $("selectA").onchange=()=>{if(duel)duel.running=false;duel=null;drawArenaStatic(
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{if(duel)duel.running=false;setView(b.dataset.view)});
 const saved=safeRead(KEY,null);if(saved){const b=cleanBot(saved);if(b)draft=b}
 roster=safeRead(ROSTER,[]);if(!Array.isArray(roster))roster=[];roster=roster.slice(0,250).map(cleanBot).filter(Boolean);
+if(window.SketchBattlePhotoStorage)roster.forEach(bot=>{if(bot.reference)window.SketchBattlePhotoStorage.put(bot.id,bot.reference).then(()=>{bot.reference=""}).catch(()=>{})});
 initArenaControls();sync();setView("workshop");
 
 // Classroom integration bridge: shares only explicitly needed workshop and duel actions.
