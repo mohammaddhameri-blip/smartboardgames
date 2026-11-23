@@ -6,7 +6,9 @@ if(!api){console.warn("Sketch Battle bridge was not loaded");return}
 const $=id=>document.getElementById(id);
 const DB_URL="https://qekcgsfeomjckctiubgm.supabase.co";
 const DB_KEY="sb_publishable_yJbCYOLDeMreuqM01g_oqA_eF5YEWwq";
-const STORE="sketchBattleCompetitionV04";
+const STORE="sketchBattleCompetitionV04",QUEUE_KEY="sketchBattleScanInboxV04";
+let inbox=[],editingPendingId=null,editingDraftId=null;
+try{const q=JSON.parse(localStorage.getItem(QUEUE_KEY)||"[]");if(Array.isArray(q))inbox=q.filter(x=>x&&typeof x.id==="string"&&typeof x.name==="string").slice(0,30)}catch{}
 let client=null,channel=null,online=false,active=null,lastCount=-1;
 let state={selected:[],rounds:[],champion:null};
 try{const old=JSON.parse(localStorage.getItem(STORE)||"null");if(old&&Array.isArray(old.selected)&&Array.isArray(old.rounds))state=old}catch{}
@@ -15,6 +17,9 @@ const css=document.createElement("style");css.textContent=".sb-class{background:
 const pairing=document.createElement("section");pairing.className="sb-class";
 pairing.innerHTML='<h3>📱 Pair phone camera</h3><div id="sbCode" class="sb-code">—</div><p>On your phone, open the host page and enter this code. Each scan appears in the smartboard workshop for final adjustment.</p><div class="sb-flex"><button class="btn" id="sbConnect">Connect</button><button class="btn" id="sbNewCode">New code</button></div><p id="sbPairStatus">Offline</p><a id="sbPhoneLink" href="./phone.html" target="_blank" rel="noopener">Open phone host</a>';
 $("workshopPanel").querySelectorAll(".section")[1].after(pairing);
+const inboxPanel=document.createElement("section");inboxPanel.className="sb-class";
+inboxPanel.innerHTML='<h3>📥 Scan inbox</h3><p id="sbInboxCount">0 drawings awaiting equipment setup</p><select id="sbPendingSelect" class="field"></select><div class="sb-flex"><button class="btn primary" id="sbLoadPending">Load selected sketch</button><button class="btn" id="sbDiscardPending">Discard</button></div><p>Scan up to 30 drawings first. Each scan is kept until the matching battlebot is saved.</p>';
+pairing.after(inboxPanel);
 const precision=document.createElement("section");precision.className="sb-class";
 precision.innerHTML='<h3>🎯 Precision mounting</h3><div class="sb-flex"><select id="sbTarget" class="field"><option value="wheel0">Front wheel 1</option><option value="wheel1">Front wheel 2</option><option value="wheel2">Rear wheel 3</option><option value="wheel3">Rear wheel 4</option><option value="weapon">Weapon mount</option></select><select id="sbStep" class="field"><option value="1">1 px</option><option value="5" selected>5 px</option><option value="10">10 px</option></select></div><div class="sb-flex"><label>X <input id="sbX" class="field" type="number" min="20" max="780"></label><label>Y <input id="sbY" class="field" type="number" min="20" max="480"></label></div><div class="sb-grid"><span></span><button class="btn" data-sb-dir="0,-1">↑</button><span></span><button class="btn" data-sb-dir="-1,0">←</button><button id="sbAuto" class="btn">Auto-place</button><button class="btn" data-sb-dir="1,0">→</button><span></span><button class="btn" data-sb-dir="0,1">↓</button><span></span></div><p>Move wheels and weapon by 1 pixel if needed. Final mounting is checked before saving.</p>';
 $("workshopPanel").querySelectorAll(".section")[2].append(precision);
@@ -55,7 +60,31 @@ function showRoom(){$("sbCode").textContent=room;$("sbPhoneLink").href="./phone.
 showRoom();
 async function send(event,payload={}){if(channel&&online)return channel.send({type:"broadcast",event,payload})}
 function status(s){$("sbPairStatus").textContent=s}
-function rosterMessage(){send("roster",{count:getRoster().length}).catch(()=>{})}
+function rosterMessage(){send("roster",{count:getRoster().length,pending:inbox.length}).catch(()=>{})}
+function storeInbox(){try{localStorage.setItem(QUEUE_KEY,JSON.stringify(inbox))}catch{status("Could not back up scan inbox metadata.")}}
+function updateInbox(){
+ const choose=$("sbPendingSelect"),previous=choose.value;choose.innerHTML="";
+ inbox.forEach(item=>{const o=document.createElement("option");o.value=item.id;o.textContent=item.name;choose.append(o)});
+ if(inbox.some(i=>i.id===previous))choose.value=previous;
+ $("sbInboxCount").textContent=inbox.length+" drawings waiting to be equipped";
+ $("sbLoadPending").disabled=!inbox.length;$("sbDiscardPending").disabled=!inbox.length;
+ rosterMessage();
+}
+$("sbLoadPending").onclick=async()=>{
+ const item=inbox.find(x=>x.id===$("sbPendingSelect").value);if(!item)return;
+ if(editingPendingId&&editingPendingId!==item.id){alert("Save the current scanned battlebot before loading another drawing.");return}
+ try{
+  const image=await window.SketchBattlePhotoStorage.get(item.id);
+  if(!image)throw Error("Photo not found in this smartboard browser.");
+  await api.importPhoto(image,item.name);editingPendingId=item.id;editingDraftId=api.getDraft().id;
+  status("Loaded "+item.name+". Fine-tune and save before loading another scan.");refreshPrecision();
+ }catch(e){status("Could not load scan: "+String(e.message||e))}
+};
+$("sbDiscardPending").onclick=async()=>{
+ const id=$("sbPendingSelect").value,item=inbox.find(x=>x.id===id);if(!item||!confirm("Discard "+item.name+"'s scanned photo?"))return;
+ inbox=inbox.filter(x=>x.id!==id);if(editingPendingId===id){editingPendingId=null;editingDraftId=null}
+ storeInbox();updateInbox();if(window.SketchBattlePhotoStorage)window.SketchBattlePhotoStorage.remove(id).catch(()=>{});
+};
 async function disconnect(){online=false;if(client&&channel)await client.removeChannel(channel);channel=null}
 async function connect(){
  if(!window.supabase?.createClient){status("Pairing library unavailable. Check internet.");return}
@@ -78,10 +107,14 @@ async function connect(){
     if(typeof payload?.image!=="string"||!/^data:image\/jpeg;base64,/.test(payload.image)||payload.image.length>330000)throw Error("Invalid or oversized photo");
     const pupil=String(payload?.name||"").trim().slice(0,40);
     if(!pupil)throw Error("Missing pupil or bot name");
-    await api.importPhoto(payload.image,pupil);requests.add(requestId);
+    if(inbox.length>=30)throw Error("Scan inbox full (30). Save or discard some scans first.");
+    if(!window.SketchBattlePhotoStorage)throw Error("This device does not support photo storage");
+    const id="pending-"+requestId;
+    await window.SketchBattlePhotoStorage.put(id,payload.image);
+    inbox.push({id,name:pupil});storeInbox();updateInbox();requests.add(requestId);
     if(requests.size>100)requests.clear();
     await send("registration-result",{requestId,ok:true});
-    status("Received "+pupil+" · adjust and save on smartboard");refreshPrecision();
+    status("Queued "+pupil+" · choose it from Scan inbox when ready");
    }catch(error){send("registration-result",{requestId,ok:false,error:String(error.message||error).slice(0,90)}).catch(()=>{});status("Photo rejected: "+String(error.message||error))}
   });
   ch.subscribe(async s=>{
@@ -161,7 +194,14 @@ $("sbCSV").onclick=()=>{
  const url=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}));
  const a=document.createElement("a");a.href=url;a.download="sketch-battle-tournament.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
 };
-$("save").addEventListener("click",()=>setTimeout(()=>{renderTournament();rosterMessage()},0));
+$("save").addEventListener("click",()=>setTimeout(()=>{
+ if(editingPendingId&&editingDraftId===api.getDraft().id&&getRoster().some(b=>b.id===editingDraftId)){
+  const id=editingPendingId;inbox=inbox.filter(item=>item.id!==id);
+  editingPendingId=null;editingDraftId=null;storeInbox();updateInbox();
+  if(window.SketchBattlePhotoStorage)window.SketchBattlePhotoStorage.remove(id).catch(()=>{});
+ }
+ renderTournament();rosterMessage();
+},0));
 setInterval(()=>{
  refreshPrecision();
  const count=getRoster().length;
@@ -174,6 +214,6 @@ setInterval(()=>{
  if(match.winnerId===m.a||match.winnerId===m.b){m.winner=match.winnerId;active=null;advance();save();renderTournament()}
  else{active=null;renderTournament();$("sbNextInfo").textContent="Draw. Replay the same match to determine a winner."}
 },600);
-renderTournament();refreshPrecision();
+renderTournament();refreshPrecision();updateInbox();
 if(window.supabase?.createClient)connect();
 })();
