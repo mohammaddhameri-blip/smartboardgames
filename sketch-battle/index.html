@@ -166,6 +166,7 @@ footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
 <footer>Sketch Battle v0.4 · 30-pupil classroom tournament · Phone camera host · Export backups regularly</footer>
 </div>
 <script src="./trace.js"></script>
+<script src="./photo-storage.js"></script>
 <script>
 "use strict";
 (function(){
@@ -185,7 +186,7 @@ const wheels=o.wheels.slice(0,4).filter(p=>p&&Number.isFinite(+p.x)&&Number.isFi
 if(outline.length<3||wheels.length!==4)return null;
 const type=["drill","hammer","slasher"].includes(o.weapon&&o.weapon.type)?o.weapon.type:"drill";
 return {id:String(o.id||"bot-"+Date.now()).slice(0,80),name:String(o.name||"Unnamed Bot").slice(0,40),color:colors.includes(o.color)?o.color:colors[0],outline,wheels,weapon:{type,x:clamp(Number(o.weapon&&o.weapon.x)||400,20,780),y:clamp(Number(o.weapon&&o.weapon.y)||150,20,480),angle:clamp(Number(o.weapon&&o.weapon.angle)||-90,-180,180)},reference:typeof o.reference==="string"&&o.reference.length<800000?o.reference:""}}
-function persistent(){try{localStorage.setItem(KEY,JSON.stringify(draft));localStorage.setItem(ROSTER,JSON.stringify(roster))}catch{message("Storage full. Export your roster and use a smaller photo.","error")}}
+function persistent(){try{localStorage.setItem(KEY,JSON.stringify(draft));localStorage.setItem(ROSTER,JSON.stringify(roster.map(b=>({...b,reference:""}))))}catch{message("Storage full. Export your roster and use a smaller photo.","error")}}
 function area(poly){let a=0;for(let i=0;i<poly.length;i++){const q=poly[(i+1)%poly.length],p=poly[i];a+=p.x*q.y-q.x*p.y}return Math.abs(a)*.5}
 function center(poly){const a=poly.reduce((s,p)=>({x:s.x+p.x,y:s.y+p.y}),{x:0,y:0});return{x:a.x/poly.length,y:a.y/poly.length}}
 function segDist(p,a,b){const vx=b.x-a.x,vy=b.y-a.y,k=clamp(((p.x-a.x)*vx+(p.y-a.y)*vy)/(vx*vx+vy*vy||1),0,1);return dist(p,{x:a.x+k*vx,y:a.y+k*vy})}
@@ -321,7 +322,7 @@ $("save").onclick=()=>{if(!polygonOK()){message("Draw a larger, closed chassis f
 if(!draft.wheels.every((w,i)=>wheelOK(i))){message("Reposition all four wheels near the chassis edge without overlaps.","error");return}
 if(!weaponOK()){message("Weapon must connect to the chassis and clear the wheels.","error");return}
 if(!draft.name.trim()){message("Enter a battlebot name before saving.","error");$("botName").focus();return}
-const sanitized=cleanBot(draft);const ix=roster.findIndex(b=>b.id===sanitized.id);if(ix>=0)roster[ix]=sanitized;else roster.push(sanitized);
+const sanitized=cleanBot(draft);if(sanitized.reference&&window.SketchBattlePhotoStorage){window.SketchBattlePhotoStorage.put(sanitized.id,sanitized.reference).catch(()=>message("Robot saved, but the original photo could not be backed up.","error"))}sanitized.reference="";const ix=roster.findIndex(b=>b.id===sanitized.id);if(ix>=0)roster[ix]=sanitized;else roster.push(sanitized);
 persistent();message("Battlebot saved to My Battlebots.","ok")};
 $("exportPNG").onclick=()=>{const a=document.createElement("a");a.download="sketch-battle-design.png";a.href=canvas.toDataURL("image/png");a.click()};
 $("newBot").onclick=()=>{draft=defaultBot();chooseTool("freehand");sync();persistent();setView("workshop")};
@@ -329,8 +330,8 @@ function renderGarage(){const box=$("garageCanvas");box.innerHTML="";$("garageCo
 if(!roster.length){const p=document.createElement("p");p.textContent="No saved battlebots yet. Design one in the Workshop.";box.append(p);return}
 roster.forEach(bot=>{const card=document.createElement("div");card.className="bot-card";const icon=document.createElement("div");icon.className="bot-icon";icon.textContent=bot.weapon.type==="drill"?"🔩":bot.weapon.type==="hammer"?"🔨":"⚙️";icon.style.borderBottom="3px solid "+bot.color;
 const name=document.createElement("b");name.textContent=bot.name;const meta=document.createElement("small");meta.textContent=bot.weapon.type+" · 4 wheels · "+(area(bot.outline)/12500).toFixed(1)+" relative mass";
-const actions=document.createElement("div");actions.className="row";const edit=document.createElement("button");edit.className="btn";edit.textContent="Edit";edit.onclick=()=>{draft=JSON.parse(JSON.stringify(bot));sync();persistent();setView("workshop")};
-const del=document.createElement("button");del.className="btn warn";del.textContent="Delete";del.onclick=()=>{if(!confirm("Delete "+bot.name+"?"))return;roster=roster.filter(x=>x.id!==bot.id);persistent();renderGarage()};
+const actions=document.createElement("div");actions.className="row";const edit=document.createElement("button");edit.className="btn";edit.textContent="Edit";edit.onclick=()=>{draft=JSON.parse(JSON.stringify(bot));sync();persistent();setView("workshop");if(window.SketchBattlePhotoStorage){const id=bot.id;window.SketchBattlePhotoStorage.get(id).then(ref=>{if(ref&&draft.id===id){draft.reference=ref;photoLoaded()}}).catch(()=>{})}};
+const del=document.createElement("button");del.className="btn warn";del.textContent="Delete";del.onclick=()=>{if(!confirm("Delete "+bot.name+"?"))return;roster=roster.filter(x=>x.id!==bot.id);if(window.SketchBattlePhotoStorage)window.SketchBattlePhotoStorage.remove(bot.id).catch(()=>{});persistent();renderGarage()};
 actions.append(edit,del);card.append(icon,name,meta,actions);box.append(card)})}
 function download(name,body,mime){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([body],{type:mime}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)}
 $("exportJSON").onclick=()=>download("sketch-battle-battlebots.json",JSON.stringify({version:1,battlebots:roster},null,2),"application/json");
