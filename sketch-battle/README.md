@@ -31,6 +31,8 @@ Sketch Battle is an automatic 1v1 battlebot game in the `smartboardgames` collec
 
 ## Classroom Edition v0.4
 
+**Scan inbox.** A phone scan goes into a 30-image pending inbox, so pupils can submit drawings before the teacher equips and saves each bot. The teacher selects a scan to load, edits it, and saves the bot before that scan is removed from the inbox. An unfinished scan can be reopened after refreshing the smartboard.
+
 **Phone host.** Open phone.html on a teacher's Android phone, connect using the 8-character code shown on the smartboard, photograph or upload the pupil's chassis drawing, crop/rotate the photo, and send it to the smartboard. The mobile host is an installable web app (PWA), **not a native APK**.
 
 **More freedom in drawing.** trace.js uses a contour-first detector to preserve many irregular and inward-pointing chassis edges. If tracing is unclear, the legacy convex hull fallback or manual point editing remains available. The smartboard workshop is where the teacher confirms and corrects the bot geometry.
@@ -39,14 +41,14 @@ Sketch Battle is an automatic 1v1 battlebot game in the `smartboardgames` collec
 
 **30-pupil competition.** The garage can hold more saved designs, but each single-elimination classroom competition accepts 2–30 participants. Battles remain 1v1, with two robots fighting at once. Knockout matches, evenly spread first-round byes, winner progression, rematches for draws, bracket persistence and CSV results are included. This is **not** a 30-robot simultaneous free-for-all.
 
-**Storage and connection.** Bot geometry and tournament data persist locally in the smartboard browser. Photos are backed up in IndexedDB when available to avoid filling localStorage with 30 camera scans. Pairing uses a short-lived room code and Supabase Realtime; internet is required on both devices. Photos are transmitted through the pairing service and are not stored in an online gallery by this app. Use only pupil sketches that the school permits you to photograph. Export backups before clearing browser data.
+**Storage and connection.** Bot geometry and tournament data persist locally in the smartboard browser. Photos are backed up in IndexedDB when available to avoid filling localStorage with 30 camera scans. Pairing uses a session-scoped room code and Supabase Realtime; internet is required on both devices. JPEG transmissions are compressed to remain below the 256 KB Realtime free-tier message limit. Photos are transmitted through the pairing service and are not stored in an online gallery by this app. Use only pupil sketches that the school permits you to photograph. Export backups before clearing browser data.
 
 ### How to try the classroom flow
 
 1. Open index.html on the smartboard. In Workshop, connect the phone host and note the pairing code.
 2. Open phone.html on Android and enter the same code. Optional: use Chrome's Add to Home screen / Install app to install the PWA.
-3. Enter a pupil's name, capture one chassis sketch, crop it, and send it to the smartboard.
-4. On the smartboard, review/edit the outline, choose a weapon, fine-tune four wheels and the weapon mount, and Save battlebot.
+3. Enter a pupil's name, capture one chassis sketch, crop it, and send it into the smartboard's scan inbox. Repeat for up to 30 pending scans if desired.
+4. On the smartboard, select a scan from the inbox, then review/edit the outline, choose a weapon, fine-tune four wheels and the weapon mount, and Save battlebot.
 5. Repeat for the class, open Test Arena, select up to 30 pupils, and create the class tournament.
 6. Launch each duel, let the physics resolve the winner, and continue to the next match. A draw requires replay.
 7. Export roster JSON and tournament CSV results for backup.
