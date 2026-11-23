@@ -1,6 +1,6 @@
-# Sketch Battle — Classroom Edition v0.4
+# Sketch Battle — Multibot Bowl v0.5
 
-Sketch Battle is an automatic 1v1 battlebot game in the `smartboardgames` collection. Pupils draw or scan their chassis, move four standardized wheels, mount one drill/hammer/slasher weapon, and launch their robots into a concave bowl arena.
+Sketch Battle is an automatic multibot battlebot game in the `smartboardgames` collection. Pupils draw or scan their chassis, move four standardized wheels, mount one drill/hammer/slasher weapon, and launch their robots into a concave bowl arena.
 
 ## What is implemented
 
@@ -28,6 +28,23 @@ Sketch Battle is an automatic 1v1 battlebot game in the `smartboardgames` collec
 - Component weapon health affects animation speed/availability; disabled weapons stop rendering.
 - Weapon damage occurs during the corresponding animation/contact window instead of granting arbitrary bonuses on every body collision.
 - Rigid-body impacts remain the primary source of damage. Weapon timing and contact are approximate.
+
+## Multibot Bowl v0.5 — simultaneous combat (NEW)
+
+The **Test Arena** now supports **2 to 30 battlebots actually fighting at the same time**. This is separate from the previous **30-entrant single-elimination tournament**, which still schedules one 1v1 duel at a time.
+
+1. Register and save pupil drawings to **My Battlebots**, using the phone host or the Workshop.
+2. Open **Test Arena**. Select the first two bots in the existing dropdowns.
+3. Use **＋ Add Bot** to add additional bots and choose each from the saved garage. Each added bot has optional launch angle (default: inward toward the bowl) and power controls.
+4. Or choose **Add All** to load every remaining registered bot, up to a total of 30. No duplicate robot IDs can enter the same battle.
+5. Start **Launch selected battlebots**. All selected bots launch together following the 3-second countdown and compete automatically until one operational bot remains or the match clock expires.
+6. Robots shrink progressively as more participate, with matching hitboxes, wheel and weapon locations, and collision distances. At 30 bots, their rendered size is about 30% of the original 1v1 size.
+7. Auto-steering targets the nearest operational opponent; damage can eliminate individual bots (chassis destroyed or fewer than two functioning wheels). Defeated bots leave the fight, and the winner is the final surviving bot. At the time limit, remaining bots are ranked by their combined health and combat score; an exact tie is reported as a draw.
+8. In **Class tournament**, scheduled matches continue to force exactly two bots; the free-for-all list is cleared when a scheduled 1v1 duel begins.
+
+For larger groups the physics integration uses 90–120 fixed steps/second rather than 180 steps/second in 1v1, helping Android smartboards maintain frame rate. Collisions remain approximate circular hitboxes, not precise 3D polygon-to-polygon impacts.
+
+**Automated tests:** Simulations validate 2, 3, 10 and 30 concurrent robots, launch spacing and scaling for every count from 2 to 30, nearest-opponent targeting, elimination and winner selection. Live frame-rate performance and 30-pupil camera workflows still need testing on the school smartboard.
 
 ## Classroom Edition v0.4
 

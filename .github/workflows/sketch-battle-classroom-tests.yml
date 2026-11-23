@@ -21,4 +21,4 @@ jobs:
         with:
           node-version: "22"
       - name: Validate sketch tracing, classroom scripts and brackets
-        run: node --test sketch-battle/tests/classroom.test.cjs
+        run: node --test sketch-battle/tests/*.test.cjs
