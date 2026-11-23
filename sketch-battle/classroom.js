@@ -72,7 +72,10 @@ function updateInbox(){
 }
 $("sbLoadPending").onclick=async()=>{
  const item=inbox.find(x=>x.id===$("sbPendingSelect").value);if(!item)return;
- if(editingPendingId&&editingPendingId!==item.id){alert("Save the current scanned battlebot before loading another drawing.");return}
+ if(editingPendingId&&editingPendingId!==item.id&&editingDraftId===api.getDraft().id){
+   if(!confirm("Switch sketches? Unsaved wheel and weapon changes will be lost. The previous scan remains in the inbox."))return;
+  }
+  editingPendingId=null;editingDraftId=null;
  try{
   const image=await window.SketchBattlePhotoStorage.get(item.id);
   if(!image)throw Error("Photo not found in this smartboard browser.");
