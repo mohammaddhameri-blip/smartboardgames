@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0c1422">
-<title>Sketch Battle — Classroom Combat v0.4</title>
+<title>Sketch Battle — Multibot Bowl v0.5</title>
 <style>
 :root{color-scheme:dark;--bg:#0b1421;--panel:#15243a;--panel2:#1d304a;--line:#33475d;--ink:#f2f7ff;--mute:#a6bad0;--lime:#c4f26b;--orange:#f7b16c;--danger:#ff8390}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 75% 0,#19334a,transparent 55%),var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -49,7 +49,7 @@ footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
 </head>
 <body>
 <div class="app">
-<header class="header"><div class="brand"><div class="logo">⚔</div><div><h1>SKETCH BATTLE</h1><small>by MrDhameri · Turbo Bowl Arena</small></div></div><span class="chip">CLASSROOM v0.4</span></header>
+<header class="header"><div class="brand"><div class="logo">⚔</div><div><h1>SKETCH BATTLE</h1><small>by MrDhameri · Turbo Bowl Arena</small></div></div><span class="chip">MULTIBOT v0.5</span></header>
 <nav class="nav" aria-label="Game sections">
 <button class="active" data-view="workshop">🔧 Workshop</button><button data-view="garage">🤖 My Battlebots</button><button data-view="arena">⚔ Test Arena</button>
 </nav>
@@ -95,10 +95,12 @@ footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
   <h2>Bowl Collision Arena</h2>
   <p>Launch both robots at high speed into a sloped bowl. Crashes do most of the damage. Select rocks, ramps, or create your own arena.</p>
   <div class="arena-head">
-   <label>Robot A<select id="selectA" class="field"></select></label>
-   <label>Robot B<select id="selectB" class="field"></select></label>
+   <label>Bot 1<select id="selectA" class="field"></select></label>
+   <label>Bot 2<select id="selectB" class="field"></select></label>
   </div>
-  
+  <div id="extraArenaBots"></div>
+  <div class="row" style="margin:10px 0"><button id="addArenaBot" class="btn primary">＋ Add Bot</button><span id="arenaBotCount" class="small-help">2 / 30 bots</span></div>
+  <p class="small-help">Add registered pupils to battle together. All selected bots launch simultaneously; the bots become smaller as the bowl fills. Each extra bot launches toward the centre by default.</p>
   <div class="section-title">01 / Arena layout</div>
   <label for="arenaPreset">Arena preset</label>
   <select id="arenaPreset" class="field">
@@ -146,10 +148,10 @@ footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
   </details>
   <p class="small-help">0° right · 90° down · 180° left · 270° up. Arena arrows show the selected launch direction.</p>
   <div class="section-title" style="margin-top:19px">03 / Automatic battle</div>
-  <button id="startDuel" class="btn primary full">⚔ Launch both battlebots</button>
-  <button id="stopDuel" class="btn full" style="margin-top:8px">■ Stop duel</button>
-  <p>Both bots launch together after a 3-second countdown. The collision model uses fast substeps, and rocks and ramps affect motion and damage. 2.5D physics preview, not a full 3D simulator.</p>
-  <div class="section-title" style="margin-top:22px">Battle results</div><div id="duelResult" class="stat">Choose two bots to begin.</div>
+  <button id="startDuel" class="btn primary full">⚔ Launch selected battlebots</button>
+  <button id="stopDuel" class="btn full" style="margin-top:8px">■ Stop battle</button>
+  <p>All selected bots launch after a 3-second countdown. The last operational bot wins, or the strongest survivor at the 90-second limit. Impact damage and animated weapons are retained; this is simplified 2.5D physics.</p>
+  <div class="section-title" style="margin-top:22px">Battle results</div><div id="duelResult" class="stat">Select 2–30 bots, then launch.</div>
 </div>
 </aside>
 <main class="stage">
@@ -163,8 +165,9 @@ footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
   <div class="stage-foot"><div id="notice" role="status">Ready. Draw a shape, or adjust the example robot.</div><div class="score" id="stageScore"><span>4 wheels</span><span>1 weapon</span></div></div>
 </main>
 </div>
-<footer>Sketch Battle v0.4 · 30-pupil classroom tournament · Phone camera host · Export backups regularly</footer>
+<footer>Sketch Battle v0.5 · Up to 30 simultaneous bowl fighters · Phone host · 1v1 tournament preserved</footer>
 </div>
+<script src="./multibot-layout.js"></script>
 <script src="./trace.js"></script>
 <script src="./photo-storage.js"></script>
 <script>
@@ -338,8 +341,70 @@ $("exportJSON").onclick=()=>download("sketch-battle-battlebots.json",JSON.string
 $("importJSON").onchange=async ev=>{const f=ev.target.files&&ev.target.files[0];if(!f)return;try{if(f.size>4e6)throw Error("File exceeds 4 MB");const data=JSON.parse(await f.text());const list=Array.isArray(data)?data:data.battlebots;if(!Array.isArray(list))throw Error("Missing battlebots list");
 let count=0;list.slice(0,200).forEach(item=>{const bot=cleanBot(item);if(bot){bot.id="bot-import-"+Date.now()+"-"+count;roster.push(bot);count++}});persistent();renderGarage();message("Imported "+count+" battlebots.","ok")}catch(e){message("Import failed: "+e.message,"error")}ev.target.value=""};
 function seedBot(n){const b=defaultBot();b.id="demo"+n;b.name=n===1?"Example Alpha":"Example Bravo";b.color=n===1?colors[0]:colors[1];b.weapon.type=n===1?"slasher":"hammer";return b}
-function populateArena(){const options=[...roster.map(b=>({id:b.id,name:b.name})),{id:"demo1",name:"Example Alpha"},{id:"demo2",name:"Example Bravo"}];["selectA","selectB"].forEach((id,i)=>{const el=$(id),prev=el.value;el.innerHTML="";options.forEach(op=>{const option=document.createElement("option");option.value=op.id;option.textContent=op.name;el.append(option)});el.value=options.some(p=>p.id===prev)?prev:options[Math.min(i,options.length-1)].id});if(!duel)drawArenaStatic()}
-function selectedBot(id){return roster.find(b=>b.id===id)||(id==="demo1"?seedBot(1):seedBot(2))}
+const extraArenaBots=[];
+function arenaOptions(){return [...roster.map(b=>({id:b.id,name:b.name})),{id:"demo1",name:"Example Alpha"},{id:"demo2",name:"Example Bravo"}]}
+function selectedIds(){return [$("selectA").value,$("selectB").value,...extraArenaBots.map(e=>e.id)]}
+function chosenBots(){return selectedIds().map(selectedBot)}
+function selectedBot(id){return roster.find(b=>b.id===id)||(id==="demo1"?seedBot(1):id==="demo2"?seedBot(2):null)}
+function renderExtraArenaBots(){
+ const container=$("extraArenaBots");container.innerHTML="";
+ const options=arenaOptions();
+ extraArenaBots.forEach((entry,i)=>{
+  const row=document.createElement("div");row.className="launch-panel";
+  const heading=document.createElement("div");heading.className="row";
+  const tag=document.createElement("strong");tag.textContent="Bot "+(i+3);
+  const remove=document.createElement("button");remove.className="btn warn";remove.textContent="✕ Remove";
+  remove.disabled=!!(duel&&duel.running);
+  remove.onclick=()=>{if(duel&&duel.running)return;extraArenaBots.splice(i,1);renderExtraArenaBots();drawArenaStatic()};
+  heading.append(tag,remove);row.append(heading);
+  const select=document.createElement("select");select.className="field";select.setAttribute("aria-label","Choose bot "+(i+3));
+  options.forEach(op=>{const opt=document.createElement("option");opt.value=op.id;opt.textContent=op.name;select.append(opt)});
+  select.value=entry.id;
+  select.disabled=!!(duel&&duel.running);
+  select.onchange=()=>{entry.id=select.value;drawArenaStatic()};
+  row.append(select);
+  const details=document.createElement("details");details.style.marginTop="6px";
+  const summary=document.createElement("summary");summary.textContent="Launch settings";details.append(summary);
+  const direction=document.createElement("label");direction.textContent="Angle (degrees, blank = auto toward centre)";
+  const angle=document.createElement("input");angle.type="number";angle.className="field";angle.min="0";angle.max="359";angle.step="1";angle.placeholder="Auto";angle.value=entry.angle==null?"":String(entry.angle);
+  angle.onchange=()=>{entry.angle=angle.value===""?null:((Number(angle.value)%360)+360)%360;angle.value=entry.angle==null?"":String(entry.angle);drawArenaStatic()};
+  const strength=document.createElement("label");strength.textContent="Power (0–100%)";
+  const power=document.createElement("input");power.type="number";power.className="field";power.min="0";power.max="100";power.step="5";power.value=entry.power;
+  power.onchange=()=>{entry.power=clamp(Number(power.value)||0,0,100);power.value=entry.power;drawArenaStatic()};
+  direction.append(angle);strength.append(power);details.append(direction,strength);row.append(details);container.append(row);
+ });
+ $("arenaBotCount").textContent=selectedIds().length+" / "+window.SketchBattleMultibot.MAX_BOTS+" bots";
+ $("addArenaBot").disabled=extraArenaBots.length+2>=window.SketchBattleMultibot.MAX_BOTS||!!(duel&&duel.running);
+}
+$("addArenaBot").onclick=()=>{
+ if(duel&&duel.running)return;
+ const used=new Set(selectedIds()),next=arenaOptions().find(o=>!used.has(o.id));
+ if(!next){message("Save more pupils' battlebots in My Battlebots before using Add Bot.","error");return}
+ if(extraArenaBots.length+2>=window.SketchBattleMultibot.MAX_BOTS)return;
+ extraArenaBots.push({id:next.id,angle:null,power:90});
+ renderExtraArenaBots();drawArenaStatic();
+};
+function populateArena(){
+ const options=arenaOptions();
+ ["selectA","selectB"].forEach((id,i)=>{
+  const el=$(id),prev=el.value;el.innerHTML="";
+  options.forEach(op=>{const option=document.createElement("option");option.value=op.id;option.textContent=op.name;el.append(option)});
+  el.value=options.some(p=>p.id===prev)?prev:options[Math.min(i,options.length-1)].id;
+ });
+ for(let i=extraArenaBots.length-1;i>=0;i--)if(!options.some(o=>o.id===extraArenaBots[i].id))extraArenaBots.splice(i,1);
+ renderExtraArenaBots();if(!duel||!duel.running)drawArenaStatic();
+}
+function openingFighters(){
+ const selected=chosenBots(),points=window.SketchBattleMultibot.layout(selected.length);
+ const mult=window.SketchBattleMultibot.scaleForCount(selected.length);
+ return selected.map((bot,i)=>{
+  const pos=points[i],angle=i===0?launches.a.angle:i===1?launches.b.angle:extraArenaBots[i-2].angle??pos.angle;
+  const power=i===0?launches.a.power:i===1?launches.b.power:extraArenaBots[i-2].power;
+  const f=fighter(bot,pos.x,(angle+90)*Math.PI/180,i,angle,power);
+  f.y=pos.y;f.scale=.4*mult;f.radius*=mult;f.number=i+1;
+  return f;
+ });
+}
 function rotTo(angle,desired,max){let a=((desired-angle+Math.PI*3)%(Math.PI*2))-Math.PI;return angle+clamp(a,-max,max)}
 // ===== TURBO BOWL v0.2: arena editor, launch control and impact combat =====
 const BOWL={cx:400,cy:250,r:220,gravity:158,drag:.105,restitution:.53};
