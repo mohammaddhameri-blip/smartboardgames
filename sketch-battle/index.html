@@ -99,7 +99,7 @@ footer{font-size:11px;color:var(--mute);text-align:center;padding-top:18px}
    <label>Bot 2<select id="selectB" class="field"></select></label>
   </div>
   <div id="extraArenaBots"></div>
-  <div class="row" style="margin:10px 0"><button id="addArenaBot" class="btn primary">＋ Add Bot</button><span id="arenaBotCount" class="small-help">2 / 30 bots</span></div>
+  <div class="row" style="margin:10px 0"><button id="addArenaBot" class="btn primary">＋ Add Bot</button><button id="addAllArenaBots" class="btn">Add All</button><span id="arenaBotCount" class="small-help">2 / 30 bots</span></div>
   <p class="small-help">Add registered pupils to battle together. All selected bots launch simultaneously; the bots become smaller as the bowl fills. Each extra bot launches toward the centre by default.</p>
   <div class="section-title">01 / Arena layout</div>
   <label for="arenaPreset">Arena preset</label>
@@ -375,6 +375,7 @@ function renderExtraArenaBots(){
  });
  $("arenaBotCount").textContent=selectedIds().length+" / "+window.SketchBattleMultibot.MAX_BOTS+" bots";
  $("addArenaBot").disabled=extraArenaBots.length+2>=window.SketchBattleMultibot.MAX_BOTS||!!(duel&&duel.running);
+ $("addAllArenaBots").disabled=$("addArenaBot").disabled;
 }
 $("addArenaBot").onclick=()=>{
  if(duel&&duel.running)return;
@@ -383,6 +384,18 @@ $("addArenaBot").onclick=()=>{
  if(extraArenaBots.length+2>=window.SketchBattleMultibot.MAX_BOTS)return;
  extraArenaBots.push({id:next.id,angle:null,power:90});
  renderExtraArenaBots();drawArenaStatic();
+};
+$("addAllArenaBots").onclick=()=>{
+ if(duel&&duel.running)return;
+ let added=0;
+ for(const option of arenaOptions()){
+  if(selectedIds().length>=window.SketchBattleMultibot.MAX_BOTS)break;
+  if(!selectedIds().includes(option.id)){
+   extraArenaBots.push({id:option.id,angle:null,power:90});added++;
+  }
+ }
+ renderExtraArenaBots();drawArenaStatic();
+ message(added?"Added "+added+" additional battlebots to the bowl.":"All available battlebots are already selected.","ok");
 };
 function populateArena(){
  const options=arenaOptions();
