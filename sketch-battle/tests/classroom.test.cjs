@@ -71,3 +71,28 @@ test("traced outline retains inward notches instead of always returning a convex
  const area=Math.abs(shape.reduce((a,p,i)=>{const q=shape[(i+1)%shape.length];return a+p.x*q.y-q.x*p.y},0))/2;
  assert.ok(area<bounds*.75,"preserve concavity and avoid a rectangular convex hull");
 });
+test("leaving the arena aborts the active duel cleanly for a new phone scan",()=>{
+ const source=fs.readFileSync(path.join(base,"index.html"),"utf8");
+ const start=source.indexOf("function setView(s){");
+ const end=source.indexOf("function canvasPoint(ev){",start);
+ assert.ok(start>0&&end>start,"setView should exist");
+ const script=source.slice(start,end);
+ const elements=new Map();
+ const get=id=>{
+  if(!elements.has(id))elements.set(id,{classList:{toggle(){}},textContent:""});
+  return elements.get(id);
+ };
+ const duel={running:true};
+ const context={
+  view:"arena",duel,
+  canvas:{classList:{toggle(){}}},arena:{classList:{toggle(){}}},
+  document:{querySelectorAll:()=>[]},
+  $:get,
+  render(){},renderGarage(){},populateArena(){},message(){},
+ };
+ vm.createContext(context);
+ vm.runInContext(script+";setView('workshop');",context);
+ assert.equal(duel.running,false,"old duel stops when the teacher opens workshop");
+ assert.equal(context.duel,null,"stale duel is cleared so the next match can begin");
+ assert.equal(context.view,"workshop");
+});
