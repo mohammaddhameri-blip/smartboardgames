@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#15283a"><title>Sketch Battle — Phone Host</title>
+<meta name="theme-color" content="#15283a"><link rel="manifest" href="./phone.webmanifest"><title>Sketch Battle — Phone Host</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#0d1927;color:#f0f8fc;font:15px/1.5 system-ui,sans-serif}main{max-width:560px;margin:auto;padding:16px 14px 60px}
 header{display:flex;gap:12px;align-items:center;margin:5px 0 18px}h1{font-size:24px;margin:0}header p{margin:0;color:#9cb3c6}.logo{font-size:30px;padding:9px 13px;background:#bfea6b;color:#14262c;border-radius:12px}
@@ -47,6 +47,7 @@ video{width:100%;background:#080f18;border-radius:10px;aspect-ratio:4/3;object-f
 const URL_="https://qekcgsfeomjckctiubgm.supabase.co",KEY="sb_publishable_yJbCYOLDeMreuqM01g_oqA_eF5YEWwq";
 const $=id=>document.getElementById(id);let client=null,channel=null,paired=false,online=false,stream=null,facing="environment";
 let raw=document.createElement("canvas"),crop={x:0,y:0,w:1,h:1},pointer=null,requestId="",waiting=false;
+raw.width=0;raw.height=0;
 const canvas=$("cropCanvas"),ctx=canvas.getContext("2d");
 function status(s,ok=false,err=false){$("connection").textContent=s;$("connection").className="status"+(ok?" good":err?" bad":"")}
 function photoStatus(s,ok=false,err=false){$("photoStatus").textContent=s;$("photoStatus").className="status"+(ok?" good":err?" bad":"")}
@@ -163,5 +164,6 @@ $("send").onclick=async ()=>{
 };
 window.addEventListener("pagehide",()=>{stopCamera();if(client&&channel)client.removeChannel(channel)});
 if($("room").value.length===8)connect();
+if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
 })();
 </script></body></html>
