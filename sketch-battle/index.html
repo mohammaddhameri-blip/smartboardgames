@@ -663,79 +663,111 @@ function updateWeaponAnimation(f,enemy,dt){
   }else f.weaponSwing=0;
  }
 }
+function battleAlive(f){return !f.eliminated&&f.body>0&&f.wheels.filter(h=>h>0).length>1}
+function nearestEnemy(f,bots){
+ let best=null,shortest=Infinity;
+ for(const other of bots){
+  if(other===f||!battleAlive(other))continue;
+  const d=(other.x-f.x)**2+(other.y-f.y)**2;
+  if(d<shortest){shortest=d;best=other}
+ }
+ return best;
+}
+function battleScore(f){return f.body*.6+f.wheels.reduce((s,n)=>s+n,0)*.08+f.weapon*.07+f.score*.6}
 function stepDuel(dt){
  duel.clock+=dt;duel.remain=Math.max(0,duel.remain-dt);
  const bots=duel.bots;
- for(let i=0;i<2;i++){
- const f=bots[i],enemy=bots[1-i],ex=enemy.x-f.x,ey=enemy.y-f.y,ed=Math.hypot(ex,ey)||1;
- const active=f.wheels.filter(h=>h>0).length,motor=active/4;
- const rx=f.x-BOWL.cx,ry=f.y-BOWL.cy,r=Math.hypot(rx,ry)||1;
- const tangent={x:-ry/r,y:rx/r},seek={x:ex/ed,y:ey/ed},ring=clamp((r-65)/170,0,1);
- const orbit=.15+.42*ring,dx=tangent.x*orbit+seek.x*(1-orbit),dy=tangent.y*orbit+seek.y*(1-orbit);
- const desired=Math.atan2(dx,-dy);
- // Protect launch direction in the opening two seconds, then let autonomous steering take over.
- const steering=clamp((duel.clock-1)/2,0,1);
- f.rot=rotTo(f.rot,desired,f.turn*dt*motor*steering*(f.stun>0?.4:1));
- const hx=Math.sin(f.rot),hy=-Math.cos(f.rot);
- const thrust=(350/(1+f.mass*.16))*motor*(f.air>0?.13:1)*(f.stun>0?.4:1);
- f.vx+=hx*thrust*dt;f.vy+=hy*thrust*dt;
- // Parabolic slope is an inward acceleration. Momentum is retained while descending and circling.
- f.vx-=BOWL.gravity*(rx/BOWL.r)*dt;f.vy-=BOWL.gravity*(ry/BOWL.r)*dt;
- let onRamp=false;
- for(let j=0;j<arenaObstacles.length;j++){const o=arenaObstacles[j];
- if(o.type==="ramp"&&hitRamp(f,o,j,dt))onRamp=true}
- if(!onRamp)f.prevRamp=-1;
- if(f.air>0){f.air=Math.max(0,f.air-dt);
- if(f.air===0){const landing=crashDamage(.5*f.mass*Math.pow(Math.hypot(f.vx,f.vy)*.40,2))*.5;
- if(landing>1)hitDamage(f,null,landing,{x:f.x,y:f.y},"landing")}}
- const damp=Math.exp(-(BOWL.drag+(onRamp?.015:0))*dt);f.vx*=damp;f.vy*=damp;
- const maxSpeed=f.speed*1.52,v=Math.hypot(f.vx,f.vy);
- if(v>maxSpeed){f.vx*=maxSpeed/v;f.vy*=maxSpeed/v}
- f.x+=f.vx*dt;f.y+=f.vy*dt;
- for(const o of arenaObstacles)if(o.type==="rock")hitRock(f,o);
- setInsideBowl(f);
- f.cd=Math.max(0,f.cd-dt);f.stun=Math.max(0,f.stun-dt);
+ for(const f of bots){
+  if(!battleAlive(f))continue;
+  const enemy=nearestEnemy(f,bots);
+  if(!enemy)break;
+  const ex=enemy.x-f.x,ey=enemy.y-f.y,ed=Math.hypot(ex,ey)||1;
+  const active=f.wheels.filter(h=>h>0).length,motor=active/4;
+  const rx=f.x-BOWL.cx,ry=f.y-BOWL.cy,r=Math.hypot(rx,ry)||1;
+  const tangent={x:-ry/r,y:rx/r},seek={x:ex/ed,y:ey/ed},ring=clamp((r-65)/170,0,1);
+  const orbit=.15+.42*ring,dx=tangent.x*orbit+seek.x*(1-orbit),dy=tangent.y*orbit+seek.y*(1-orbit);
+  const desired=Math.atan2(dx,-dy);
+  const steering=clamp((duel.clock-1)/2,0,1);
+  f.rot=rotTo(f.rot,desired,f.turn*dt*motor*steering*(f.stun>0?.4:1));
+  const hx=Math.sin(f.rot),hy=-Math.cos(f.rot);
+  const thrust=(350/(1+f.mass*.16))*motor*(f.air>0?.13:1)*(f.stun>0?.4:1);
+  f.vx+=hx*thrust*dt;f.vy+=hy*thrust*dt;
+  f.vx-=BOWL.gravity*(rx/BOWL.r)*dt;f.vy-=BOWL.gravity*(ry/BOWL.r)*dt;
+  let onRamp=false;
+  for(let j=0;j<arenaObstacles.length;j++){
+   const o=arenaObstacles[j];if(o.type==="ramp"&&hitRamp(f,o,j,dt))onRamp=true;
+  }
+  if(!onRamp)f.prevRamp=-1;
+  if(f.air>0){f.air=Math.max(0,f.air-dt);
+   if(f.air===0){const landing=crashDamage(.5*f.mass*Math.pow(Math.hypot(f.vx,f.vy)*.40,2))*.5;
+    if(landing>1)hitDamage(f,null,landing,{x:f.x,y:f.y},"landing")}
+  }
+  const damp=Math.exp(-(BOWL.drag+(onRamp?.015:0))*dt);f.vx*=damp;f.vy*=damp;
+  const maxSpeed=f.speed*1.52,v=Math.hypot(f.vx,f.vy);
+  if(v>maxSpeed){f.vx*=maxSpeed/v;f.vy*=maxSpeed/v}
+  f.x+=f.vx*dt;f.y+=f.vy*dt;
+  for(const o of arenaObstacles)if(o.type==="rock")hitRock(f,o);
+  setInsideBowl(f);
+  f.cd=Math.max(0,f.cd-dt);f.stun=Math.max(0,f.stun-dt);
  }
- for(let i=0;i<2;i++)updateWeaponAnimation(bots[i],bots[1-i],dt);
- // Bot-to-bot impulse, with fixed 180 Hz substeps to reduce high-speed tunneling.
- const a=bots[0],b=bots[1],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.001;
- const min=a.radius*.60+b.radius*.60+12;
- if(d<min && a.air<.17 && b.air<.17){
- const nx=dx/d,ny=dy/d,penetration=min-d,total=a.mass+b.mass;
- a.x-=nx*penetration*b.mass/total;b.x+=nx*penetration*a.mass/total;
- a.y-=ny*penetration*b.mass/total;b.y+=ny*penetration*a.mass/total;
- const relative=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
- if(relative<0){
- const reduced=a.mass*b.mass/(total),closing=-relative,impulse=-(1+.39)*relative*reduced;
- a.vx-=impulse*nx/a.mass;a.vy-=impulse*ny/a.mass;
- b.vx+=impulse*nx/b.mass;b.vy+=impulse*ny/b.mass;
- const impactEnergy=.5*reduced*closing*closing;
- const crash=crashDamage(impactEnergy);
- // Weapons now deal damage through their actual animation/contact cycles.
- const ba=0,bb=0;
- if(crash>1.3)sparkAt({x:(a.x+b.x)*.5,y:(a.y+b.y)*.5},crash*.18);
- const ca={x:a.x+nx*a.radius*.5,y:a.y+ny*a.radius*.5},cb={x:b.x-nx*b.radius*.5,y:b.y-ny*b.radius*.5};
- if(crash+bb>0)hitDamage(a,b,crash+bb,ca,"bot");
- if(crash+ba>0)hitDamage(b,a,crash+ba,cb,"bot");
- a.stun=Math.max(a.stun,clamp(closing/1300,0,.19));b.stun=Math.max(b.stun,a.stun);
+ // One fully animated weapon against each operational bot's nearest live opponent.
+ for(const f of bots)if(battleAlive(f)){
+  const enemy=nearestEnemy(f,bots);if(enemy)updateWeaponAnimation(f,enemy,dt);
  }
+ // Check each unique pair. Smaller robots have proportionately smaller hitboxes.
+ for(let i=0;i<bots.length;i++){
+  const a=bots[i];if(!battleAlive(a))continue;
+  for(let j=i+1;j<bots.length;j++){
+   const b=bots[j];if(!battleAlive(b))continue;
+   const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+   const scale=(a.scale+b.scale)/.8,min=a.radius*.60+b.radius*.60+12*scale;
+   if(d>=min||a.air>=.17||b.air>=.17)continue;
+   const nx=d>.0001?dx/d:Math.cos((i+j)*2.4),ny=d>.0001?dy/d:Math.sin((i+j)*2.4);
+   const penetration=min-d,total=a.mass+b.mass;
+   a.x-=nx*penetration*b.mass/total;b.x+=nx*penetration*a.mass/total;
+   a.y-=ny*penetration*b.mass/total;b.y+=ny*penetration*a.mass/total;
+   const relative=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+   if(relative>=0)continue;
+   const reduced=a.mass*b.mass/total,closing=-relative,impulse=-(1+.39)*relative*reduced;
+   a.vx-=impulse*nx/a.mass;a.vy-=impulse*ny/a.mass;
+   b.vx+=impulse*nx/b.mass;b.vy+=impulse*ny/b.mass;
+   const impactEnergy=.5*reduced*closing*closing,crash=crashDamage(impactEnergy);
+   if(crash>1.3)sparkAt({x:(a.x+b.x)*.5,y:(a.y+b.y)*.5},crash*.18);
+   const ca={x:a.x+nx*a.radius*.5,y:a.y+ny*a.radius*.5};
+   const cb={x:b.x-nx*b.radius*.5,y:b.y-ny*b.radius*.5};
+   if(crash>0){hitDamage(a,b,crash,ca,"bot");hitDamage(b,a,crash,cb,"bot")}
+   a.stun=Math.max(a.stun,clamp(closing/1300,0,.19));
+   b.stun=Math.max(b.stun,a.stun);
+  }
  }
  for(const p of duel.debris){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.exp(-2*dt);p.vy*=Math.exp(-2*dt);p.t-=dt}
  duel.debris=duel.debris.filter(p=>p.t>0);
  for(const p of duel.sparks){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.97;p.vy*=.97;p.t-=dt}
  duel.sparks=duel.sparks.filter(p=>p.t>0);
- const ko=bots.map(f=>f.body<=0||f.wheels.filter(w=>w>0).length<=1);
- if(ko[0]||ko[1]||duel.remain<=0){
- duel.running=false;
- const score=f=>f.body*.6+f.wheels.reduce((s,n)=>s+n,0)*.08+f.weapon*.07+f.score*.6;
- const winner=ko[0]&&!ko[1]?b:ko[1]&&!ko[0]?a:score(a)>score(b)+.01?a:score(b)>score(a)+.01?b:null;
- duel.winner=winner?winner.bot.name:"Draw";
-  duel.winnerId=winner?winner.bot.id:null;
- $("duelResult").textContent=(winner?"Winner: "+winner.bot.name:"Draw")+" · "+(90-duel.remain).toFixed(1)+" s · "+
- "Damage taken "+a.bot.name+": "+Math.round(a.damage)+", "+b.bot.name+": "+Math.round(b.damage)+
- " · rock impacts "+Math.round(duel.hits.rock||0);
- message("Battle completed. The prototype uses simplified 2.5D impact physics.","ok");
+ for(const f of bots){
+  if(!f.eliminated&&!battleAlive(f)){
+   f.eliminated=true;
+   duel.eliminations.push({id:f.bot.id,name:f.bot.name,time:duel.clock});
+   sparkAt({x:f.x,y:f.y},4);
+  }
  }
+ const survivors=bots.filter(battleAlive);
+ if(survivors.length>1&&duel.remain>0)return;
+ duel.running=false;
+ let winner=null;
+ if(survivors.length===1)winner=survivors[0];
+ else if(survivors.length>1){
+  const ranked=survivors.slice().sort((a,b)=>battleScore(b)-battleScore(a));
+  if(battleScore(ranked[0])>battleScore(ranked[1])+.01)winner=ranked[0];
+ }
+ duel.winner=winner?winner.bot.name:"Draw";
+ duel.winnerId=winner?winner.bot.id:null;
+ const elapsed=(duel.duration-duel.remain).toFixed(1);
+ $("duelResult").textContent=(winner?"Winner: "+winner.bot.name:"Draw")+" · "+elapsed+" s · "+
+  survivors.length+" survivor"+(survivors.length===1?"":"s")+" · "+
+  duel.eliminations.length+" eliminated · "+Math.round(duel.hits.rock||0)+" rock damage";
+ $("selectA").disabled=false;$("selectB").disabled=false;$("startDuel").disabled=false;renderExtraArenaBots();
+ message("Battle completed. "+(winner?winner.bot.name+" wins!":"No clear winner; rerun for a deciding battle."),"ok");
 }
 function arenaBackground(){
  ac.fillStyle="#101b29";ac.fillRect(0,0,W,H);
