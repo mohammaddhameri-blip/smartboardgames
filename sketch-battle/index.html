@@ -508,18 +508,18 @@ function fighter(bot,x,rot,side,angle,power){
  const top=bot.wheels.slice(0,2),rear=bot.wheels.slice(2);
  const wb=Math.abs((rear[0].y+rear[1].y-top[0].y-top[1].y)/2);
  const width=(Math.abs(bot.wheels[0].x-bot.wheels[1].x)+Math.abs(bot.wheels[2].x-bot.wheels[3].x))/2;
- return {bot,x,y:250,rot,angle,power,mass,mid,b,radius:clamp(Math.max(b.x1-b.x0,b.y1-b.y0)*.17,25,58),
+ return {bot,x,y:250,rot,angle,power,mass,mid,b,scale:.4,number:0,eliminated:false,radius:clamp(Math.max(b.x1-b.x0,b.y1-b.y0)*.17,25,58),
  speed:clamp(330/Math.sqrt(mass/2),155,365),turn:clamp(2.9-wb/190,1.2,3),width,body:100,
  wheels:[100,100,100,100],weapon:100,cd:0,vx:0,vy:0,air:0,prevRamp:-1,dents:[],damage:0,score:0,stun:0,side,
  weaponSpin:0,weaponSwing:0,hammerTime:0,hammerFired:false,hammerActive:false,contactGlow:0};
 }
 function launchFighter(f){const speed=(f.power/100)*350;const a=f.angle*Math.PI/180;
  f.vx=Math.cos(a)*speed;f.vy=Math.sin(a)*speed;f.rot=a+Math.PI/2}
-function worldWheel(f,i){const w=f.bot.wheels[i],dx=(w.x-f.mid.x)*.40,dy=(w.y-f.mid.y)*.40;
+function worldWheel(f,i){const w=f.bot.wheels[i],dx=(w.x-f.mid.x)*f.scale,dy=(w.y-f.mid.y)*f.scale;
  return{x:f.x+dx*Math.cos(f.rot)-dy*Math.sin(f.rot),y:f.y+dx*Math.sin(f.rot)+dy*Math.cos(f.rot)}}
 function debris(type,p,velocity){if(!duel)return;duel.debris.push({type,x:p.x,y:p.y,vx:velocity.x,vy:velocity.y,t:7})}
 function hitDamage(target,source,amount,contact,label){
- if(amount<=0)return;
+ if(amount<=0||target.eliminated)return;
  const before=target.wheels.slice(),wp=target.weapon;
  target.body=Math.max(0,target.body-amount*.65);
  let nearest=0,dd=Infinity;
@@ -533,18 +533,25 @@ function hitDamage(target,source,amount,contact,label){
  if(wp>0&&target.weapon===0)debris("weapon",{x:target.x,y:target.y},{x:target.vx*.7+20,y:target.vy*.7-15});
  const dx=contact.x-target.x,dy=contact.y-target.y;
  const lx=dx*Math.cos(-target.rot)-dy*Math.sin(-target.rot),ly=dx*Math.sin(-target.rot)+dy*Math.cos(-target.rot);
- target.dents.push({x:lx/.4,y:ly/.4});if(target.dents.length>14)target.dents.shift();
+ target.dents.push({x:lx/target.scale,y:ly/target.scale});if(target.dents.length>14)target.dents.shift();
 }
 function crashDamage(energy){return clamp(Math.max(0,energy-1800)/9200,0,32)}
 function startDuel(){
- const a=selectedBot($("selectA").value),b=selectedBot($("selectB").value);
- if(a.id===b.id){message("Choose two different battlebots.","error");return}
+ if(duel&&duel.running){message("Finish or stop the current battle before launching again.","error");return false}
+ const ids=selectedIds(),unique=new Set(ids);
+ if(ids.length<2||ids.length>window.SketchBattleMultibot.MAX_BOTS||unique.size!==ids.length||chosenBots().some(b=>!b)){
+  message("Select 2–30 DIFFERENT battlebots, then press Launch.","error");return false;
+ }
  selectedObstacle=-1;syncRampControl();
- duel={bots:[fighter(a,255,Math.PI/2,"a",launches.a.angle,launches.a.power),
- fighter(b,545,-Math.PI/2,"b",launches.b.angle,launches.b.power)],remain:90,running:true,winner:null,debris:[],clock:0,countdown:3,hits:{},sparks:[]};
- last=0;$("duelResult").textContent="Preparing simultaneous launch…";
+ const bots=openingFighters(),duration=bots.length===2?90:Math.min(180,90+(bots.length-2)*3);
+ duel={bots,remain:duration,duration,running:true,winner:null,winnerId:null,
+  debris:[],clock:0,countdown:3,hits:{},sparks:[],eliminations:[]};
+ last=0;$("duelResult").textContent="Preparing "+bots.length+" battlebots for simultaneous launch…";
+ renderExtraArenaBots();
+ $("selectA").disabled=true;$("selectB").disabled=true;$("startDuel").disabled=true;
  if(!raf)raf=requestAnimationFrame(tick);
- message("3… 2… 1… LAUNCH! Robots retain the momentum from your chosen launch settings.","ok");
+ message("3… 2… 1… LAUNCH! "+bots.length+" battlebots in the bowl.","ok");
+ return true;
 }
 function tick(now){
  raf=0;
@@ -552,7 +559,8 @@ function tick(now){
  if(last){const frame=Math.min(.05,(now-last)/1000);if(duel.countdown>0){
  duel.countdown=Math.max(0,duel.countdown-frame);
  if(duel.countdown===0)duel.bots.forEach(launchFighter);
- }else{const steps=Math.max(1,Math.ceil(frame/(1/180))),dt=frame/steps;
+ }else{const rate=duel.bots.length>15?90:duel.bots.length>8?120:180;
+ const steps=Math.max(1,Math.ceil(frame*rate)),dt=frame/steps;
  for(let i=0;i<steps&&duel.running;i++)stepDuel(dt);}}
  last=now;drawDuel();if(duel.running)raf=requestAnimationFrame(tick);
 }
@@ -597,7 +605,7 @@ function weaponFacing(f){
  return{x:Math.sin(a),y:-Math.cos(a)};
 }
 function mountPoint(f){
- const p=f.bot.weapon,dx=(p.x-f.mid.x)*.4,dy=(p.y-f.mid.y)*.4;
+ const p=f.bot.weapon,dx=(p.x-f.mid.x)*f.scale,dy=(p.y-f.mid.y)*f.scale;
  return{x:f.x+dx*Math.cos(f.rot)-dy*Math.sin(f.rot),y:f.y+dx*Math.sin(f.rot)+dy*Math.cos(f.rot)};
 }
 function sparkAt(p,amount=1){if(!duel||!duel.sparks)return;
@@ -611,7 +619,7 @@ function updateWeaponAnimation(f,enemy,dt){
  const w=f.bot.weapon.type,active=f.weapon>0,forward=weaponFacing(f),mount=mountPoint(f);
  const dx=enemy.x-mount.x,dy=enemy.y-mount.y,d=Math.hypot(dx,dy)||1;
  const facing=(forward.x*dx+forward.y*dy)/d;
- const contactDistance=f.radius*.48+enemy.radius*.55+30;
+ const relativeScale=f.scale/.4,contactDistance=f.radius*.48+enemy.radius*.55+30*relativeScale;
  const close=d<contactDistance;
  f.contactGlow=Math.max(0,f.contactGlow-dt*5);
  if(w==="drill"){
@@ -619,16 +627,16 @@ function updateWeaponAnimation(f,enemy,dt){
   // Drills work only when close and facing the opponent; repeated contact makes slow chip damage.
   if(active&&close&&facing>.55&&f.air<.15&&enemy.air<.15){
    const damage=2.6*dt;
-   hitDamage(enemy,f,damage,{x:mount.x+forward.x*30,y:mount.y+forward.y*30},"weapon");
+   hitDamage(enemy,f,damage,{x:mount.x+forward.x*30*relativeScale,y:mount.y+forward.y*30*relativeScale},"weapon");
    f.contactGlow=.85;
-   if(Math.random()<dt*12)sparkAt({x:mount.x+forward.x*22,y:mount.y+forward.y*22},1);
+   if(Math.random()<dt*12)sparkAt({x:mount.x+forward.x*22*relativeScale,y:mount.y+forward.y*22*relativeScale},1);
   }
  }else if(w==="slasher"){
   f.weaponSpin+=dt*(active?12*clamp(f.weapon/100,.4,1):0);
   // Spinning slashers can chip exposed parts during a close pass.
   if(active&&close&&facing>.34&&f.cd<=0&&f.air<.16&&enemy.air<.16){
-   hitDamage(enemy,f,1.7,{x:mount.x+forward.x*28,y:mount.y+forward.y*28},"weapon");
-   f.cd=.72;f.contactGlow=.85;sparkAt({x:mount.x+forward.x*30,y:mount.y+forward.y*30},2);
+   hitDamage(enemy,f,1.7,{x:mount.x+forward.x*28*relativeScale,y:mount.y+forward.y*28*relativeScale},"weapon");
+   f.cd=.72;f.contactGlow=.85;sparkAt({x:mount.x+forward.x*30*relativeScale,y:mount.y+forward.y*30*relativeScale},2);
   }
  }else if(w==="hammer"){
   if(!active){f.hammerActive=false;f.weaponSwing=0;return}
@@ -645,8 +653,8 @@ function updateWeaponAnimation(f,enemy,dt){
     // Strike can miss if target moved out of reach during wind-up.
     const ndx=enemy.x-mount.x,ndy=enemy.y-mount.y,nd=Math.hypot(ndx,ndy)||1;
     const aim=(forward.x*ndx+forward.y*ndy)/nd;
-    if(nd<contactDistance+14&&aim>.37){
-     const impact={x:mount.x+forward.x*34,y:mount.y+forward.y*34};
+    if(nd<contactDistance+14*relativeScale&&aim>.37){
+     const impact={x:mount.x+forward.x*34*relativeScale,y:mount.y+forward.y*34*relativeScale};
      hitDamage(enemy,f,4.5,impact,"weapon");
      enemy.vx+=forward.x*24/enemy.mass;enemy.vy+=forward.y*24/enemy.mass;
      sparkAt(impact,5);f.contactGlow=1;
