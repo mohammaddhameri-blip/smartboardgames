@@ -281,7 +281,7 @@ function sync(){document.querySelectorAll("[data-tool]").forEach(b=>b.classList.
 $("botName").value=draft.name;$("weaponAngle").value=draft.weapon.angle;
 $("colors").innerHTML="";colors.forEach(color=>{const b=document.createElement("button");b.className="swatch"+(color===draft.color?" on":"");b.style.setProperty("--c",color);b.title="Chassis colour "+color;b.setAttribute("aria-label",b.title);b.onclick=()=>{draft.color=color;persistent();sync();render()};$("colors").append(b)});photoLoaded();updateStats();render()}
 function chooseTool(s){tool=s;document.querySelectorAll("[data-tool]").forEach(b=>b.classList.toggle("on",b.dataset.tool===s));$("canvasTag").textContent=({freehand:"DRAW A CLOSED SHAPE",points:"TAP CORNERS · THEN CLOSE",edit:"DRAG OUTLINE VERTICES",wheels:"DRAG EACH WHEEL",weapon:"DRAG WEAPON MOUNT"})[s];render()}
-function setView(s){if(s!=="arena"&&view==="arena"&&duel){duel.running=false;duel=null}view=s;document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===s));["workshop","garage","arena"].forEach(k=>$(k+"Panel").classList.toggle("hide",k!==s));
+function setView(s){if(s!=="arena"&&view==="arena"&&duel){duel.running=false;duel=null;$("selectA").disabled=false;$("selectB").disabled=false;$("startDuel").disabled=false;renderExtraArenaBots()}view=s;document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===s));["workshop","garage","arena"].forEach(k=>$(k+"Panel").classList.toggle("hide",k!==s));
 canvas.classList.toggle("hide",s!=="workshop");arena.classList.toggle("hide",s!=="arena");$("garageCanvas").classList.toggle("hide",s!=="garage");$("canvasTag").classList.toggle("hide",s!=="workshop");
 $("stageTitle").textContent=s==="workshop"?"Battlebot Workshop":s==="garage"?"Registered Battlebots":"Bowl Collision Arena";
 $("stageSub").textContent=s==="workshop"?"Draw a chassis and configure the equipment":s==="garage"?"Select a saved design to edit or test":"Early movement and combat sandbox";
@@ -800,12 +800,12 @@ function drawObstacles(){
  ac.restore();
  }
 }
-function arrow(c,x,y,deg,power,colour){
- c.save();c.translate(x,y);c.rotate(deg*Math.PI/180);
+function arrow(c,x,y,deg,power,colour,scale=1){
+ c.save();c.translate(x,y);c.rotate(deg*Math.PI/180);c.scale(scale,scale);
  const len=24+power*.52;c.strokeStyle=colour;c.lineWidth=5;c.lineCap="round";c.beginPath();c.moveTo(0,0);c.lineTo(len,0);c.moveTo(len-13,-10);c.lineTo(len,0);c.lineTo(len-13,10);c.stroke();c.restore();
 }
 function drawFighter(f){
- const c=ac,s=.4;c.save();c.translate(f.x,f.y);
+ const c=ac,s=f.scale||.4;c.save();c.translate(f.x,f.y);
  if(f.air>0){c.fillStyle="#151e2588";c.beginPath();c.ellipse(7,10,f.radius*.65,f.radius*.4,0,0,Math.PI*2);c.fill();c.translate(0,-f.air*30)}
  c.rotate(f.rot);c.scale(s,s);c.translate(-f.mid.x,-f.mid.y);
  const p=f.bot.outline;c.beginPath();c.moveTo(p[0].x,p[0].y);p.slice(1).forEach(v=>c.lineTo(v.x,v.y));c.closePath();
@@ -814,12 +814,17 @@ function drawFighter(f){
  drawWheels(c,f.bot,1,f.wheels);
  if(f.weapon>0)drawWeapon(c,f.bot.weapon,f.bot.weapon.type,f.bot.weapon.angle,1,f.weapon,
  {spin:f.weaponSpin,swing:f.weaponSwing,contact:f.contactGlow});
- c.restore();ac.fillStyle="#0e1b2b";ac.fillRect(f.x-54,f.y-f.radius*.67-29,108,21);
- ac.fillStyle=f.bot.color;ac.fillRect(f.x-51,f.y-f.radius*.67-26,102*f.body/100,5);
- ac.font="bold 11px system-ui";ac.fillStyle="#f7fcff";ac.textAlign="center";ac.fillText(f.bot.name.slice(0,16),f.x,f.y-f.radius*.67-11);ac.textAlign="left";
+ c.restore();
+ const size=f.scale/.4,crowded=(duel&&duel.running?duel.bots.length:selectedIds().length)>9;
+ const barWidth=crowded?Math.max(17,31*size):Math.max(35,108*size);
+ const barY=f.y-f.radius*.75-(crowded?12:22);
+ ac.fillStyle="#0e1b2b";ac.fillRect(f.x-barWidth/2-2,barY-3,barWidth+4,crowded?14:18);
+ ac.fillStyle=f.bot.color;ac.fillRect(f.x-barWidth/2,barY,barWidth*clamp(f.body/100,0,1),4);
+ ac.font=(crowded?"bold 9px":"bold 11px")+" system-ui";ac.fillStyle="#f7fcff";ac.textAlign="center";
+ ac.fillText(crowded?String(f.number):f.bot.name.slice(0,16),f.x,barY+13);ac.textAlign="left";
 }
 function drawDuel(){
- arenaBackground();drawObstacles();duel.bots.forEach(drawFighter);
+ arenaBackground();drawObstacles();duel.bots.filter(f=>!f.eliminated).forEach(drawFighter);
  for(const p of duel.debris){ac.save();ac.translate(p.x,p.y);ac.rotate(p.t*2);ac.fillStyle=p.type==="wheel"?"#131b27":"#efb66e";ac.strokeStyle="#cfdae4";ac.fillRect(-7,-7,14,14);ac.strokeRect(-7,-7,14,14);ac.restore()}
  for(const p of duel.sparks){ac.fillStyle="rgba(255,207,109,"+clamp(p.t*4,0,1)+")";ac.beginPath();ac.arc(p.x,p.y,clamp(p.t*12,1,3.5),0,Math.PI*2);ac.fill()}
  if(duel.countdown>0){
@@ -827,20 +832,23 @@ function drawDuel(){
  }else{
  ac.fillStyle="#fff";ac.font="bold 25px system-ui";ac.textAlign="center";ac.fillText(Math.ceil(duel.remain)+"s",400,28);ac.textAlign="left";
  }
- $("stageScore").innerHTML="<span>Automatic</span><span>"+Math.ceil(duel.remain)+"s</span><span>Turbo impact</span>";
+ $("stageScore").innerHTML="<span>"+duel.bots.filter(battleAlive).length+" / "+duel.bots.length+" active</span><span>"+Math.ceil(duel.remain)+"s</span><span>Turbo impact</span>";
 }
 function drawArenaStatic(){
  arenaBackground();drawObstacles();
- const a=selectedBot($("selectA").value||"demo1"),b=selectedBot($("selectB").value||"demo2");
- drawFighter(fighter(a,255,(launches.a.angle+90)*Math.PI/180,"a",launches.a.angle,launches.a.power));
- drawFighter(fighter(b,545,(launches.b.angle+90)*Math.PI/180,"b",launches.b.angle,launches.b.power));
- arrow(ac,255,250,launches.a.angle,launches.a.power,"#72d1ff");
- arrow(ac,545,250,launches.b.angle,launches.b.power,"#ffbb78");
- $("stageScore").innerHTML="<span>"+arenaMode+" bowl</span><span>Launch A "+launches.a.power+"%</span><span>Launch B "+launches.b.power+"%</span>";
+ const entries=chosenBots();
+ if(entries.some(b=>!b)||new Set(selectedIds()).size!==entries.length){
+  $("stageScore").textContent="Select different registered bots.";return;
+ }
+ const ready=openingFighters();
+ ready.forEach(f=>drawFighter(f));
+ const arrowScale=window.SketchBattleMultibot.scaleForCount(ready.length);
+ if(ready.length<=12)ready.forEach(f=>arrow(ac,f.x,f.y,f.angle,f.power,f.bot.color,arrowScale));
+ $("stageScore").innerHTML="<span>"+entries.length+" selected</span><span>"+arenaMode+" bowl</span><span>"+(ready.length>2?"Free-for-all":"1v1")+" preview</span>";
 }
 // ===== end Turbo Bowl engine =====
 $("startDuel").onclick=()=>{if(view!=="arena")setView("arena");startDuel()};
-$("stopDuel").onclick=()=>{if(duel)duel.running=false;duel=null;message("Duel stopped. Configure the next launch.");drawArenaStatic()};
+$("stopDuel").onclick=()=>{if(duel)duel.running=false;duel=null;message("Battle stopped. Configure the next launch.");$("selectA").disabled=false;$("selectB").disabled=false;$("startDuel").disabled=false;renderExtraArenaBots();drawArenaStatic()};
 $("selectA").onchange=()=>{if(duel)duel.running=false;duel=null;drawArenaStatic()};$("selectB").onchange=()=>{if(duel)duel.running=false;duel=null;drawArenaStatic()};
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{if(duel)duel.running=false;setView(b.dataset.view)});
 const saved=safeRead(KEY,null);if(saved){const b=cleanBot(saved);if(b)draft=b}
@@ -898,9 +906,10 @@ window.SketchBattleBridge={
  }),
  startMatch:(a,b)=>{
   if(duel&&duel.running)return false;
+  extraArenaBots.length=0;renderExtraArenaBots();
   if(!a||!b||a===b||!roster.some(x=>x.id===a)||!roster.some(x=>x.id===b))return false;
   setView("arena");populateArena();$("selectA").value=a;$("selectB").value=b;
-  drawArenaStatic();startDuel();return !!(duel&&duel.running);
+  drawArenaStatic();return startDuel();
  },
  getMatch:()=>duel?{running:duel.running&&view==="arena",winnerId:duel.winnerId||null}:null
 };
