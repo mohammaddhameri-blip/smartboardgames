@@ -70,12 +70,12 @@ async function connect(){
   const ch=client.channel("sketch-battle:classroom:"+code,{config:{private:false,broadcast:{ack:true}}});channel=ch;
   ch.on("broadcast",{event:"board-ready"},()=>{if(channel!==ch)return;paired=true;status("✓ Paired with smartboard",true);controls();send("roster-request",{}).catch(()=>{})});
   ch.on("broadcast",{event:"roster"},({payload})=>{if(channel!==ch)return;
-    if(typeof payload?.count==="number")$("count").textContent=payload.count+" registered bots · tournament supports up to 30 entrants";
+    if(typeof payload?.count==="number")$("count").textContent=payload.count+" saved bots · "+(payload.pending||0)+" scans queued · 30 entrants per tournament";
   });
   ch.on("broadcast",{event:"registration-result"},({payload})=>{
     if(!payload||payload.requestId!==requestId)return;
     waiting=false;requestId="";controls();
-    if(payload.ok){photoStatus("✓ Sketch received. Fine-tune and save this battlebot on the smartboard.",true);$("name").value="";}
+    if(payload.ok){raw.width=0;raw.height=0;photoStatus("✓ Sketch queued on smartboard. You can scan the next pupil.",true);$("name").value="";controls();}
     else photoStatus("Registration failed: "+(payload.error||"Unknown error"),false,true);
   });
   ch.subscribe(async state=>{
