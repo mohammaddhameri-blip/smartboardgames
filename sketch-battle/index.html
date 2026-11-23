@@ -765,7 +765,7 @@ function suggestMounts(){
 }
 window.SketchBattleBridge={
  getRoster:()=>roster.map(b=>({id:b.id,name:b.name,weapon:b.weapon.type})),
- getDraft:()=>JSON.parse(JSON.stringify(draft)),
+ getDraft:()=>({id:draft.id,wheels:draft.wheels.map(p=>({...p})),weapon:{...draft.weapon}}),
  moveEquipment:(kind,i,x,y)=>{
   const p=kind==="weapon"?draft.weapon:kind==="wheel"?draft.wheels[i]:null;
   if(!p||!Number.isFinite(Number(x))||!Number.isFinite(Number(y)))return false;
