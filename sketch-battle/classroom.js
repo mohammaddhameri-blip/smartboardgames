@@ -135,8 +135,7 @@ function advance(){
  while(state.rounds.length&&state.rounds[state.rounds.length-1].every(m=>m.winner)){
   const round=state.rounds[state.rounds.length-1];
   if(round.length===1){state.champion=round[0].winner;return}
-  const next=[];for(let i=0;i<round.length;i+=2)next.push({a:round[i].winner,b:round[i+1].winner,winner:null});
-  state.rounds.push(next);
+  state.rounds.push(window.SketchBattleTournament.nextRound(round));
  }
 }
 function entrants(){
@@ -174,12 +173,7 @@ $("sbNewTournament").onclick=()=>{
  const ids=getRoster().filter(b=>selected.has(b.id)).slice(0,30).map(b=>b.id);
  if(ids.length<2){alert("Select at least two pupils.");return}
  if(state.rounds.length&&!confirm("Replace existing bracket and its results?"))return;
- const all=shuffle(ids),size=2**Math.ceil(Math.log2(all.length)),byes=size-all.length,slots=Array(size);
- // One bye maximum per opening pair; all 2–30-entrant brackets are supported.
- const pairs=size/2,bits=Math.log2(pairs);const spread=Array.from({length:pairs},(_,i)=>i).sort((a,b)=>{let ra=0,rb=0;for(let k=0;k<bits;k++){ra=ra*2+((a>>k)&1);rb=rb*2+((b>>k)&1)}return ra-rb});
- for(let i=0;i<byes;i++)slots[2*spread[i]+1]=null;
- let n=0;for(let i=0;i<size;i++)if(slots[i]===undefined)slots[i]=all[n++];
- const round=[];for(let i=0;i<size;i+=2){const a=slots[i],b=slots[i+1];round.push({a:a||b,b:a&&b?b:null,winner:a&&b?null:a||b})}
+ const round=window.SketchBattleTournament.openingRound(shuffle(ids));
  state={selected:ids,rounds:[round],champion:null};advance();save();renderTournament();
 };
 $("sbFightNext").onclick=()=>{
