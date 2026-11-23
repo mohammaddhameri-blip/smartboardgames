@@ -88,7 +88,7 @@ test("leaving the arena aborts the active duel cleanly for a new phone scan",()=
   canvas:{classList:{toggle(){}}},arena:{classList:{toggle(){}}},
   document:{querySelectorAll:()=>[]},
   $:get,
-  render(){},renderGarage(){},populateArena(){},message(){},
+  render(){},renderGarage(){},populateArena(){},renderExtraArenaBots(){},message(){},
  };
  vm.createContext(context);
  vm.runInContext(script+";setView('workshop');",context);
