@@ -139,19 +139,22 @@ function prepared(){
  const sx=Math.round(crop.x*raw.width),sy=Math.round(crop.y*raw.height);
  const sw=Math.max(1,Math.min(raw.width-sx,Math.round(crop.w*raw.width))),sh=Math.max(1,Math.min(raw.height-sy,Math.round(crop.h*raw.height)));
  const scale=Math.min(1,650/Math.max(sw,sh));
- const c=document.createElement("canvas");c.width=Math.max(1,Math.round(sw*scale));c.height=Math.max(1,Math.round(sh*scale));
+ let c=document.createElement("canvas");c.width=Math.max(1,Math.round(sw*scale));c.height=Math.max(1,Math.round(sh*scale));
  const g=c.getContext("2d",{willReadFrequently:true});g.fillStyle="#fff";g.fillRect(0,0,c.width,c.height);g.drawImage(raw,sx,sy,sw,sh,0,0,c.width,c.height);
  if($("contrast").checked){const frame=g.getImageData(0,0,c.width,c.height),d=frame.data;
   for(let i=0;i<d.length;i+=4){const l=.3*d[i]+.59*d[i+1]+.11*d[i+2],v=l<165?0:255;d[i]=d[i+1]=d[i+2]=v}g.putImageData(frame,0,0)}
  let jpg=c.toDataURL("image/jpeg",.72);
- if(jpg.length>220000)jpg=c.toDataURL("image/jpeg",.48);
+ for(let attempt=0;jpg.length>180000&&attempt<5;attempt++){
+  const small=document.createElement("canvas");small.width=Math.max(180,Math.floor(c.width*.78));small.height=Math.max(150,Math.floor(c.height*.78));
+  small.getContext("2d").drawImage(c,0,0,small.width,small.height);c=small;jpg=c.toDataURL("image/jpeg",.49);
+ }
  return jpg;
 }
 $("send").onclick=async ()=>{
  if(!paired||!online||!raw.width||waiting){photoStatus("Connect and take a picture first.",false,true);return}
  const name=$("name").value.trim();
  if(!name){photoStatus("Enter the pupil or battlebot name first.",false,true);$("name").focus();return}
- const image=prepared();if(image.length>320000){photoStatus("Photo is too large. Crop closer to the robot.",false,true);return}
+ const image=prepared();if(image.length>190000){photoStatus("Photo exceeds the pairing limit. Crop closer to the robot.",false,true);return}
  const id="scan-"+Date.now()+"-"+Math.random().toString(36).slice(2);
  requestId=id;waiting=true;controls();
  $("photoPreview").src=image;$("photoPreview").classList.remove("hide");photoStatus("Sending sketch…");
