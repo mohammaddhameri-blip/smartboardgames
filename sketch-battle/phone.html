@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#15283a"><link rel="manifest" href="./phone.webmanifest"><title>Sketch Battle — Phone Host</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0d1927;color:#f0f8fc;font:15px/1.5 system-ui,sans-serif}main{max-width:560px;margin:auto;padding:16px 14px 60px}
+header{display:flex;gap:12px;align-items:center;margin:5px 0 18px}h1{font-size:24px;margin:0}header p{margin:0;color:#9cb3c6}.logo{font-size:30px;padding:9px 13px;background:#bfea6b;color:#14262c;border-radius:12px}
+section{background:#17283b;border:1px solid #355269;border-radius:16px;padding:15px;margin:12px 0}h2{font-size:17px;margin:0 0 12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{flex:1}label{display:block;font-weight:750;margin:11px 0 5px}
+input{border-radius:10px;background:#0b1a28;color:#fff;border:1px solid #4c6b7f;width:100%;padding:12px;font:inherit}
+button,.file{border:1px solid #5e798e;background:#253e55;color:white;padding:11px 14px;border-radius:10px;font-weight:800;min-height:43px;font:inherit;cursor:pointer;text-align:center}
+button:disabled{opacity:.45;cursor:default}.primary{background:#c4ef75;color:#172619;border-color:#c4ef75;font-weight:800;width:100%;margin-top:10px}
+.file input{display:none}.file{display:block;margin:9px 0}
+.status{color:#b3c3d1;margin:10px 0 0;font-size:13px}.status.good{color:#c8f08e}.status.bad{color:#ffb6ae}
+video{width:100%;background:#080f18;border-radius:10px;aspect-ratio:4/3;object-fit:cover}
+#cropCanvas{display:block;width:100%;max-height:350px;touch-action:none;cursor:crosshair;background:#fff;border-radius:9px}
+#cropArea{display:none}#cropArea.active{display:block}.help{font-size:12px;color:#9eb3c4;margin:7px 0}
+.count{padding:8px 11px;border-radius:9px;background:#213a42;color:#c9ef90;font-weight:750}
+#photoPreview{width:100%;max-height:200px;object-fit:contain;background:white;border-radius:9px;margin-top:10px}
+.hide{display:none!important}
+</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script></head>
+<body><main>
+<header><div class="logo">⚔</div><div><h1>Sketch Battle</h1><p>Phone host · classroom registration</p></div></header>
+<section><h2>1 · Pair with smartboard</h2>
+<div class="row"><input id="room" maxlength="8" placeholder="8-character room code" autocomplete="off"><button id="connect">Connect</button></div>
+<div id="connection" class="status">Enter the pairing code shown on the smartboard.</div>
+<div id="count" class="count" style="margin-top:10px">Waiting for roster…</div>
+</section>
+<section><h2>2 · Scan pupil's battlebot</h2>
+<label for="name">Pupil / battlebot name</label><input id="name" maxlength="40" autocomplete="off" placeholder="Enter pupil or bot name">
+<video id="video" autoplay muted playsinline aria-label="Camera preview"></video>
+<div class="row"><button id="openCamera" disabled>📷 Open camera</button><button id="flipCamera" disabled>↻ Flip</button></div>
+<button class="primary" id="capture" disabled>📸 Capture sketch</button>
+<label class="file">Choose an existing photo<input id="photo" type="file" accept="image/*"></label>
+<div id="cropArea"><h2>3 · Crop / adjust sketch</h2>
+<p class="help">Drag a rectangle around the chassis drawing. Keep all of its edges inside the selection; crop out names, notebook lines, and clutter.</p>
+<canvas id="cropCanvas" width="420" height="300" aria-label="Drag to crop drawing"></canvas>
+<div class="row" style="margin-top:8px"><button id="rotateLeft">↶ Rotate</button><button id="rotateRight">↷ Rotate</button><button id="resetCrop">Reset crop</button></div>
+<label style="font-weight:normal"><input id="contrast" type="checkbox" style="width:auto;margin-right:8px">High contrast (black and white)</label>
+<button id="send" class="primary" disabled>↑ Send sketch to smartboard</button>
+<img id="photoPreview" class="hide" alt="Prepared scanned drawing">
+<div id="photoStatus" class="status">Review the crop, then send.</div></div>
+</section>
+<p class="help">Pairing requires internet on both devices. Captured images are sent through the pairing service and saved in the smartboard's local browser. Only use photos of pupil work you are authorized to collect. Keep the pairing code private.</p>
+</main>
+<script>
+(function(){"use strict";
+const URL_="https://qekcgsfeomjckctiubgm.supabase.co",KEY="sb_publishable_yJbCYOLDeMreuqM01g_oqA_eF5YEWwq";
+const $=id=>document.getElementById(id);let client=null,channel=null,paired=false,online=false,stream=null,facing="environment";
+let raw=document.createElement("canvas"),crop={x:0,y:0,w:1,h:1},pointer=null,requestId="",waiting=false;
+raw.width=0;raw.height=0;
+const canvas=$("cropCanvas"),ctx=canvas.getContext("2d");
+function status(s,ok=false,err=false){$("connection").textContent=s;$("connection").className="status"+(ok?" good":err?" bad":"")}
+function photoStatus(s,ok=false,err=false){$("photoStatus").textContent=s;$("photoStatus").className="status"+(ok?" good":err?" bad":"")}
+function controls(){
+ const ready=paired&&online;
+ $("openCamera").disabled=!ready;$("flipCamera").disabled=!ready;$("capture").disabled=!ready||!stream;
+ $("send").disabled=!ready||!raw.width||waiting;
+}
+function codeClean(s){return s.toUpperCase().replace(/[^A-Z2-9]/g,"").slice(0,8)}
+$("room").value=codeClean(new URLSearchParams(location.search).get("room")||"");
+async function send(event,payload){if(!channel)throw Error("Not connected");return channel.send({type:"broadcast",event,payload})}
+async function connect(){
+ let code=codeClean($("room").value);$("room").value=code;
+ if(code.length!==8){status("Enter the eight-character code from the smartboard.",false,true);return}
+ if(!window.supabase?.createClient){status("Pairing library is not available. Check internet.",false,true);return}
+ try{
+  if(channel&&client)await client.removeChannel(channel);
+  paired=false;online=false;controls();status("Connecting…");
+  client=client||window.supabase.createClient(URL_,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  const ch=client.channel("sketch-battle:classroom:"+code,{config:{private:false,broadcast:{ack:true}}});channel=ch;
+  ch.on("broadcast",{event:"board-ready"},()=>{if(channel!==ch)return;paired=true;status("✓ Paired with smartboard",true);controls();send("roster-request",{}).catch(()=>{})});
+  ch.on("broadcast",{event:"roster"},({payload})=>{if(channel!==ch)return;
+    if(typeof payload?.count==="number")$("count").textContent=payload.count+" saved bots · "+(payload.pending||0)+" scans queued · 30 entrants per tournament";
+  });
+  ch.on("broadcast",{event:"registration-result"},({payload})=>{
+    if(!payload||payload.requestId!==requestId)return;
+    waiting=false;requestId="";controls();
+    if(payload.ok){raw.width=0;raw.height=0;photoStatus("✓ Sketch queued on smartboard. You can scan the next pupil.",true);$("name").value="";controls();}
+    else photoStatus("Registration failed: "+(payload.error||"Unknown error"),false,true);
+  });
+  ch.subscribe(async state=>{
+    if(ch!==channel)return;
+    if(state==="SUBSCRIBED"){online=true;controls();await send("phone-hello",{})}
+    else if(["CHANNEL_ERROR","TIMED_OUT","CLOSED"].includes(state)){online=false;paired=false;controls();status("Connection interrupted. Reconnect.",false,true)}
+  });
+ }catch(e){status("Unable to connect. Check internet and pairing code.",false,true)}
+}
+$("connect").onclick=connect;
+async function stopCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$("video").srcObject=null;controls()}
+async function openCamera(){
+ await stopCamera();
+ if(!navigator.mediaDevices?.getUserMedia){photoStatus("Camera not supported here. Use a saved photo.",false,true);return}
+ try{
+  stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:960}}});
+  $("video").srcObject=stream;await $("video").play();controls();photoStatus("Camera ready. Capture one complete battlebot drawing.");
+ }catch(e){photoStatus("Camera unavailable. Check permissions or choose a saved photo.",false,true)}
+}
+$("openCamera").onclick=openCamera;
+$("flipCamera").onclick=()=>{facing=facing==="environment"?"user":"environment";openCamera()};
+function assignSource(source,w,h){
+ const scale=Math.min(1,1000/Math.max(w,h));raw.width=Math.max(1,Math.round(w*scale));raw.height=Math.max(1,Math.round(h*scale));
+ raw.getContext("2d").drawImage(source,0,0,raw.width,raw.height);
+ crop={x:0,y:0,w:1,h:1};$("cropArea").classList.add("active");drawCrop();controls();photoStatus("Select a crop around the robot's body.");
+}
+$("capture").onclick=()=>{const v=$("video");if(v.videoWidth)assignSource(v,v.videoWidth,v.videoHeight)};
+$("photo").onchange=event=>{
+ const f=event.target.files?.[0];if(!f)return;
+ if(!f.type.startsWith("image/")||f.size>15e6){photoStatus("Select an image smaller than 15 MB.",false,true);return}
+ const url=URL.createObjectURL(f),im=new Image();
+ im.onload=()=>{assignSource(im,im.width,im.height);URL.revokeObjectURL(url)};
+ im.onerror=()=>{photoStatus("Could not read this picture.",false,true);URL.revokeObjectURL(url)};
+ im.src=url;event.target.value="";
+};
+function drawCrop(){
+ if(!raw.width)return;
+ ctx.fillStyle="#fff";ctx.fillRect(0,0,420,300);
+ const s=Math.min(420/raw.width,300/raw.height),ow=raw.width*s,oh=raw.height*s,ox=(420-ow)/2,oy=(300-oh)/2;
+ ctx.drawImage(raw,ox,oy,ow,oh);ctx.save();ctx.fillStyle="#0b1a2877";
+ ctx.fillRect(0,0,420,oy+crop.y*oh);ctx.fillRect(0,oy+(crop.y+crop.h)*oh,420,300-oy-(crop.y+crop.h)*oh);
+ ctx.fillRect(0,oy+crop.y*oh,ox+crop.x*ow,crop.h*oh);
+ ctx.fillRect(ox+(crop.x+crop.w)*ow,oy+crop.y*oh,420-ox-(crop.x+crop.w)*ow,crop.h*oh);
+ ctx.strokeStyle="#c4ef75";ctx.lineWidth=3;ctx.strokeRect(ox+crop.x*ow,oy+crop.y*oh,crop.w*ow,crop.h*oh);ctx.restore();
+ return {s,ox,oy,ow,oh};
+}
+function pos(e){const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*420/r.width,y=(e.clientY-r.top)*300/r.height,b=drawCrop();return{x:Math.max(0,Math.min(1,(x-b.ox)/b.ow)),y:Math.max(0,Math.min(1,(y-b.oy)/b.oh))}}
+canvas.onpointerdown=e=>{if(!raw.width)return;e.preventDefault();pointer=pos(e);canvas.setPointerCapture(e.pointerId);crop={x:pointer.x,y:pointer.y,w:.01,h:.01};drawCrop()};
+canvas.onpointermove=e=>{if(!pointer)return;const p=pos(e),x=Math.min(pointer.x,p.x),y=Math.min(pointer.y,p.y);crop={x,y,w:Math.max(.01,Math.abs(pointer.x-p.x)),h:Math.max(.01,Math.abs(pointer.y-p.y))};drawCrop()};
+canvas.onpointerup=e=>{if(!pointer)return;pointer=null;if(crop.w<.08||crop.h<.08)crop={x:0,y:0,w:1,h:1};drawCrop()};
+canvas.onpointercancel=()=>{pointer=null;drawCrop()};
+$("resetCrop").onclick=()=>{crop={x:0,y:0,w:1,h:1};drawCrop()};
+function rotate(clockwise){
+ if(!raw.width)return;
+ const c=document.createElement("canvas");c.width=raw.height;c.height=raw.width;const g=c.getContext("2d");
+ if(clockwise){g.translate(c.width,0);g.rotate(Math.PI/2)}else{g.translate(0,c.height);g.rotate(-Math.PI/2)}
+ g.drawImage(raw,0,0);raw=c;crop={x:0,y:0,w:1,h:1};drawCrop();
+}
+$("rotateLeft").onclick=()=>rotate(false);$("rotateRight").onclick=()=>rotate(true);
+function prepared(){
+ const sx=Math.round(crop.x*raw.width),sy=Math.round(crop.y*raw.height);
+ const sw=Math.max(1,Math.min(raw.width-sx,Math.round(crop.w*raw.width))),sh=Math.max(1,Math.min(raw.height-sy,Math.round(crop.h*raw.height)));
+ const scale=Math.min(1,650/Math.max(sw,sh));
+ let c=document.createElement("canvas");c.width=Math.max(1,Math.round(sw*scale));c.height=Math.max(1,Math.round(sh*scale));
+ const g=c.getContext("2d",{willReadFrequently:true});g.fillStyle="#fff";g.fillRect(0,0,c.width,c.height);g.drawImage(raw,sx,sy,sw,sh,0,0,c.width,c.height);
+ if($("contrast").checked){const frame=g.getImageData(0,0,c.width,c.height),d=frame.data;
+  for(let i=0;i<d.length;i+=4){const l=.3*d[i]+.59*d[i+1]+.11*d[i+2],v=l<165?0:255;d[i]=d[i+1]=d[i+2]=v}g.putImageData(frame,0,0)}
+ let jpg=c.toDataURL("image/jpeg",.72);
+ for(let attempt=0;jpg.length>180000&&attempt<5;attempt++){
+  const small=document.createElement("canvas");small.width=Math.max(180,Math.floor(c.width*.78));small.height=Math.max(150,Math.floor(c.height*.78));
+  small.getContext("2d").drawImage(c,0,0,small.width,small.height);c=small;jpg=c.toDataURL("image/jpeg",.49);
+ }
+ return jpg;
+}
+$("send").onclick=async ()=>{
+ if(!paired||!online||!raw.width||waiting){photoStatus("Connect and take a picture first.",false,true);return}
+ const name=$("name").value.trim();
+ if(!name){photoStatus("Enter the pupil or battlebot name first.",false,true);$("name").focus();return}
+ const image=prepared();if(image.length>190000){photoStatus("Photo exceeds the pairing limit. Crop closer to the robot.",false,true);return}
+ const id="scan-"+Date.now()+"-"+Math.random().toString(36).slice(2);
+ requestId=id;waiting=true;controls();
+ $("photoPreview").src=image;$("photoPreview").classList.remove("hide");photoStatus("Sending sketch…");
+ try{
+  const result=await send("snapshot",{requestId:id,image,name:name.slice(0,40)});
+  if(result!=="ok")throw Error("Transfer not confirmed");
+  photoStatus("Sent. Awaiting smartboard confirmation…");
+  setTimeout(()=>{if(requestId===id){waiting=false;controls();photoStatus("No reply. Check the smartboard, then retry if needed.",false,true)}},13000);
+ }catch(e){waiting=false;controls();photoStatus("Transfer failed. Check both devices are connected.",false,true)}
+};
+window.addEventListener("pagehide",()=>{stopCamera();if(client&&channel)client.removeChannel(channel)});
+if($("room").value.length===8)connect();
+if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
+})();
+</script></body></html>

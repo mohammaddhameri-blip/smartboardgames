@@ -1,0 +1,24 @@
+name: Sketch Battle classroom checks
+on:
+  push:
+    paths:
+      - "sketch-battle/**"
+      - "games.json"
+      - ".github/workflows/sketch-battle-classroom-tests.yml"
+  pull_request:
+    paths:
+      - "sketch-battle/**"
+      - "games.json"
+      - ".github/workflows/sketch-battle-classroom-tests.yml"
+permissions:
+  contents: read
+jobs:
+  classroom-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate sketch tracing, classroom scripts and brackets
+        run: node --test sketch-battle/tests/classroom.test.cjs

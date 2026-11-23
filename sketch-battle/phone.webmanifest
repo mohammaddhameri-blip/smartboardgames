@@ -1,0 +1,17 @@
+{
+  "name": "Sketch Battle — Phone Host",
+  "short_name": "Battle Host",
+  "start_url": "./phone.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d1927",
+  "theme_color": "#15283a",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
