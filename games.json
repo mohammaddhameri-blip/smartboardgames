@@ -56,8 +56,8 @@
     "published": true
   },
   {
-    "name": "Sketch Rally Online — V0.2",
-    "description": "Draw, tune and drive your own cars. Private online garage, teacher invitation registration, practice history, drag racing and hill challenges. Live competition is not enabled yet.",
+    "name": "Sketch Rally Online",
+    "description": "Draw your own car, choose a track and race. Simple Cars, Tracks and Race tabs with automatic wheel fitting and a private online garage.",
     "category": "Creative STEM",
     "icon": "🏁",
     "path": "sketch-rally-online/",
