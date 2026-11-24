@@ -56,8 +56,8 @@
     "published": true
   },
   {
-    "name": "Sketch Rally Online — Physics Lab",
-    "description": "Early local prototype: draw and tune cars, drive manually, test hills, race 1 km or attempt the continuous 20 km Challenge. Online competition is not enabled yet.",
+    "name": "Sketch Rally Online — V0.2",
+    "description": "Draw, tune and drive your own cars. Private online garage, teacher invitation registration, practice history, drag racing and hill challenges. Live competition is not enabled yet.",
     "category": "Creative STEM",
     "icon": "🏁",
     "path": "sketch-rally-online/",
