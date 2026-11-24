@@ -56,6 +56,14 @@
     "published": true
   },
   {
+    "name": "Sketch Rally Online — Physics Lab",
+    "description": "Early local prototype: draw and tune cars, drive manually, test hills, race 1 km or attempt the continuous 20 km Challenge. Online competition is not enabled yet.",
+    "category": "Creative STEM",
+    "icon": "🏁",
+    "path": "sketch-rally-online/",
+    "published": true
+  },
+  {
     "name": "Melody Trail",
     "description": "Listen, imitate melodies and practice beats, singing and instrument sounds.",
     "category": "Music",
