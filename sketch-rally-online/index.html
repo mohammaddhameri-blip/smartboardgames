@@ -19,7 +19,7 @@ const API="https://qekcgsfeomjckctiubgm.supabase.co/functions/v1/sketch-rally-sc
 const randomKey=()=>Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,"0")).join("");
 function globalRead(k,f){try{return JSON.parse(localStorage.getItem("sro.simple."+k))??f}catch(e){return f}}
 function globalWrite(k,v){try{localStorage.setItem("sro.simple."+k,JSON.stringify(v));return true}catch(e){return false}}
-let roomKey=globalRead("room",""),profiles=globalRead("profiles",[]),activeProfile=null,scope="sro.",syncing=false,autoTimer=null,boardMode="drag",boardSerial=0,cloud=null;
+let roomKey=globalRead("room",""),profiles=globalRead("profiles",[]),activeProfile=null,scope="sro.",syncing=false,autoTimer=null,boardMode="drag",boardSerial=0;
 const fragment=new URLSearchParams(location.hash.slice(1));const incoming=fragment.get("school");if(incoming&&/^[a-f0-9]{48}$/.test(incoming)){roomKey=incoming;globalWrite("room",roomKey);window.history.replaceState(null,"",location.pathname+location.search)}
 // Use window.history explicitly because the local race history is named history.
 function read(k,f){try{return JSON.parse(localStorage.getItem(scope+k))??f}catch(e){return f}}
@@ -117,7 +117,7 @@ document.querySelectorAll("#nav button,#mobileNav button").forEach(b=>b.onclick=
 for(let b of document.querySelectorAll("#drive button")){let k=b.dataset.key;b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);keys[k]=true;b.classList.add("held")};b.onpointerup=b.onpointercancel=b.onlostpointercapture=()=>{keys[k]=false;b.classList.remove("held")}}let km={ArrowUp:"go",ArrowDown:"brake",ArrowLeft:"left",ArrowRight:"right",s:"reverse",S:"reverse"};window.addEventListener("keydown",e=>{if(km[e.key]&&!$("racing").hidden){e.preventDefault();keys[km[e.key]]=true}});window.addEventListener("keyup",e=>{if(km[e.key])keys[km[e.key]]=false});window.addEventListener("blur",()=>{keys={};if(running){paused=true;$("pause").textContent="Resume"}document.querySelectorAll(".held").forEach(b=>b.classList.remove("held"))});$("carname").onchange=saveDraft;
 
 
-function homeStatus(){let e=$("menuStatus");e.textContent=roomKey?"School leaderboard connected when online.":"You can play offline. Open your teacher’s school link to join the online leaderboard."}
+function homeStatus(){let e=$("menuStatus");e.textContent=roomKey?"School link saved. Play online to submit your results.":"You can play offline. Open your teacher’s school link to join the online leaderboard."}
 function reloadScope(){garage=read("garage",[]);history=read("history",[]);draft=read("draft",null);undos=[];tune={...defaults,...(draft?.tune||{})};project=draft?.project||null;original=draft?.original||null;$("carname").value=draft?.name||"";ic.clearRect(0,0,960,480);invalidateFit();grid();if(draft?.image)loadImage(draft.image).catch(()=>{});$("tips").checked=read("tips",false)}
 function selectName(){
  let name=$("pupilName").value;if(!name.trim()||name.length>100){$("pupilName").focus();return false}
