@@ -1,3 +1,9 @@
+# Sketch Rally Online — V0.3
+
+Primary Year 2–6 revamp: Cars, Tracks and Race are the only main tabs. Cars includes drawing, photo import, saving and selecting previous revisions; optional tips replace the car list in the left panel. Tracks offers 1 km Drag, 20 km Challenge and Test Track. Race retains manual controls. Account is a separate header utility; private history is accessible within the game. All advanced tuning sliders and drivetrain/tyre selection removed from the pupil UI. Wheels are estimated from circular ink outlines or fitted automatically from body bounds; balanced AWD, all-terrain tyres, fixed gearing and suspension are applied internally. Previous saved revisions and cloud account records are preserved. New runs use V0.3 setups; previous-version ghosts are not used in new races. Automatic wheel estimation is approximate and does not yet reliably handle arbitrary drawings or notebook backgrounds. Syntax, DOM ID and synthetic wheel detection tests passed; actual browser/device and competitive physics calibration pending. No live competition or APK added in this release.
+
+---
+
 # Sketch Rally Online — V0.2
 
 ## Cloud garage release
