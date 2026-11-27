@@ -1,3 +1,17 @@
+# Sketch Rally Online — V0.6 (school roster login)
+
+- Log in with the existing school pupil code; no name-only registration or separate school-link key.
+- Reuses the UPDLP Assessment Platform `students` roster (Year 2 class-based codes, Year 5/6 codes, and registered TST/TEST tester codes, with optional hyphen for numbered codes).
+- Roster names and classes are resolved on the server. No pupil roster or service credentials are shipped to the browser.
+- The school endpoint issues a temporary signed session. Every garage and leaderboard request checks it; expired sessions require a new login. Invalid login attempts are throttled.
+- A stable roster-linked racer identity allows the same saved online car designs and best results across devices; local drafts and full practice history remain device-specific. Legacy name-only saves remain untouched and are not automatically assigned to a pupil.
+- Login needs internet. Once signed in, local drawing/racing can continue offline; sync resumes when the connection returns. Log out before sharing a device.
+- The original V0.5 Car Studio, automatic physics, tracks and leaderboard formats are unchanged. Rankings are still client-submitted/unverified practice results, not official anti-cheat-verified competition results.
+
+Backend source: `backend/index.ts` (deployed as Supabase Edge Function `sketch-rally-school`, in the existing project). It uses the existing school-room/racer/car/best/limit tables, no roster writes or new roster accounts.
+
+## Previous versions (historical)
+
 # Sketch Rally Online — V0.5
 
 Reuses the original Sketch Rally v1.9 760×350 Car Studio, pen/shape routines, colour palette, brush sizing, undo, eraser and pointer-coordinate logic, plus crop/thickening/wheel detection routines. Original side-view automatic solver and vehicle rendering are reused; online track distances and terrain are mapped to its world coordinates. Main menu, name-only entry, Cars/Tracks/Race, private school link, cloud cars and local personal ghost remain. Automatic rankings are separate from preserved manual results. Existing designs can be opened and edited; older images are fitted to the original studio dimensions. Original solver does not implement progressive component damage. Browser and device tests remain pending. Synthetic checks: drag completed in 14.43 s, Test Track in 24.55 s, Challenge stopped at 16.48 km. Automatic opponents from other pupils and live multiplayer are not yet implemented. APK not rebuilt.
