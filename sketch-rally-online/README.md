@@ -1,3 +1,11 @@
+# Sketch Rally Online — V0.7 (simplified interface)
+
+- One shared Cars, Tracks and Race navigation, with a single Menu button; Play opens Cars and saved designs.
+- Short, action-focused labels; removed decorative slogans, duplicate navigation and redundant descriptions.
+- Full-width Tracks, Race and Results screens. The existing Car Studio retains its drawing canvas and tools; polygon options and photo cleanup appear only when relevant.
+- Start, Pause/Resume, Restart and Race Again appear only in the appropriate race states. Results are accessible from Cars and the race screen. Optional Tips and essential errors/status feedback remain.
+- Roster login, tester codes, saved cars, automatic physics, practice times and leaderboards remain unchanged. PWA cache updated.
+
 # Sketch Rally Online — V0.6 (school roster login)
 
 - Log in with the existing school pupil code; no name-only registration or separate school-link key.
