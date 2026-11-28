@@ -27,9 +27,14 @@ header #nav[hidden]{display:none!important}
 .studio-top{align-items:center}.studio-top h2{margin:0}
 #closeDrawing{min-width:42px}.studio-bottom span:empty{display:none}.studio-actions{margin-left:auto}
 @media(max-width:720px){header{padding:9px 10px}header #nav{order:3;flex:0 0 100%}header #nav button{min-height:44px}#gameLayout.full-mode main{padding:8px}.menu-hero{min-height:135px}.track-option{min-height:85px}}
+#raceStandings{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:5px;margin:8px 0}
+.race-place{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:7px;padding:7px 9px;border:1px solid var(--border);border-radius:8px;background:#152237;min-width:0;font-size:12px}
+.race-place .rank{color:var(--lime);font-size:15px;font-weight:900}.race-place .racer{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}.race-place .measure{font-variant-numeric:tabular-nums;color:#c0d0e0;white-space:nowrap}
+.race-place.own{border-color:var(--lime);background:#25382b}
+@media(max-width:550px){#raceStandings{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.race-place{gap:5px;padding:6px;font-size:11px}.race-place .rank{font-size:13px}}
 </style></head><body><header id="appHeader" hidden><h1>SKETCH RALLY <span style="color:var(--lime)">ONLINE</span></h1><nav class="tabs" id="nav" aria-label="Game stages" hidden><button data-page="sketch" class="active">Cars</button><button data-page="tracks">Tracks</button><button data-page="race">Race</button></nav><button id="homeButton" class="profile-button">⌂ Menu</button></header>
 <div class="layout" id="gameLayout"><aside id="gameSide" hidden><label><input id="tips" type="checkbox"> Tips</label><div id="side"></div></aside><main>
-<section id="home"><div class="menu-hero"><div><h2>SKETCH RALLY<br><span style="color:var(--lime)">ONLINE</span></h2></div><svg viewBox="0 0 300 155" aria-hidden="true"><path d="M9 126H291" stroke="#8ba0b6" stroke-width="3" stroke-dasharray="9 7"/><path d="M20 100L35 72 90 64 125 24 192 25 228 65 274 79 283 108H20Z" fill="#c4f26b" stroke="#0c1422" stroke-width="4" stroke-linejoin="round"/><path d="M107 62L133 34 185 34 209 62Z" fill="#263e58"/><circle cx="75" cy="109" r="28" fill="#172337" stroke="#758ba2" stroke-width="4"/><circle cx="75" cy="109" r="11" fill="#aebdca"/><circle cx="232" cy="109" r="28" fill="#172337" stroke="#758ba2" stroke-width="4"/><circle cx="232" cy="109" r="11" fill="#aebdca"/></svg></div><form id="loginForm" class="menu-controls"><label for="pupilCode"><b>Pupil / tester code</b></label><input id="pupilCode" type="password" maxlength="16" autocomplete="off" autocapitalize="characters" spellcheck="false" required placeholder="Code"><label class="hint"><input type="checkbox" id="showCode" style="width:auto;min-height:0"> Show code</label><button id="loginButton" type="submit" class="primary">Log in</button><p id="loginStatus" class="hint" role="status"></p></form><div id="signedInMenu" class="menu-controls" hidden><div><h2 id="welcomeName" style="margin:0"></h2><p id="welcomeClass" class="hint"></p></div><button type="button" id="playButton" class="primary">▶ Play</button><button type="button" id="openBoard">🏆 Online Leaderboard</button><button type="button" id="logoutButton">Log out</button><p id="menuStatus" class="hint" role="status"></p></div></section><section id="leaderboard" hidden><div class="board-heading"><h2>Online Leaderboard</h2><button id="refreshBoard">Refresh</button></div><p class="hint board-note">Unverified practice results</p><div class="board-modes"><button data-board="drag" class="active">Drag Race · 1 km</button><button data-board="challenge">Challenge · 20 km</button></div><p id="boardStatus" role="status"></p><div id="boardRows"></div></section><section id="editor" hidden><div class="tools"><button id="openDrawing" class="primary big">✎ Draw</button><input id="photo" type="file" accept="image/*" hidden><button id="upload">Photo</button><button id="clean" hidden>Clean photo</button></div><div class="preview-car"><canvas id="draw" width="760" height="350"></canvas></div><div class="actions"><input id="carname" type="text" maxlength="60" placeholder="Car name"><button id="save" class="primary">Save car</button><button id="testNow" class="big">Tracks →</button></div><p id="editmsg" class="hint" role="status"></p></section><section id="tracks" hidden><h2>Tracks</h2><div class="track-choice" id="trackChoices"><button class="track-option" data-track="drag"><b>Drag Race</b><small>1 km</small><svg viewBox="0 0 180 42" aria-hidden="true"><path d="M3 32H177" stroke="currentColor" stroke-width="4" fill="none"/><path d="M155 32V4H175V17H155" fill="currentColor"/></svg></button><button class="track-option" data-track="challenge"><b>Challenge</b><small>20 km</small><svg viewBox="0 0 180 42" aria-hidden="true"><path d="M3 35H24L42 27 54 35 75 18 92 35 115 10 133 33 154 4 177 35" stroke="currentColor" stroke-width="3" stroke-linejoin="round" fill="none"/></svg></button><button class="track-option" data-track="test"><b>Test Track</b><small>Practice</small><svg viewBox="0 0 180 42" aria-hidden="true"><path d="M3 33H32Q44 7 57 33H80L89 20 98 33 107 24 116 33 139 8 157 33H177" stroke="currentColor" stroke-width="3" fill="none"/></svg></button></div><div class="actions"><button id="nextRace" class="primary big">Race →</button></div></section><section id="racing" hidden><div id="raceTitle" class="race-label"></div><div class="tools"><button id="start" class="primary big">🏁 Start</button><button id="pause" class="primary big" hidden>Pause</button><button id="restart" hidden>Restart</button><button id="raceHistory">Results</button><label id="sectionLabel">Section <select id="section"><option value="0">Straight</option><option value="65">Hills</option><option value="140">Bumps</option><option value="220">Ramp</option></select></label><label id="ghostLabel"><input id="ghost" type="checkbox"> Ghost</label></div><div id="stats"></div><canvas id="race" width="960" height="450"></canvas><p id="result" role="status"></p></section><section id="library" hidden><h2 id="libtitle"></h2><div id="entries"></div></section></main></div>
+<section id="home"><div class="menu-hero"><div><h2>SKETCH RALLY<br><span style="color:var(--lime)">ONLINE</span></h2></div><svg viewBox="0 0 300 155" aria-hidden="true"><path d="M9 126H291" stroke="#8ba0b6" stroke-width="3" stroke-dasharray="9 7"/><path d="M20 100L35 72 90 64 125 24 192 25 228 65 274 79 283 108H20Z" fill="#c4f26b" stroke="#0c1422" stroke-width="4" stroke-linejoin="round"/><path d="M107 62L133 34 185 34 209 62Z" fill="#263e58"/><circle cx="75" cy="109" r="28" fill="#172337" stroke="#758ba2" stroke-width="4"/><circle cx="75" cy="109" r="11" fill="#aebdca"/><circle cx="232" cy="109" r="28" fill="#172337" stroke="#758ba2" stroke-width="4"/><circle cx="232" cy="109" r="11" fill="#aebdca"/></svg></div><form id="loginForm" class="menu-controls"><label for="pupilCode"><b>Pupil / tester code</b></label><input id="pupilCode" type="password" maxlength="16" autocomplete="off" autocapitalize="characters" spellcheck="false" required placeholder="Code"><label class="hint"><input type="checkbox" id="showCode" style="width:auto;min-height:0"> Show code</label><button id="loginButton" type="submit" class="primary">Log in</button><p id="loginStatus" class="hint" role="status"></p></form><div id="signedInMenu" class="menu-controls" hidden><div><h2 id="welcomeName" style="margin:0"></h2><p id="welcomeClass" class="hint"></p></div><button type="button" id="playButton" class="primary">▶ Play</button><button type="button" id="openBoard">🏆 Online Leaderboard</button><button type="button" id="logoutButton">Log out</button><p id="menuStatus" class="hint" role="status"></p></div></section><section id="leaderboard" hidden><div class="board-heading"><h2>Online Leaderboard</h2><button id="refreshBoard">Refresh</button></div><p class="hint board-note">Unverified practice results</p><div class="board-modes"><button data-board="drag" class="active">Drag Race · 1 km</button><button data-board="challenge">Challenge · 20 km</button></div><p id="boardStatus" role="status"></p><div id="boardRows"></div></section><section id="editor" hidden><div class="tools"><button id="openDrawing" class="primary big">✎ Draw</button><input id="photo" type="file" accept="image/*" hidden><button id="upload">Photo</button><button id="clean" hidden>Clean photo</button></div><div class="preview-car"><canvas id="draw" width="760" height="350"></canvas></div><div class="actions"><input id="carname" type="text" maxlength="60" placeholder="Car name"><button id="save" class="primary">Save car</button><button id="testNow" class="big">Tracks →</button></div><p id="editmsg" class="hint" role="status"></p></section><section id="tracks" hidden><h2>Tracks</h2><div class="track-choice" id="trackChoices"><button class="track-option" data-track="drag"><b>Drag Race</b><small>1 km</small><svg viewBox="0 0 180 42" aria-hidden="true"><path d="M3 32H177" stroke="currentColor" stroke-width="4" fill="none"/><path d="M155 32V4H175V17H155" fill="currentColor"/></svg></button><button class="track-option" data-track="challenge"><b>Challenge</b><small>20 km</small><svg viewBox="0 0 180 42" aria-hidden="true"><path d="M3 35H24L42 27 54 35 75 18 92 35 115 10 133 33 154 4 177 35" stroke="currentColor" stroke-width="3" stroke-linejoin="round" fill="none"/></svg></button><button class="track-option" data-track="test"><b>Test Track</b><small>Practice</small><svg viewBox="0 0 180 42" aria-hidden="true"><path d="M3 33H32Q44 7 57 33H80L89 20 98 33 107 24 116 33 139 8 157 33H177" stroke="currentColor" stroke-width="3" fill="none"/></svg></button></div><div class="actions"><button id="nextRace" class="primary big">Race →</button></div></section><section id="racing" hidden><div id="raceTitle" class="race-label"></div><div class="tools"><button id="start" class="primary big">🏁 Start</button><button id="pause" class="primary big" hidden>Pause</button><button id="restart" hidden>Restart</button><button id="raceHistory">Results</button><label id="sectionLabel">Section <select id="section"><option value="0">Straight</option><option value="65">Hills</option><option value="140">Bumps</option><option value="220">Ramp</option></select></label></div><div id="stats"></div><canvas id="race" width="960" height="450" aria-label="Race track"></canvas><div id="raceStandings" aria-label="Race positions" hidden></div><p id="result" role="status"></p></section><section id="library" hidden><h2 id="libtitle"></h2><div id="entries"></div></section></main></div>
 <div class="studio-backdrop hidden" id="drawStudio" role="dialog" aria-modal="true" aria-labelledby="studioTitle">
   <section class="studio-panel">
     <div class="studio-top">
@@ -301,7 +306,9 @@ document.querySelectorAll("[data-track]").forEach(b=>b.onclick=()=>{chosenTrack=
 $("nextRace").onclick=()=>go(chosenTrack);$("homeButton").onclick=()=>go("home");$("raceHistory").onclick=()=>go("history");
 $("tips").onchange=()=>{write("tips",$("tips").checked);side()};
 $("save").onclick=()=>{try{let m=geometry();project=project||Date.now().toString(36);let rev=garage.filter(g=>g.project===project).length+1;let v={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),project,rev,name:m.name,image:m.image,topImage,original,date:new Date().toISOString()};garage.unshift(v);if(!write("garage",garage)){garage.shift();throw Error("Storage full. This revision was not saved.")}saveDraft();$("editmsg").textContent="Saved "+v.name+"!";side()}catch(e){$("editmsg").textContent=e.message}};
-let state=null,running=false,paused=false,lastFrame=0,acc=0,keys={},frames=[],ghostRun=null,ghostPlayer=null,finished=false,ghostLoadId=0;
+let state=null,running=false,paused=false,lastFrame=0,acc=0,keys={},frames=[],finished=false,ghostLoadId=0;
+let ghosts=[],ghostLoading=false,ghostPromise=Promise.resolve(),ghostAbort=null,finalRun=null,standingsKey="",nextFrameTime=0;
+const GHOST_COLORS=["#89d7ff","#ffc285","#d6baff"];
 const START=30,SEGMENT=4200,FINISH=START+SEGMENT,WORLD_H=680;
 let players=[],rocks=[],elapsed=0,simulation="idle";
 const modes={test:{length:6200,scale:310/6200},drag:{length:4200,scale:1000/4200},challenge:{length:84000,scale:20000/84000}};
@@ -312,10 +319,10 @@ function height(x){if(page==="drag")return 0;if(page==="test"){if(x<55)return 0;
 function sampleRoad(x){let scale=page==="challenge"?42:page==="test"?20:4.2;return 420-height((x-START)/scale)*scale}
 function derivative(x){return (sampleRoad(x+6)-sampleRoad(x-6))/12}
 function syncBeginRaceButton(){
- $("start").hidden=running;$("start").textContent=finished?"↻ Race again":"🏁 Start";
+ $("start").hidden=running;$("start").disabled=ghostLoading;$("start").textContent=ghostLoading?"Loading ghosts…":finished?"↻ Race again":"🏁 Start";
  $("pause").hidden=!running;$("pause").textContent=paused?"Resume":"Pause";
  $("restart").hidden=!running;$("raceHistory").hidden=running;$("stats").hidden=finished;
- $("sectionLabel").hidden=page!=="test"||running;$("ghostLabel").hidden=page==="test"||running;
+ $("sectionLabel").hidden=page!=="test"||running;
 }
 function physical(p){const cv=p.canvas,ratio=cv.width/Math.max(cv.height,1);let bodyW=clamp(104+(ratio-2)*17,85,158),bodyH=clamp(bodyW/ratio,34,104);const wheels=p.wheels.map(wh=>({ax:(wh.x-.5)*bodyW,ay:(wh.y-.50)*bodyH,r:clamp(wh.r*bodyW,12,42)}));return {bodyW,bodyH,wheels,mass:105+bodyH*.17+bodyW*.05, inertia:(105+bodyH*.17+bodyW*.05)*bodyW*bodyW/8,drag:65+bodyH*.6,friction:1.35}}
 function paintCar(c,p,theta=0,shadow=true,spinX=null){const ph=physical(p);c.save();if(theta)c.rotate(theta);const {bodyW,bodyH,wheels}=ph;if(shadow){c.fillStyle='rgba(9,31,34,.18)';c.beginPath();c.ellipse(3,bodyH*.8,bodyW*.52,7,0,0,7);c.fill()}if(p.canvas)c.drawImage(p.canvas,-bodyW/2,-bodyH/2,bodyW,bodyH);
@@ -344,32 +351,118 @@ if(elapsed>maxRaceSeconds()&&s.status==='racing')s.status='timed out';
 if(players.every(p=>p.state.status!=='racing')){simulation='complete';syncBeginRaceButton();}
 }
 
-function init(){running=false;paused=false;finished=false;frames=[];acc=0;elapsed=0;simulation="idle";ghostRun=null;ghostPlayer=null;let token=++ghostLoadId;
+function resetGhosts(){
+ ++ghostLoadId;ghostAbort?.abort();ghostAbort=null;ghosts=[];ghostLoading=false;ghostPromise=Promise.resolve();finalRun=null;standingsKey="";$("raceStandings").hidden=true;$("raceStandings").replaceChildren();
+}
+function decodeGhost(row,index){
+ return new Promise(resolve=>{
+  const replay=row?.replay,fs=replay?.frames;
+  if(replay?.version!==1||!Array.isArray(fs)||fs.length<2||fs.length>7300||typeof replay.image!=="string"||!fs.every(f=>Array.isArray(f)&&f.length===4&&f.every(Number.isFinite))){resolve(null);return}
+  const im=new Image(),timer=setTimeout(()=>resolve(null),3500);
+  im.onerror=()=>{clearTimeout(timer);resolve(null)};
+  im.onload=()=>{clearTimeout(timer);try{
+   if(im.width!==760||im.height!==350){resolve(null);return}
+   const canvas=document.createElement("canvas");canvas.width=im.width;canvas.height=im.height;canvas.getContext("2d").drawImage(im,0,0);
+   const crop=cropInk(canvas);if(!crop){resolve(null);return}
+   const cv=thickenInk(crop,1),name=String(row.name||"Racer"),distance=Number(row.distance),time=Number(row.seconds);
+   if(!Number.isFinite(distance)||!Number.isFinite(time)||time<=0){resolve(null);return}
+   resolve({name,car:String(row.car||""),done:row.done===true,distance,time,frames:fs,player:{canvas:cv,wheels:detectWheels(cv),source:"drawn"},lane:index+1,color:GHOST_COLORS[index]});
+  }catch{resolve(null)}};
+  im.src=replay.image;
+ });
+}
+async function prepareGhosts(token,raceMode,profile){
+ if(raceMode==="test")return;
+ if(!navigator.onLine){if(token===ghostLoadId)$("result").textContent="Offline · solo race";return}
+ ghostLoading=true;syncBeginRaceButton();
+ const controller=new AbortController();ghostAbort=controller;const timeout=setTimeout(()=>controller.abort(),6500);
+ try{
+  const data=await schoolApi({action:"ghosts",mode:"auto_"+raceMode},profile,controller.signal);
+  if(token!==ghostLoadId)return;
+  const rows=Array.isArray(data.rows)?data.rows.slice(0,3):[];
+  const loaded=await Promise.all(rows.map(decodeGhost));
+  if(token!==ghostLoadId)return;
+  ghosts=loaded.filter(Boolean);
+  ghosts.forEach((g,i)=>{g.lane=i+1;g.color=GHOST_COLORS[i]});
+  $("result").textContent=ghosts.length?"":"No ghost replays yet";
+ }catch{if(token===ghostLoadId)$("result").textContent="Ghosts unavailable · solo race"}
+ finally{clearTimeout(timeout);if(token===ghostLoadId){ghostAbort=null;ghostLoading=false;syncBeginRaceButton();renderStandings()}}
+}
+function recordFrame(){
+ if(!state)return;
+ const frame=[+elapsed.toFixed(3),+state.x.toFixed(2),+state.y.toFixed(2),+state.angle.toFixed(4)];
+ if(frames.length&&frame[0]===frames[frames.length-1][0])frames[frames.length-1]=frame;
+ else if(frames.length<7300)frames.push(frame);
+}
+function init(){
+ running=false;paused=false;finished=false;frames=[];nextFrameTime=.125;acc=0;elapsed=0;simulation="idle";resetGhosts();
  try{model=geometry()}catch(e){$("result").textContent=e.message;state=null;syncBeginRaceButton();return false}
  let x=START+(page==="test"?Number($("section").value)*20:0),ph=physical(model),y=Math.min(...ph.wheels.map(wh=>sampleRoad(x+wh.ax)-(wh.ay+wh.r)))-3;
- state={x,y,vx:0,vy:0,angle:0,omega:0,finishTime:0,status:"racing",grounded:false,stall:0,flip:0,rockCooldown:0,topSpeed:0,max:x};model.state=state;players=[model];
- if($("ghost").checked&&page!=="test"){ghostRun=history.filter(h=>h.version==="0.5-auto"&&h.mode===page&&h.done&&h.frames?.length).sort((a,b)=>a.time-b.time)[0]||null;if(ghostRun){let im=new Image();im.onload=()=>{if(token!==ghostLoadId)return;let c=document.createElement("canvas");c.width=im.width;c.height=im.height;c.getContext("2d").drawImage(im,0,0);let cropped=cropInk(c);if(cropped){let cv=thickenInk(cropped,1);ghostPlayer={canvas:cv,wheels:detectWheels(cv),source:"drawn"}}};im.src=ghostRun.image}}
- $("result").textContent="";syncBeginRaceButton();return true
+ state={x,y,vx:0,vy:0,angle:0,omega:0,finishTime:0,status:"racing",grounded:false,stall:0,flip:0,rockCooldown:0,topSpeed:0,max:x};model.state=state;players=[model];recordFrame();
+ $("result").textContent="";syncBeginRaceButton();
+ if(page!=="test"&&activeProfile)ghostPromise=prepareGhosts(ghostLoadId,page,activeProfile);
+ return true
 }
-function step(dt){simulate(dt);state.max=Math.max(state.max,state.x);if(Math.floor(elapsed*8)>frames.length-1&&frames.length<7300)frames.push([+state.x.toFixed(2),+state.y.toFixed(2),+state.angle.toFixed(4)]);if(simulation==="complete")end(state.status==="finished",state.status==="finished"?"Finished":state.status==="flipped"?"Rolled over":state.status==="stuck"?"Got stuck":state.status==="timed out"?"Time is up":"Crashed")}
-function end(done,reason){running=false;finished=true;let s=state,rec={id:Date.now(),version:"0.5-auto",mode:page,name:model.name,done,time:+elapsed.toFixed(2),distance:done?(page==="drag"?1000:page==="challenge"?20000:310):Math.max(0,Math.min(modes[page].length-.01,s.max-START))*modes[page].scale,top:+(s.topSpeed*modes[page].scale*3.6).toFixed(1),image:model.image,frames:frames.slice()};let saved=true;if(page!=="test"){history.unshift(rec);saved=write("history",history);if(!saved)history.shift()}$("result").textContent=reason+" · "+rec.time.toFixed(2)+" s · "+(rec.distance/1000).toFixed(2)+" km"+(!saved?" · Record not saved.":"")+($("tips").checked&&!done?" | Tip: try a lower body or change your wheels.":"");syncBeginRaceButton()}
-function render(){if(!state||!model)return;let s=state,c=rc,sc=.94,cam=s.x-240/sc,base=s.y-220/sc,px=x=>(x-cam)*sc,py=y=>(y-base)*sc;c.clearRect(0,0,960,450);let g=c.createLinearGradient(0,0,0,450);g.addColorStop(0,"#80b8d8");g.addColorStop(1,"#e7edc9");c.fillStyle=g;c.fillRect(0,0,960,450);c.fillStyle="#6d8a54";c.beginPath();c.moveTo(0,450);for(let i=0;i<=960;i+=4)c.lineTo(i,py(sampleRoad(cam+i/sc)));c.lineTo(960,450);c.closePath();c.fill();c.strokeStyle="#364c35";c.lineWidth=4;c.beginPath();for(let i=0;i<=960;i+=4){let y=py(sampleRoad(cam+i/sc));if(i)c.lineTo(i,y);else c.moveTo(i,y)}c.stroke();
- if(ghostRun&&ghostPlayer){let f=ghostRun.frames[Math.min(ghostRun.frames.length-1,Math.floor(elapsed*8))];if(f){c.save();c.globalAlpha=.35;c.translate(px(f[0]),py(f[1]));c.scale(sc,sc);paintCar(c,ghostPlayer,f[2],false,f[0]);c.restore()}}
- c.save();c.translate(px(s.x),py(s.y));c.scale(sc,sc);paintCar(c,model,s.angle,false,s.x);c.restore();
+function replayPose(g,t){
+ const fs=g.frames;
+ if(t<=0)return fs[0];
+ if(t>=fs[fs.length-1][0])return fs[fs.length-1];
+ let lo=0,hi=fs.length-1;
+ while(hi-lo>1){let mid=(lo+hi)>>1;if(fs[mid][0]<=t)lo=mid;else hi=mid}
+ const a=fs[lo],b=fs[hi],f=clamp((t-a[0])/(b[0]-a[0]),0,1);
+ return [t,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f,a[3]+(b[3]-a[3])*f];
+}
+function racePlaces(final=false){
+ if(!state)return [];
+ const rows=[{own:true,name:activeProfile?.name||"You",done:final?finalRun.done:false,ended:final,time:final?finalRun.time:elapsed,distance:final?finalRun.distance:Math.max(0,state.x-START)*modes[page].scale,order:0}];
+ for(const g of ghosts){
+  const ended=final||elapsed>=g.frames[g.frames.length-1][0],pose=replayPose(g,elapsed);
+  rows.push({own:false,name:g.name,done:ended&&g.done,ended,time:ended?g.time:elapsed,distance:ended?g.distance:Math.max(0,pose[1]-START)*modes[page].scale,order:g.lane});
+ }
+ return rows.sort((a,b)=>Number(b.done)-Number(a.done)||(a.done&&b.done?a.time-b.time:b.distance-a.distance||a.time-b.time)||a.order-b.order);
+}
+function renderStandings(){
+ const box=$("raceStandings");if(!ghosts.length||!state){box.hidden=true;return}
+ const rows=racePlaces(finished&&!!finalRun);
+ const measures=rows.map(r=>r.done?r.time.toFixed(2)+" s":(r.distance/1000).toFixed(2)+" km"+(r.ended?" DNF":""));
+ const key=JSON.stringify(rows.map((r,i)=>[r.order,measures[i]]));if(key===standingsKey)return;
+ standingsKey=key;box.hidden=false;box.replaceChildren();
+ rows.forEach((r,i)=>{const row=document.createElement("div");row.className="race-place"+(r.own?" own":"");const rank=document.createElement("span");rank.className="rank";rank.textContent=i+1;
+ const name=document.createElement("span");name.className="racer";name.textContent=r.name;name.title=r.name;const measure=document.createElement("span");measure.className="measure";measure.textContent=measures[i];
+ row.append(rank,name,measure);box.append(row)});
+}
+function paintName(c,name,x,y,color){
+ if(x<-60||x>1020||y<-80||y>500)return;
+ c.save();c.font="bold 14px system-ui,sans-serif";c.textAlign="center";c.textBaseline="middle";
+ let label=String(name);while(label.length>1&&c.measureText(label).width>180)label=label.slice(0,-2)+"…";
+ const w=c.measureText(label).width+14,ax=clamp(x,w/2+3,960-w/2-3),ay=clamp(y,12,438);
+ c.fillStyle="rgba(10,20,34,.85)";c.fillRect(ax-w/2,ay-10,w,20);c.fillStyle=color;c.fillText(label,ax,ay);c.restore();
+}
+function step(dt){simulate(dt);state.max=Math.max(state.max,state.x);if(elapsed+1e-7>=nextFrameTime){recordFrame();nextFrameTime+=.125;}if(simulation==="complete")end(state.status==="finished",state.status==="finished"?"Finished":state.status==="flipped"?"Rolled over":state.status==="stuck"?"Got stuck":state.status==="timed out"?"Time is up":"Crashed")}
+function end(done,reason){running=false;finished=true;recordFrame();let s=state,rec={id:Date.now(),version:"0.5-auto",replayVersion:1,mode:page,name:model.name,done,time:+elapsed.toFixed(2),distance:done?(page==="drag"?1000:page==="challenge"?20000:310):Math.max(0,Math.min(modes[page].length-.01,s.max-START))*modes[page].scale,top:+(s.topSpeed*modes[page].scale*3.6).toFixed(1),image:model.image,frames:frames.slice()};finalRun=rec;let saved=true;if(page!=="test"){history.unshift(rec);saved=write("history",history);if(!saved)history.shift()}$("result").textContent=(ghosts.length?("#"+(racePlaces(true).findIndex(r=>r.own)+1)+" / "+(ghosts.length+1)+" · "):"")+reason+" · "+rec.time.toFixed(2)+" s · "+(rec.distance/1000).toFixed(2)+" km"+(!saved?" · Record not saved.":"")+($("tips").checked&&!done?" | Tip: try a lower body or change your wheels.":"");syncBeginRaceButton();renderStandings()}
+function render(){if(!state||!model)return;let s=state,c=rc,sc=ghosts.length?.80:.94,cam=s.x-240/sc,base=s.y-(ghosts.length?338:220)/sc,px=x=>(x-cam)*sc,py=y=>(y-base)*sc;c.clearRect(0,0,960,450);let g=c.createLinearGradient(0,0,0,450);g.addColorStop(0,"#80b8d8");g.addColorStop(1,"#e7edc9");c.fillStyle=g;c.fillRect(0,0,960,450);c.fillStyle="#6d8a54";c.beginPath();c.moveTo(0,450);for(let i=0;i<=960;i+=4)c.lineTo(i,py(sampleRoad(cam+i/sc)));c.lineTo(960,450);c.closePath();c.fill();c.strokeStyle="#364c35";c.lineWidth=4;c.beginPath();for(let i=0;i<=960;i+=4){let y=py(sampleRoad(cam+i/sc));if(i)c.lineTo(i,y);else c.moveTo(i,y)}c.stroke();
+ // Visually separated translucent lanes keep overlapping ghosts readable without changing their recorded physics.
+ for(const ghost of ghosts){
+  const off=-ghost.lane*77,pose=replayPose(ghost,elapsed),gx=px(pose[1]),gy=py(pose[2])+off;
+  c.save();c.strokeStyle=ghost.color;c.globalAlpha=.38;c.lineWidth=2;c.setLineDash([8,9]);c.beginPath();for(let i=0;i<=960;i+=8){let y=py(sampleRoad(cam+i/sc))+off;if(i)c.lineTo(i,y);else c.moveTo(i,y)}c.stroke();c.restore();
+  c.save();c.globalAlpha=.75;c.translate(gx,gy);c.scale(sc,sc);paintCar(c,ghost.player,pose[3],false,pose[1]);c.restore();
+  paintName(c,ghost.name,gx,gy-physical(ghost.player).bodyH*sc/2-12,ghost.color);
+ }
+ c.save();c.translate(px(s.x),py(s.y));c.scale(sc,sc);paintCar(c,model,s.angle,false,s.x);c.restore();if(ghosts.length)paintName(c,activeProfile?.name||"You",px(s.x),py(s.y)-physical(model).bodyH*sc/2-12,"#c4f26b");renderStandings();
  $("stats").innerHTML="<span>Distance <b>"+(Math.max(0,s.x-START)*modes[page].scale/1000).toFixed(2)+" km</b></span><span>Time <b>"+elapsed.toFixed(1)+" s</b></span>";
 }
 function loop(ts){let delta=Math.min(.05,(ts-(lastFrame||ts))/1000);lastFrame=ts;if(running&&!paused&&state){acc+=delta;while(acc>=1/120&&running){step(1/120);acc-=1/120}}if(["test","drag","challenge"].includes(page))render();requestAnimationFrame(loop)}
 function go(pageName){
  if(pageName==="race")pageName=chosenTrack;if(!activeProfile&&pageName!=="home")pageName="home";
  if(["test","drag","challenge"].includes(pageName)){try{geometry()}catch(e){pageName="sketch";$("editmsg").textContent=e.message}}
- running=false;paused=false;keys={};document.querySelectorAll(".held").forEach(b=>b.classList.remove("held"));page=pageName;
+ running=false;paused=false;resetGhosts();keys={};document.querySelectorAll(".held").forEach(b=>b.classList.remove("held"));page=pageName;
  let tab=page==="tracks"?"tracks":["test","drag","challenge","history"].includes(page)?"race":"sketch";
  document.querySelectorAll("#nav button").forEach(b=>{const selected=b.dataset.page===tab;b.classList.toggle("active",selected);if(selected)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
  $("editor").hidden=page!=="sketch";$("tracks").hidden=page!=="tracks";$("racing").hidden=!["test","drag","challenge"].includes(page);$("library").hidden=page!=="history";$("home").hidden=page!=="home";$("leaderboard").hidden=page!=="leaderboard";let menu=page==="home"||page==="leaderboard";$("gameLayout").classList.toggle("menu-mode",menu);$("gameLayout").classList.toggle("full-mode",page!=="sketch"&&!menu);$("gameSide").hidden=page!=="sketch";$("appHeader").hidden=page==="home";$("nav").hidden=menu;side();
- if(page==="sketch"){refreshFit()}else if(page==="tracks"){showTracks()}else if(!$("racing").hidden){chosenTrack=page;$("raceTitle").textContent=trackNames[page];$("sectionLabel").hidden=page!=="test";$("ghostLabel").hidden=page==="test";init();render()}else if(page==="leaderboard")loadBoard();else if(page==="home")homeStatus();else library()
+ if(page==="sketch"){refreshFit()}else if(page==="tracks"){showTracks()}else if(!$("racing").hidden){chosenTrack=page;$("raceTitle").textContent=trackNames[page];$("sectionLabel").hidden=page!=="test";init();render()}else if(page==="leaderboard")loadBoard();else if(page==="home")homeStatus();else library()
 }
 function library(){$("libtitle").textContent=page==="garage"?"My Garage":"Practice results";let e=$("entries");e.replaceChildren();let arr=page==="garage"?garage:history;if(!arr.length)e.textContent=page==="garage"?"No saved designs yet.":"No results yet";for(let g of arr){let row=document.createElement("div");row.className="entry";let im=new Image();im.src=g.image;let txt=document.createElement("div");txt.textContent=g.name+" · "+(page==="garage"?"Revision "+g.rev:g.mode+" · "+(g.done?"Finished":"DNF")+" · "+(g.distance/1000).toFixed(2)+" km · "+g.time+" s");row.append(im,txt);if(page==="garage"){let b=document.createElement("button");b.textContent="Edit revision";b.onclick=async()=>{project=g.project;original=g.original;$("carname").value=g.name;await loadImage(g.image);saveDraft();go("sketch")};row.append(b)}e.append(row)}}
-document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>go(b.dataset.page));$("testNow").onclick=()=>{try{geometry();go("tracks")}catch(e){$("editmsg").textContent=e.message}};$("start").onclick=()=>{if(running)return;if(!state||finished){if(!init())return}running=true;paused=false;simulation="running";$("result").textContent="Racing…";syncBeginRaceButton()};$("pause").onclick=()=>{if(!running)return;paused=!paused;$("result").textContent=paused?"Paused":"Racing…";syncBeginRaceButton()};$("restart").onclick=()=>init();$("section").onchange=()=>{if(!running)init()};$("ghost").onchange=()=>{if(!running)init()};window.addEventListener("blur",()=>{if(running){paused=true;$("result").textContent="Paused";syncBeginRaceButton()}});$("carname").onchange=saveDraft;
+document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>go(b.dataset.page));$("testNow").onclick=()=>{try{geometry();go("tracks")}catch(e){$("editmsg").textContent=e.message}};$("start").onclick=async()=>{if(running||ghostLoading)return;if(!state||finished){if(!init())return}const token=ghostLoadId;await ghostPromise;if(token!==ghostLoadId||running||!state)return;running=true;paused=false;simulation="running";$("result").textContent="";syncBeginRaceButton()};$("pause").onclick=()=>{if(!running)return;paused=!paused;$("result").textContent=paused?"Paused":"Racing…";syncBeginRaceButton()};$("restart").onclick=()=>init();$("section").onchange=()=>{if(!running)init()};window.addEventListener("blur",()=>{if(running){paused=true;$("result").textContent="Paused";syncBeginRaceButton()}});$("carname").onchange=saveDraft;
 
 function homeStatus(){
  $("loginForm").hidden=!!activeProfile;$("signedInMenu").hidden=!activeProfile;
@@ -399,9 +492,9 @@ $("playButton").onclick=()=>{if(activeProfile){go("sketch");scheduleSync()}};
 $("logoutButton").onclick=()=>signOut();
 $("openBoard").onclick=()=>{if(activeProfile)go("leaderboard")};$("refreshBoard").onclick=()=>loadBoard();
 document.querySelectorAll("[data-board]").forEach(b=>b.onclick=()=>{boardMode=b.dataset.board;loadBoard()});
-async function schoolApi(data,p=activeProfile){
+async function schoolApi(data,p=activeProfile,signal){
  const headers={"Content-Type":"application/json"};if(p?.session)headers["X-SRO-Session"]=p.session;
- let res;try{res=await fetch(API,{method:"POST",headers,body:JSON.stringify(data),cache:"no-store"})}catch{throw Error("Could not connect. Check your internet connection.")}
+ let res;try{res=await fetch(API,{method:"POST",headers,body:JSON.stringify(data),cache:"no-store",signal})}catch{throw Error("Could not connect. Check your internet connection.")}
  let j;try{j=await res.json()}catch{throw Error("Game server unavailable. Please try again.")}
  if(!res.ok){if(res.status===401&&p&&activeProfile===p)signOut("Please log in again.");throw Error(j.error||"Could not connect")}
  return j
@@ -414,7 +507,16 @@ async function syncCloud(){
  try{let remote=[],offset=0;do{let j=await schoolApi({action:"cars",offset},p);remote.push(...j.items);offset=j.next}while(offset!==null);
  let known=new Set(remote.map(x=>String(x.id)));for(const c of localCars)if(!known.has(String(c.id)))await schoolApi({action:"save",car:c},p);
  let latest={};for(let r of runs)if(r.version==="0.5-auto"&&["drag","challenge"].includes(r.mode)&&better(r,latest[r.mode]))latest[r.mode]=r;
- let sent=globalRead("roster.sent."+p.key,{});for(let r of Object.values(latest))if(sent["auto_"+r.mode]!==r.id){await schoolApi({action:"submit",run:{mode:"auto_"+r.mode,done:r.done,distance:r.distance,time:r.time,name:r.name}},p);sent["auto_"+r.mode]=r.id;globalWrite("roster.sent."+p.key,sent)}
+ let sent=globalRead("roster.sent."+p.key,{});
+ const payload=r=>({mode:"auto_"+r.mode,done:r.done,distance:r.distance,time:r.time,name:r.name});
+ let replayBest={};for(let r of runs)if(r.version==="0.5-auto"&&r.replayVersion===1&&["drag","challenge"].includes(r.mode)&&better(r,replayBest[r.mode]))replayBest[r.mode]=r;
+ for(const r of Object.values(latest))if(sent["auto_"+r.mode]!==r.id){
+  await schoolApi({action:"submit",run:payload(r)},p);sent["auto_"+r.mode]=r.id;globalWrite("roster.sent."+p.key,sent);
+ }
+ for(const r of Object.values(replayBest))if(sent["replay_"+r.mode]!==r.id){
+  await schoolApi({action:"submit",run:{...payload(r),replay:{version:1,image:r.image,frames:r.frames}}},p);
+  sent["replay_"+r.mode]=r.id;globalWrite("roster.sent."+p.key,sent);
+ }
  if(activeProfile===p&&scope===localScope){let map=new Map(remote.map(x=>[String(x.id),x]));for(let c of garage)map.set(String(c.id),c);pending=garage.some(c=>!localCars.some(x=>x.id===c.id))||history.some(r=>!runs.some(x=>x.id===r.id));garage=[...map.values()].sort((a,b)=>String(b.date||b.id).localeCompare(String(a.date||a.id)));try{localStorage.setItem(scope+"garage",JSON.stringify(garage))}catch(e){}if(page==="sketch"&&!$("tips").checked)side();if(page==="home")homeStatus()}
  }catch(e){if(page==="home"&&activeProfile===p)$("menuStatus").textContent="Sync unavailable · saved locally"}
  finally{syncing=false;if(pending||activeProfile!==p)scheduleSync()}

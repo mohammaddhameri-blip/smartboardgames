@@ -1,3 +1,12 @@
+# Sketch Rally Online — V0.8 (top-three ghost races)
+
+- Drag and Challenge automatically fetch up to three highest-ranked other racers on the selected school leaderboard that have compatible replays, excluding the signed-in racer's ID. Test Track remains solo.
+- Ghosts replay time-stamped positions and the original side-view artwork from actual recorded automatic races. They start alongside the player, are non-colliding, and appear in separate translucent visual lanes. Live standings and racer nameplates identify the cars; final standings compare actual saved finish times/distances as soon as the player's run ends.
+- V0.8 records exact starting and ending poses and 8 samples per second. A new best recorded performance syncs through the existing signed school session. Ghosts remain unverified client-submitted practice performances, not anti-cheat-verified results.
+- Historical leaderboard scores remain unchanged. Racers without a compatible recording are skipped, and an older overall personal best can remain better than that racer's best available replay. New V0.8 runs supply ghosts even if they do not beat a legacy result. If fewer than three opponents have uploaded a replay, the game uses the available number; an empty or unavailable ghost list falls back to solo racing.
+- Replay data is stored server-side in the private `sro_simple_replays` table. Only the existing school Edge Function can submit or retrieve it. The query returns display names, artwork, timings and trajectory samples, never pupil codes or roster IDs. No changes to the school roster, login process, automatic race physics or existing leaderboard scoring.
+- Backend migration applied: `backend/migrations/20261128105148_sketch_rally_top_three_ghost_replays.sql`. The existing `sketch-rally-school` Edge Function uses the matching `backend/index.ts`. PWA cache updated.
+
 # Sketch Rally Online — V0.7 (simplified interface)
 
 - One shared Cars, Tracks and Race navigation, with a single Menu button; Play opens Cars and saved designs.

@@ -29,6 +29,29 @@ function codes(v:unknown){
 }
 async function failCount(k:string,seconds:number){const r=await db(q("sro_limits",{select:"hits,bucket",key:"eq."+k,limit:"1"}));return r.length&&Number(r[0].bucket)===Math.floor(Date.now()/1000/seconds)?Number(r[0].hits):0}
 
+// Replay data is unverified client gameplay, bounded and validated before storage.
+function validReplay(v:any,p:any){
+ if(!v||v.version!==1||typeof v.image!=="string"||v.image.length>1900000||!/^data:image\/png;base64,[a-zA-Z0-9+/=]+$/.test(v.image))return false;
+ // Only the game's 760 × 350 source canvas is accepted; prevent oversized image decodes.
+ try{const h=Uint8Array.from(atob(v.image.slice(22,54)),c=>c.charCodeAt(0));const d=new DataView(h.buffer);
+ if(d.getUint32(0)!==0x89504e47||d.getUint32(4)!==0x0d0a1a0a||d.getUint32(12)!==0x49484452||d.getUint32(16)!==760||d.getUint32(20)!==350)return false;
+ }catch{return false}
+ const f=v.frames,finish=p.mode==="auto_drag"?4230:84030;
+ if(!Array.isArray(f)||f.length<2||f.length>7300)return false;
+ let last=-1,furthest=30;
+ for(const row of f){
+  if(!Array.isArray(row)||row.length!==4||!row.every(Number.isFinite))return false;
+  const [t,x,y,angle]=row;
+  if(t<0||t>901||t<=last||last>=0&&t-last>.151||x<29.99||x>finish+.02||Math.abs(y)>100000||Math.abs(angle)>7000)return false;
+  if(last<0&&(t!==0||Math.abs(x-30)>.02))return false;
+  last=t;furthest=Math.max(furthest,x);
+ }
+ if(Math.abs(last-p.time)>.015||p.done&&Math.abs(f[f.length-1][1]-finish)>.03)return false;
+ const max=p.mode==="auto_drag"?1000:20000;
+ if(Math.abs((furthest-30)*max/(finish-30)-p.distance)>5)return false;
+ return true;
+}
+
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers});
  if(req.method!=="POST")return reply({error:"Method not allowed"},405);
@@ -72,11 +95,17 @@ Deno.serve(async(req:Request)=>{
  if(!racers.length)return reply({error:"Please log in again."},401);
  const uid=racers[0].id;
  if(b.action==="board"){if(!["auto_drag","auto_challenge"].includes(b.mode))return reply({error:"Invalid track"},400);return reply({rows:await rpc("sro_simple_board",{p_room:room,p_mode:b.mode}),verified:false})}
+ if(b.action==="ghosts"){if(!["auto_drag","auto_challenge"].includes(b.mode))return reply({error:"Invalid track"},400);return reply({rows:await rpc("sro_simple_ghosts",{p_room:room,p_racer:uid,p_mode:b.mode}),verified:false})}
  if(b.action==="submit"){
  let p=b.run;if(!p||!["auto_drag","auto_challenge"].includes(p.mode)||typeof p.done!=="boolean"||!Number.isFinite(p.time)||p.time<.01||p.time>901||!Number.isFinite(p.distance)||typeof p.name!=="string"||p.name.length>100)return reply({error:"Invalid race record"},400);
  const max=p.mode.endsWith("drag")?1000:20000;
  if(p.distance<0||p.distance>max||(p.done&&p.distance!==max)||(!p.done&&p.distance>=max)||p.time<(p.distance/(p.mode.endsWith("drag")?95:950))-.02)return reply({error:"Invalid race result"},400);
- await rpc("sro_simple_submit",{p_racer:uid,p_mode:p.mode,p_done:p.done,p_dist:p.distance,p_seconds:p.time,p_car:p.name});return reply({ok:true,verified:false});
+ const args={p_racer:uid,p_mode:p.mode,p_done:p.done,p_dist:p.distance,p_seconds:p.time,p_car:p.name};
+ if(p.replay!==undefined){
+  if(!validReplay(p.replay,p))return reply({error:"Invalid replay"},400);
+  await rpc("sro_simple_submit_replay",{...args,p_payload:{version:1,image:p.replay.image,frames:p.replay.frames}});
+ }else await rpc("sro_simple_submit",args);
+ return reply({ok:true,verified:false});
  }
  if(b.action==="save"){
  let p=b.car;if(!p||typeof p.id!=="string"||!/^[a-zA-Z0-9_-]{1,80}$/.test(p.id)||typeof p.name!=="string"||p.name.length>100||typeof p.image!=="string"||!/^data:image\/png;base64,[a-zA-Z0-9+/=]+$/.test(p.image))return reply({error:"Invalid car"},400);
