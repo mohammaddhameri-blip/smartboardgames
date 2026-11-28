@@ -431,24 +431,35 @@ function renderStandings(){
  const name=document.createElement("span");name.className="racer";name.textContent=r.name;name.title=r.name;const measure=document.createElement("span");measure.className="measure";measure.textContent=measures[i];
  row.append(rank,name,measure);box.append(row)});
 }
-function paintName(c,name,x,y,color){
+function paintName(c,name,x,y,color,occupied){
  if(x<-60||x>1020||y<-80||y>500)return;
  c.save();c.font="bold 14px system-ui,sans-serif";c.textAlign="center";c.textBaseline="middle";
  let label=String(name);while(label.length>1&&c.measureText(label).width>180)label=label.slice(0,-2)+"…";
- const w=c.measureText(label).width+14,ax=clamp(x,w/2+3,960-w/2-3),ay=clamp(y,12,438);
+ const w=c.measureText(label).width+14,ax=clamp(x,w/2+3,960-w/2-3),preferred=clamp(y,12,438);
+ // Separate overlapping nameplates, never the cars themselves.
+ const free=ay=>ay>=12&&ay<=438&&!occupied.some(b=>Math.abs(ax-b.x)<(w+b.w)/2+5&&Math.abs(ay-b.y)<24);
+ let ay=preferred;
+ if(!free(ay)){
+  for(let i=1;i<=18;i++){const above=preferred-i*24,below=preferred+i*24;if(free(above)){ay=above;break}if(free(below)){ay=below;break}}
+ }
+ occupied.push({x:ax,y:ay,w});
  c.fillStyle="rgba(10,20,34,.85)";c.fillRect(ax-w/2,ay-10,w,20);c.fillStyle=color;c.fillText(label,ax,ay);c.restore();
 }
 function step(dt){simulate(dt);state.max=Math.max(state.max,state.x);if(elapsed+1e-7>=nextFrameTime){recordFrame();nextFrameTime+=.125;}if(simulation==="complete")end(state.status==="finished",state.status==="finished"?"Finished":state.status==="flipped"?"Rolled over":state.status==="stuck"?"Got stuck":state.status==="timed out"?"Time is up":"Crashed")}
 function end(done,reason){running=false;finished=true;recordFrame();let s=state,rec={id:Date.now(),version:"0.5-auto",replayVersion:1,mode:page,name:model.name,done,time:+elapsed.toFixed(2),distance:done?(page==="drag"?1000:page==="challenge"?20000:310):Math.max(0,Math.min(modes[page].length-.01,s.max-START))*modes[page].scale,top:+(s.topSpeed*modes[page].scale*3.6).toFixed(1),image:model.image,frames:frames.slice()};finalRun=rec;let saved=true;if(page!=="test"){history.unshift(rec);saved=write("history",history);if(!saved)history.shift()}$("result").textContent=(ghosts.length?("#"+(racePlaces(true).findIndex(r=>r.own)+1)+" / "+(ghosts.length+1)+" · "):"")+reason+" · "+rec.time.toFixed(2)+" s · "+(rec.distance/1000).toFixed(2)+" km"+(!saved?" · Record not saved.":"")+($("tips").checked&&!done?" | Tip: try a lower body or change your wheels.":"");syncBeginRaceButton();renderStandings()}
-function render(){if(!state||!model)return;let s=state,c=rc,sc=ghosts.length?.80:.94,cam=s.x-240/sc,base=s.y-(ghosts.length?338:220)/sc,px=x=>(x-cam)*sc,py=y=>(y-base)*sc;c.clearRect(0,0,960,450);let g=c.createLinearGradient(0,0,0,450);g.addColorStop(0,"#80b8d8");g.addColorStop(1,"#e7edc9");c.fillStyle=g;c.fillRect(0,0,960,450);c.fillStyle="#6d8a54";c.beginPath();c.moveTo(0,450);for(let i=0;i<=960;i+=4)c.lineTo(i,py(sampleRoad(cam+i/sc)));c.lineTo(960,450);c.closePath();c.fill();c.strokeStyle="#364c35";c.lineWidth=4;c.beginPath();for(let i=0;i<=960;i+=4){let y=py(sampleRoad(cam+i/sc));if(i)c.lineTo(i,y);else c.moveTo(i,y)}c.stroke();
- // Visually separated translucent lanes keep overlapping ghosts readable without changing their recorded physics.
+function render(){if(!state||!model)return;let s=state,c=rc,sc=.94,cam=s.x-240/sc,base=s.y-220/sc,px=x=>(x-cam)*sc,py=y=>(y-base)*sc;c.clearRect(0,0,960,450);let g=c.createLinearGradient(0,0,0,450);g.addColorStop(0,"#80b8d8");g.addColorStop(1,"#e7edc9");c.fillStyle=g;c.fillRect(0,0,960,450);c.fillStyle="#6d8a54";c.beginPath();c.moveTo(0,450);for(let i=0;i<=960;i+=4)c.lineTo(i,py(sampleRoad(cam+i/sc)));c.lineTo(960,450);c.closePath();c.fill();c.strokeStyle="#364c35";c.lineWidth=4;c.beginPath();for(let i=0;i<=960;i+=4){let y=py(sampleRoad(cam+i/sc));if(i)c.lineTo(i,y);else c.moveTo(i,y)}c.stroke();
+ // All racers use their true world coordinates on the same road. Ghosts never enter the physics simulation.
+ const ownX=px(s.x),ownY=py(s.y),ownPh=physical(model),labels=[];
+ c.save();c.translate(ownX,ownY);c.scale(sc,sc);paintCar(c,model,s.angle,false,s.x);c.restore();
+ if(ghosts.length)labels.push({name:activeProfile?.name||"You",x:ownX,y:ownY-ownPh.bodyH*sc/2-12,color:"#c4f26b"});
  for(const ghost of ghosts){
-  const off=-ghost.lane*77,pose=replayPose(ghost,elapsed),gx=px(pose[1]),gy=py(pose[2])+off;
-  c.save();c.strokeStyle=ghost.color;c.globalAlpha=.38;c.lineWidth=2;c.setLineDash([8,9]);c.beginPath();for(let i=0;i<=960;i+=8){let y=py(sampleRoad(cam+i/sc))+off;if(i)c.lineTo(i,y);else c.moveTo(i,y)}c.stroke();c.restore();
-  c.save();c.globalAlpha=.75;c.translate(gx,gy);c.scale(sc,sc);paintCar(c,ghost.player,pose[3],false,pose[1]);c.restore();
-  paintName(c,ghost.name,gx,gy-physical(ghost.player).bodyH*sc/2-12,ghost.color);
+  const pose=replayPose(ghost,elapsed),gx=px(pose[1]),gy=py(pose[2]),ph=physical(ghost.player);
+  const overlapsOwn=Math.abs(gx-ownX)<(ph.bodyW+ownPh.bodyW)*sc/2&&Math.abs(gy-ownY)<(ph.bodyH+ownPh.bodyH)*sc/2;
+  c.save();c.globalAlpha=overlapsOwn?.42:.72;c.translate(gx,gy);c.scale(sc,sc);paintCar(c,ghost.player,pose[3],false,pose[1]);c.restore();
+  labels.push({name:ghost.name,x:gx,y:gy-ph.bodyH*sc/2-12,color:ghost.color});
  }
- c.save();c.translate(px(s.x),py(s.y));c.scale(sc,sc);paintCar(c,model,s.angle,false,s.x);c.restore();if(ghosts.length)paintName(c,activeProfile?.name||"You",px(s.x),py(s.y)-physical(model).bodyH*sc/2-12,"#c4f26b");renderStandings();
+ const occupied=[];for(const l of labels)paintName(c,l.name,l.x,l.y,l.color,occupied);
+ renderStandings();
  $("stats").innerHTML="<span>Distance <b>"+(Math.max(0,s.x-START)*modes[page].scale/1000).toFixed(2)+" km</b></span><span>Time <b>"+elapsed.toFixed(1)+" s</b></span>";
 }
 function loop(ts){let delta=Math.min(.05,(ts-(lastFrame||ts))/1000);lastFrame=ts;if(running&&!paused&&state){acc+=delta;while(acc>=1/120&&running){step(1/120);acc-=1/120}}if(["test","drag","challenge"].includes(page))render();requestAnimationFrame(loop)}

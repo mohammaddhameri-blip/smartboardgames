@@ -1,3 +1,9 @@
+# Sketch Rally Online — V0.8.1 (shared-road ghosts)
+
+- All cars now race on the same road, using their actual recorded coordinates, without vertical lane offsets or separate ghost track lines.
+- Ghosts are translucent and pass through the player's car and other ghosts without collisions. Only overlapping nameplates are repositioned for legibility.
+- Same race physics, replay format, saved records, leaderboard, roster login and top-three selection. PWA cache updated.
+
 # Sketch Rally Online — V0.8 (top-three ghost races)
 
 - Drag and Challenge automatically fetch up to three highest-ranked other racers on the selected school leaderboard that have compatible replays, excluding the signed-in racer's ID. Test Track remains solo.
